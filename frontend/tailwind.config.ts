@@ -16,14 +16,14 @@ export default {
           deep: "#E8E0D6",
         },
         gold: {
-          DEFAULT: "#C9A15B",
+          DEFAULT: "var(--color-gold, #C9A15B)",
           muted: "#C8A46A",
           light: "#D4B87A",
         },
         ink: {
-          DEFAULT: "#2C2825",
-          muted: "#4A4540",
-          soft: "#6B6560",
+          DEFAULT: "var(--color-ink, #2C2825)",
+          muted: "var(--color-ink-muted, #4A4540)",
+          soft: "var(--color-ink-soft, #6B6560)",
         },
         background: "var(--background)",
         foreground: "var(--foreground)",

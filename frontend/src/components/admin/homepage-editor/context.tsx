@@ -12,6 +12,8 @@ import {
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import type { CategoryCard, HeroSlide, HomepageConfig, SectionOrderEntry } from "@/types/homepage";
+import { withRefreshedLayoutBlocks } from "@/lib/homepage-layout-blocks";
+import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 
 export function sortSlides(slides: HeroSlide[]) {
   return [...slides].sort((a, b) => a.order - b.order);
@@ -88,6 +90,7 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       token,
       body: JSON.stringify({ homepage: hp }),
     });
+    publishStorefrontSettingsChanged();
     setMsg("Saved.");
     await load();
   }, [token, hp, load]);
@@ -120,23 +123,23 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       if (j < 0 || j >= list.length) return prev;
       const swapped = [...list];
       [swapped[index], swapped[j]] = [swapped[j], swapped[index]];
-      return {
+      return withRefreshedLayoutBlocks({
         ...prev,
         sectionsOrder: swapped.map((s, i) => ({ ...s, order: i })),
-      };
+      });
     });
   }, []);
 
   const updateSlide = useCallback((id: string, patch: Partial<HeroSlide>) => {
     setHp((prev) => {
       if (!prev) return prev;
-      return {
+      return withRefreshedLayoutBlocks({
         ...prev,
         carousel: {
           ...prev.carousel,
           slides: prev.carousel.slides.map((s) => (s.id === id ? { ...s, ...patch } : s)),
         },
-      };
+      });
     });
   }, []);
 

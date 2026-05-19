@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import type { Product, ProductVariant } from "@/types";
 import { cn } from "@/lib/cn";
+import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 
 type SectionKey = "basic" | "pricing" | "inventory" | "taxonomy" | "media" | "flags";
 
@@ -201,6 +202,7 @@ export function ProductEditor({
           token,
           body: JSON.stringify(body),
         });
+        publishStorefrontSettingsChanged();
         setMsg("Saved.");
       } else {
         const res = await apiFetch<{ product: Product }>("/products", {
@@ -208,6 +210,7 @@ export function ProductEditor({
           token,
           body: JSON.stringify(body),
         });
+        publishStorefrontSettingsChanged();
         setMsg("Created.");
         router.replace(`/admin/products/${res.product._id}`);
       }

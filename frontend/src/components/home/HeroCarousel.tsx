@@ -4,7 +4,8 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { HeroSlide } from "@/types/homepage";
+import type { HeroSlide, SectionTextColors } from "@/types/homepage";
+import { sectionTextStyles } from "@/lib/section-text-styles";
 import { cn } from "@/lib/cn";
 
 const easeLux = [0.22, 1, 0.36, 1] as const;
@@ -12,9 +13,11 @@ const easeLux = [0.22, 1, 0.36, 1] as const;
 type Props = {
   slides: HeroSlide[];
   autoplayMs: number;
+  /** CMS hex overrides for hero copy (kicker, heading, subheading, link). */
+  sectionText?: SectionTextColors | null;
 };
 
-export function HeroCarousel({ slides, autoplayMs }: Props) {
+export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
   const active = [...slides]
     .filter((s) => s.enabled)
     .sort((a, b) => a.order - b.order);
@@ -24,6 +27,7 @@ export function HeroCarousel({ slides, autoplayMs }: Props) {
   const count = active.length || 1;
   const safeIndex = ((index % count) + count) % count;
   const slide = active[safeIndex] ?? active[0];
+  const st = sectionTextStyles(sectionText);
 
   const go = useCallback(
     (dir: -1 | 1) => {
@@ -104,14 +108,23 @@ export function HeroCarousel({ slides, autoplayMs }: Props) {
             transition={{ duration: 1.15, ease: easeLux }}
             className="max-w-3xl text-balance md:max-w-[42rem] [text-shadow:0_2px_40px_rgba(0,0,0,0.35)]"
           >
-            <p className="font-sans text-[10px] font-light uppercase tracking-[0.48em] text-ivory/80">
+            <p
+              className="font-sans text-[10px] font-light uppercase tracking-[0.48em] text-ivory/80"
+              style={st.kicker}
+            >
               Naya Studio
             </p>
-            <h1 className="mt-5 font-display text-[clamp(2.35rem,6.2vw,4.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-ivory">
+            <h1
+              className="mt-5 font-display text-[clamp(2.35rem,6.2vw,4.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-ivory"
+              style={st.heading}
+            >
               {slide.heading}
             </h1>
             {slide.subheading ? (
-              <p className="mt-5 max-w-xl font-sans text-[15px] font-light leading-relaxed text-ivory/90 md:text-base">
+              <p
+                className="mt-5 max-w-xl font-sans text-[15px] font-light leading-relaxed text-ivory/90 md:text-base"
+                style={st.subheading}
+              >
                 {slide.subheading}
               </p>
             ) : null}
@@ -120,6 +133,7 @@ export function HeroCarousel({ slides, autoplayMs }: Props) {
                 <Link
                   href={slide.ctaHref || "/collections"}
                   className="rounded-full border border-ivory/45 bg-transparent px-9 py-3.5 font-sans text-[11px] font-light uppercase tracking-[0.3em] text-ivory transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-gold/80 hover:text-gold md:px-11 md:py-4"
+                  style={st.link}
                 >
                   {slide.ctaLabel}
                 </Link>

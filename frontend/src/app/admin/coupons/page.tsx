@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
+import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 
 type Coupon = {
   _id: string;
@@ -52,6 +53,7 @@ export default function AdminCouponsPage() {
             token,
             body: JSON.stringify(draft),
           });
+          publishStorefrontSettingsChanged();
           setDraft({ code: "", type: "percent", value: 10, usageLimit: 500 });
           await refresh();
         }}
@@ -118,6 +120,7 @@ export default function AdminCouponsPage() {
                         token,
                         body: JSON.stringify({ active: !c.active }),
                       });
+                      publishStorefrontSettingsChanged();
                       await refresh();
                     }}
                   >

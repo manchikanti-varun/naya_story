@@ -3,7 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import type { CategoryCard } from "@/types/homepage";
+import type { CategoryCard, SectionTextColors } from "@/types/homepage";
+import { sectionTextStyles } from "@/lib/section-text-styles";
 
 type Props = {
   title: string;
@@ -11,13 +12,23 @@ type Props = {
   items: CategoryCard[];
   cta?: { label: string; href: string };
   compactTop?: boolean;
+  sectionText?: SectionTextColors | null;
 };
 
-export function ShopByCategorySection({ title, subtitle, items, cta, compactTop = false }: Props) {
+export function ShopByCategorySection({
+  title,
+  subtitle,
+  items,
+  cta,
+  compactTop = false,
+  sectionText,
+}: Props) {
   const visible = [...items]
     .filter((c) => c.enabled)
     .sort((a, b) => a.order - b.order)
     .slice(0, 3);
+
+  const st = sectionTextStyles(sectionText);
 
   return (
     <section
@@ -25,13 +36,19 @@ export function ShopByCategorySection({ title, subtitle, items, cta, compactTop 
     >
       <div className="mx-auto max-w-[1400px]">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="font-sans text-[10px] font-light uppercase tracking-[0.36em] text-gold/90">
+          <p className="font-sans text-[10px] font-light uppercase tracking-[0.36em] text-gold/90" style={st.kicker}>
             Explore
           </p>
-          <h2 className="mt-3 font-display text-[clamp(1.85rem,3.5vw,2.75rem)] font-normal tracking-[-0.02em] text-ink">
+          <h2
+            className="mt-3 font-display text-[clamp(1.85rem,3.5vw,2.75rem)] font-normal tracking-[-0.02em] text-ink"
+            style={st.heading}
+          >
             {title}
           </h2>
-          <p className="mt-4 font-sans text-sm font-light leading-relaxed text-ink-muted md:text-[15px]">
+          <p
+            className="mt-4 font-sans text-sm font-light leading-relaxed text-ink-muted md:text-[15px]"
+            style={st.subheading}
+          >
             {subtitle}
           </p>
         </div>
@@ -78,6 +95,7 @@ export function ShopByCategorySection({ title, subtitle, items, cta, compactTop 
             <Link
               href={cta.href}
               className="rounded-full border border-ivory-deep/80 bg-transparent px-8 py-3 font-sans text-[11px] uppercase tracking-[0.24em] text-ink transition-all duration-500 hover:border-gold hover:text-gold"
+              style={st.link}
             >
               {cta.label}
             </Link>

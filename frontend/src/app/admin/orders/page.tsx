@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
+import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 import { ORDER_STATUSES } from "@/lib/constants";
 import type { Order } from "@/types";
 
@@ -52,6 +53,7 @@ export default function AdminOrdersPage() {
                         token,
                         body: JSON.stringify({ status: e.target.value }),
                       });
+                      publishStorefrontSettingsChanged();
                       await refresh();
                     }}
                   >
@@ -98,6 +100,7 @@ function InlineTracking({
           token,
           body: JSON.stringify({ status: order.status, trackingNumber: value }),
         });
+        publishStorefrontSettingsChanged();
         await onSaved();
       }}
     >

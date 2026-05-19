@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductIdListField } from "@/components/admin/ProductIdListField";
+import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
 import { sortSlides, sortSections, useHomepageEditor } from "@/components/admin/homepage-editor/context";
 
 export function ContentEditorHeroPanel() {
@@ -8,8 +9,8 @@ export function ContentEditorHeroPanel() {
   if (!hp) return null;
   const slides = sortSlides(hp.carousel.slides);
   return (
-    <section id="admin-section-hero" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">Hero carousel</h2>
+    <section id="admin-section-hero" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Hero carousel</h2>
             <label className="mt-6 block font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
               Autoplay (ms)
               <input
@@ -106,6 +107,7 @@ export function ContentEditorHeroPanel() {
                 </div>
               ))}
             </div>
+            <SectionTypographyFields section="hero" />
           </section>
   );
 }
@@ -115,8 +117,8 @@ export function ContentEditorHomeLayoutPanel() {
   if (!hp) return null;
   const sections = sortSections(hp.sectionsOrder);
   return (
-    <section id="admin-section-home-order" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">Section order & visibility</h2>
+    <section id="admin-section-home-order" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Section order & visibility</h2>
             <p className="mt-2 font-sans text-sm text-slate-500">
               Reorder blocks as they appear on the storefront (below the hero).
             </p>
@@ -178,8 +180,8 @@ export function ContentEditorBestsellersPanel() {
   const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-bestsellers" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">Our bestsellers</h2>
+    <section id="admin-section-bestsellers" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Our bestsellers</h2>
             <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
               <input
                 type="checkbox"
@@ -230,6 +232,7 @@ export function ContentEditorBestsellersPanel() {
                 />
               ) : null}
             </div>
+            <SectionTypographyFields section="bestsellers" />
           </section>
   );
 }
@@ -238,8 +241,8 @@ export function ContentEditorNewInHomePanel() {
   const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-newin-home" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">New in (homepage rail)</h2>
+    <section id="admin-section-newin-home" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">New in (homepage rail)</h2>
             <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
               <input
                 type="checkbox"
@@ -299,6 +302,7 @@ export function ContentEditorNewInHomePanel() {
                 />
               ) : null}
             </div>
+            <SectionTypographyFields section="newIn" />
           </section>
   );
 }
@@ -307,8 +311,8 @@ export function ContentEditorNewInPagePanel() {
   const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-newin-page" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">New In page (/new-in)</h2>
+    <section id="admin-section-newin-page" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">New In page (/new-in)</h2>
             <p className="mt-2 font-sans text-sm text-slate-500">
               Turn on curated mode to control exactly which products appear and in which order on the public New In
               page. When off, the page lists every catalog item flagged as New In (same as before).
@@ -397,8 +401,8 @@ export function ContentEditorCategoriesPanel() {
   const { hp, setHp, updateCategory } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-categories" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">Shop by category</h2>
+    <section id="admin-section-categories" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Shop by category</h2>
             <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
               <input
                 type="checkbox"
@@ -477,6 +481,7 @@ export function ContentEditorCategoriesPanel() {
                   </div>
                 ))}
             </div>
+            <SectionTypographyFields section="categories" />
           </section>
   );
 }
@@ -485,8 +490,8 @@ export function ContentEditorCollectionsPanel() {
   const { hp, setHp, token, updateCollectionsCategory } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-collections" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">Collections page</h2>
+    <section id="admin-section-collections" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Collections page</h2>
             <p className="mt-2 font-sans text-sm text-slate-500">
               Manage category tabs, pagination limit, and editorial copy for the collections browse page.
             </p>
@@ -685,8 +690,8 @@ export function ContentEditorOurStoryPanel() {
   const { hp, setHp } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-our-story" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">Our Story page</h2>
+    <section id="admin-section-our-story" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Our Story page</h2>
             <p className="mt-2 font-sans text-sm text-slate-500">
               Control hero content, cinematic sections, manifesto quote, CTA, and section order/visibility.
             </p>
@@ -941,8 +946,8 @@ export function ContentEditorFooterPanel() {
   const { hp, setHp } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-footer" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">Footer</h2>
+    <section id="admin-section-footer" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Footer</h2>
             <p className="mt-2 font-sans text-sm text-slate-500">
               Manage luxury footer content: brand text, legal links, contact, socials, and CTA links.
             </p>
@@ -1142,8 +1147,8 @@ export function ContentEditorNewsletterPanel() {
   const { hp, setHp } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-newsletter" className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="font-display text-2xl text-slate-900">Newsletter</h2>
+    <section id="admin-section-newsletter" className="admin-surface-elevated p-6 sm:p-8">
+            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Newsletter</h2>
             <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
               <input
                 type="checkbox"
@@ -1200,6 +1205,7 @@ export function ContentEditorNewsletterPanel() {
                 />
               </label>
             </div>
+            <SectionTypographyFields section="newsletter" />
           </section>
   );
 }

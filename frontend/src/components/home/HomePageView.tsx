@@ -45,6 +45,7 @@ export function HomePageView({ homepage, products }: Props) {
         <HeroCarousel
           slides={homepage.carousel.slides}
           autoplayMs={homepage.carousel.autoplayMs}
+          sectionText={homepage.sectionTextColors?.hero}
         />
       </div>
 
@@ -65,6 +66,7 @@ export function HomePageView({ homepage, products }: Props) {
               subtitle={homepage.bestsellers.subtitle}
               products={bestList}
               badge="bestseller"
+              sectionText={homepage.sectionTextColors?.bestsellers}
               cta={{
                 label: "View all bestsellers",
                 href: "/collections?tab=bestselling",
@@ -77,11 +79,12 @@ export function HomePageView({ homepage, products }: Props) {
             <HomeProductRail
               key="newIn"
               tone="mist"
-              compactTop
+              compactTop={compactTop}
               title={homepage.newIn.title}
               subtitle={homepage.newIn.subtitle}
               products={newList}
               badge="latest"
+              sectionText={homepage.sectionTextColors?.newIn}
               cta={{
                 label: homepage.newIn.ctaLabel,
                 href: homepage.newIn.ctaHref,
@@ -101,6 +104,7 @@ export function HomePageView({ homepage, products }: Props) {
               subtitle={homepage.categories.subtitle}
               items={homepage.categories.items}
               compactTop={compactTop}
+              sectionText={homepage.sectionTextColors?.categories}
               cta={{
                 label: "Explore all collections",
                 href: "/collections",
@@ -121,6 +125,7 @@ export function HomePageView({ homepage, products }: Props) {
               placeholder={homepage.newsletter.placeholder}
               buttonLabel={homepage.newsletter.buttonLabel}
               compactTop={compactTop}
+              textColors={homepage.sectionTextColors?.newsletter}
               cta={{
                 label: "Read our story",
                 href: "/our-story",

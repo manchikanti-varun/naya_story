@@ -3,10 +3,10 @@ import { ArrowUpRight, Home, ImageIcon, LayoutGrid, Package } from "lucide-react
 
 const cards = [
   {
-    title: "Content editor",
+    title: "Storefront CMS",
     description:
-      "Per-section editors, preview your draft, then save or discard. Homepage rails pick catalog products here.",
-    href: "/admin/content/hero",
+      "Homepage block map, section editors, and live preview — the operating center for everything shoppers see.",
+    href: "/admin/storefront",
     icon: Home,
   },
   {

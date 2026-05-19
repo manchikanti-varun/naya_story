@@ -1,5 +1,6 @@
 "use client";
 
+import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
 
 export function ContentEditorTopPromoPanel() {
@@ -9,15 +10,15 @@ export function ContentEditorTopPromoPanel() {
   const bar = hp.topPromoBar;
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-      <h2 className="font-display text-2xl text-slate-900">Top promo bar</h2>
-      <p className="mt-2 max-w-2xl font-sans text-sm text-slate-500">
+    <section className="admin-surface-elevated p-6 sm:p-8">
+      <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Top promo bar</h2>
+      <p className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-[var(--admin-muted)]">
         A slim strip above the main navigation on every storefront page — ideal for coupon codes, free shipping, or
         short announcements. Shoppers can scroll the line horizontally on small screens and close it with the ×; it
         stays hidden until you change the message (same browser).
       </p>
 
-      <label className="mt-6 flex items-center gap-2 font-sans text-sm text-slate-600">
+      <label className="mt-6 flex items-center gap-2 font-sans text-sm text-[var(--admin-muted)]">
         <input
           type="checkbox"
           checked={bar.enabled === true}
@@ -95,6 +96,7 @@ export function ContentEditorTopPromoPanel() {
           </select>
         </label>
       </div>
+      <SectionTypographyFields section="promoBar" />
     </section>
   );
 }

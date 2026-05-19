@@ -33,7 +33,52 @@ export type TopPromoBarConfig = {
   variant?: "ink" | "sand" | "gold";
 };
 
+export type SectionTextColors = Partial<{
+  kicker: string;
+  heading: string;
+  subheading: string;
+  body: string;
+  link: string;
+}>;
+
+export type HomepageSectionTextKey =
+  | "hero"
+  | "bestsellers"
+  | "newIn"
+  | "categories"
+  | "newsletter"
+  | "promoBar";
+
+/** Optional hex overrides (#rgb, #rrggbb, #rrggbbaa) for storefront typography — applied as CSS variables. */
+export type StorefrontTheme = {
+  textInk?: string;
+  textInkMuted?: string;
+  textInkSoft?: string;
+  accentGold?: string;
+  /** When set, updates `body`/default text via `--foreground`. */
+  foreground?: string;
+};
+
+export type HomepageLayoutBlockType =
+  | "promoBar"
+  | "theme"
+  | "hero"
+  | "bestsellers"
+  | "newIn"
+  | "categories"
+  | "newsletter"
+  | "footer";
+
+/** Persisted manifest: block order + visibility (canonical copy data remains in hero, sections, promo, etc.). */
+export type HomepageLayoutBlock = {
+  id: string;
+  type: HomepageLayoutBlockType;
+  enabled: boolean;
+  order: number;
+};
+
 export type HomepageConfig = {
+  theme?: StorefrontTheme;
   heroTitle?: string;
   heroSubtitle?: string;
   heroImage?: string;
@@ -117,6 +162,7 @@ export type HomepageConfig = {
       gallery?: string[];
     }>;
   };
+  sectionTextColors?: Partial<Record<HomepageSectionTextKey, SectionTextColors>>;
   footer: {
     logoUrl: string;
     logoAlt: string;
@@ -137,4 +183,5 @@ export type HomepageConfig = {
     ctaLinks: Array<{ label: string; href: string; enabled: boolean; order: number }>;
     copyrightText: string;
   };
+  layoutBlocks?: HomepageLayoutBlock[];
 };

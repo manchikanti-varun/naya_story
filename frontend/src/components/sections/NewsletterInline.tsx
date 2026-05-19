@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import type { SectionTextColors } from "@/types/homepage";
+import { sectionTextStyles } from "@/lib/section-text-styles";
 
 const DEFAULT = {
   title: "Letters from the studio",
@@ -19,6 +21,8 @@ type Props = {
   description?: string;
   placeholder?: string;
   buttonLabel?: string;
+  /** CMS hex overrides (kicker, heading, body, link). */
+  textColors?: SectionTextColors | null;
 };
 
 export function NewsletterInline({
@@ -28,6 +32,7 @@ export function NewsletterInline({
   description,
   placeholder,
   buttonLabel,
+  textColors,
 }: Props) {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -38,6 +43,7 @@ export function NewsletterInline({
   const btn = buttonLabel?.trim() || DEFAULT.buttonLabel;
 
   const centered = layout === "centered";
+  const st = sectionTextStyles(textColors);
 
   return (
     <div
@@ -55,13 +61,19 @@ export function NewsletterInline({
         }
       >
         <div className={centered ? "max-w-md" : "max-w-md"}>
-          <p className="font-sans text-[10px] font-light uppercase tracking-[0.36em] text-gold/90">
+          <p className="font-sans text-[10px] font-light uppercase tracking-[0.36em] text-gold/90" style={st.kicker}>
             Newsletter
           </p>
-          <h3 className="mt-4 font-display text-3xl font-normal tracking-[-0.02em] text-ink md:text-[2.35rem]">
+          <h3
+            className="mt-4 font-display text-3xl font-normal tracking-[-0.02em] text-ink md:text-[2.35rem]"
+            style={st.heading}
+          >
             {t}
           </h3>
-          <p className="mt-4 font-sans text-sm font-light leading-relaxed text-ink-muted md:text-[15px]">
+          <p
+            className="mt-4 font-sans text-sm font-light leading-relaxed text-ink-muted md:text-[15px]"
+            style={st.body ?? st.subheading}
+          >
             {d}
           </p>
         </div>
@@ -92,6 +104,7 @@ export function NewsletterInline({
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             type="submit"
             className="rounded-full border border-transparent bg-ink px-8 py-3.5 font-sans text-[11px] font-light uppercase tracking-[0.28em] text-ivory transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-gold/40 hover:bg-gold hover:text-white"
+            style={st.link}
           >
             {btn}
           </motion.button>

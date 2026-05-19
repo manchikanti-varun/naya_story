@@ -1,4 +1,84 @@
-import type { CategoryCard, HeroSlide, HomepageConfig } from "../types/homepage.js";
+import type {
+  CategoryCard,
+  HeroSlide,
+  HomepageConfig,
+  HomepageSectionTextKey,
+  SectionTextColors,
+  StorefrontTheme,
+} from "../types/homepage.js";
+import { mergeLayoutBlocksIntoHomepage } from "./layout-blocks.js";
+
+function sanitizeHexColor(input: string): string | null {
+  const s = input.trim();
+  if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(s)) return null;
+  return s;
+}
+
+function mergeTheme(raw: unknown): StorefrontTheme {
+  if (!raw || typeof raw !== "object") return {};
+  const r = raw as Record<string, unknown>;
+  const pick = (key: keyof StorefrontTheme): string | undefined => {
+    const v = r[key];
+    if (v === "" || v === null || v === undefined) return undefined;
+    if (typeof v !== "string") return undefined;
+    return sanitizeHexColor(v) ?? undefined;
+  };
+  const out: StorefrontTheme = {};
+  const ink = pick("textInk");
+  if (ink) out.textInk = ink;
+  const muted = pick("textInkMuted");
+  if (muted) out.textInkMuted = muted;
+  const soft = pick("textInkSoft");
+  if (soft) out.textInkSoft = soft;
+  const gold = pick("accentGold");
+  if (gold) out.accentGold = gold;
+  const fg = pick("foreground");
+  if (fg) out.foreground = fg;
+  return out;
+}
+
+const SECTION_TEXT_COLOR_KEYS = ["kicker", "heading", "subheading", "body", "link"] as const;
+
+const SECTION_TEXT_SECTION_KEYS: HomepageSectionTextKey[] = [
+  "hero",
+  "bestsellers",
+  "newIn",
+  "categories",
+  "newsletter",
+  "promoBar",
+];
+
+function mergeOneSectionTextColors(raw: unknown): SectionTextColors | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Record<string, unknown>;
+  const out: SectionTextColors = {};
+  for (const key of SECTION_TEXT_COLOR_KEYS) {
+    const v = r[key];
+    if (typeof v !== "string") continue;
+    const s = sanitizeHexColor(v);
+    if (s) out[key] = s;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function mergeSectionTextColors(
+  raw: unknown,
+  baseline: HomepageConfig["sectionTextColors"],
+): HomepageConfig["sectionTextColors"] | undefined {
+  type MapT = NonNullable<HomepageConfig["sectionTextColors"]>;
+  const base = { ...(baseline ?? {}) } as MapT;
+  if (!raw || typeof raw !== "object") {
+    return Object.keys(base).length > 0 ? base : undefined;
+  }
+  const r = raw as Record<string, unknown>;
+  for (const sk of SECTION_TEXT_SECTION_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(r, sk)) continue;
+    const merged = mergeOneSectionTextColors(r[sk]);
+    if (merged) base[sk] = merged;
+    else delete base[sk];
+  }
+  return Object.keys(base).length > 0 ? base : undefined;
+}
 
 const IMG = (id: string, w = 1920) =>
   `https://images.unsplash.com/${id}?w=${w}&q=85`;
@@ -79,6 +159,7 @@ const defaultCategories: CategoryCard[] = [
 
 export function defaultHomepageConfig(): HomepageConfig {
   return {
+    theme: {},
     heroTitle: "Naya Studio",
     heroSubtitle: "Timeless silhouettes for modern femininity.",
     heroImage: IMG("photo-1521572163474-6864f9cf17ab"),
@@ -395,7 +476,7 @@ export function mergeHomepageConfig(
   raw: Partial<HomepageConfig> | null | undefined,
 ): HomepageConfig {
   const d = defaultHomepageConfig();
-  if (!raw || typeof raw !== "object") return d;
+  if (!raw || typeof raw !== "object") return mergeLayoutBlocksIntoHomepage(d, null);
   const r = raw as Record<string, unknown>;
   const carousel = (r.carousel as HomepageConfig["carousel"]) || d.carousel;
   const sectionsOrder = Array.isArray(r.sectionsOrder)
@@ -424,7 +505,7 @@ export function mergeHomepageConfig(
     ? ourStoryPage.sections
     : d.ourStoryPage.sections;
   const footer = { ...d.footer, ...((r.footer as object) ?? {}) } as HomepageConfig["footer"];
-  return {
+  const merged: HomepageConfig = {
     ...d,
     ...r,
     heroTitle: typeof r.heroTitle === "string" ? r.heroTitle : d.heroTitle,
@@ -616,5 +697,8 @@ export function mergeHomepageConfig(
           ? footer.copyrightText
           : d.footer.copyrightText,
     },
+    theme: mergeTheme(r.theme),
+    sectionTextColors: mergeSectionTextColors(r.sectionTextColors, d.sectionTextColors),
   };
+  return mergeLayoutBlocksIntoHomepage(merged, r.layoutBlocks);
 }

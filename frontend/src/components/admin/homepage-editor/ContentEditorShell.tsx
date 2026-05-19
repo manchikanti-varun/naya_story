@@ -3,7 +3,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { ContentEditorNav } from "@/components/admin/homepage-editor/ContentEditorNav";
 import { HomepageEditorProvider, useHomepageEditor } from "@/components/admin/homepage-editor/context";
 
 function ContentEditorChrome({ children }: { children: ReactNode }) {
@@ -12,69 +11,90 @@ function ContentEditorChrome({ children }: { children: ReactNode }) {
   const { hp, msg, save, isDirty, discardDraft } = useHomepageEditor();
 
   if (!hp) {
-    return <p className="text-sm text-slate-500">Loading homepage…</p>;
+    return (
+      <p className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-4 py-3 font-sans text-sm text-[var(--admin-muted)]">
+        Loading homepage…
+      </p>
+    );
   }
 
-  return (
-    <div className="space-y-10 pb-24">
-      <header className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="font-sans text-xs uppercase tracking-[0.3em] text-slate-400">Storefront CMS</p>
-          <h1 className="mt-3 font-display text-4xl text-slate-900">Storefront content</h1>
-          <p className="mt-2 max-w-xl font-sans text-sm text-slate-500">
-            Edit any section, open <strong className="font-medium text-slate-700">Preview draft</strong> to review,
-            then <strong className="font-medium text-slate-700">Save changes</strong> to publish or{" "}
-            <strong className="font-medium text-slate-700">Discard</strong> to revert to the last saved version.
-          </p>
-          {isDirty ? (
-            <p className="mt-2 font-sans text-xs font-medium text-amber-800">Unsaved changes</p>
-          ) : (
-            <p className="mt-2 font-sans text-xs text-slate-500">In sync with published site</p>
-          )}
-        </div>
-        {!isPreviewRoute ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/admin/content/preview/hero"
-              className="rounded-full border border-slate-200 bg-white px-5 py-2.5 font-sans text-xs font-medium uppercase tracking-[0.16em] text-slate-800 shadow-sm transition hover:bg-slate-50"
-            >
-              Preview draft
-            </Link>
-            <button
-              type="button"
-              disabled={!isDirty}
-              onClick={() => discardDraft()}
-              className="rounded-full border border-slate-200 px-5 py-2.5 font-sans text-xs font-medium uppercase tracking-[0.16em] text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Discard changes
-            </button>
-            <button
-              type="button"
-              disabled={!isDirty}
-              onClick={() => void save()}
-              className="rounded-full bg-slate-900 px-6 py-2.5 font-sans text-xs font-medium uppercase tracking-[0.18em] text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Save changes
-            </button>
-          </div>
-        ) : null}
-      </header>
-      {!isPreviewRoute && msg ? <p className="text-sm text-emerald-600">{msg}</p> : null}
+  const actionRow = !isPreviewRoute ? (
+    <div className="flex flex-shrink-0 flex-wrap gap-2">
+      <Link
+        href="/admin/content/preview/hero"
+        className="inline-flex items-center justify-center rounded-full border border-[var(--admin-border-strong)] bg-[var(--admin-surface-raised)] px-5 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.14em] text-[var(--admin-ink)] shadow-sm transition hover:border-[var(--admin-accent)]/40 hover:bg-[var(--admin-accent-soft)]"
+      >
+        Preview draft
+      </Link>
+      <button
+        type="button"
+        disabled={!isDirty}
+        onClick={() => discardDraft()}
+        className="rounded-full border border-[var(--admin-border)] bg-transparent px-5 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.14em] text-[var(--admin-muted)] transition hover:border-[var(--admin-border-strong)] hover:bg-black/[0.03] hover:text-[var(--admin-ink)] disabled:cursor-not-allowed disabled:opacity-35"
+      >
+        Discard
+      </button>
+      <button
+        type="button"
+        disabled={!isDirty}
+        onClick={() => void save()}
+        className="rounded-full bg-gradient-to-b from-[#292524] to-[#1c1917] px-6 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-md shadow-stone-900/15 ring-1 ring-white/10 transition hover:from-[#44403c] hover:to-[#292524] disabled:cursor-not-allowed disabled:opacity-35 disabled:shadow-none"
+      >
+        Save changes
+      </button>
+    </div>
+  ) : null;
 
-      <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
-        <aside className="lg:w-56 lg:shrink-0">
-          <div className="lg:sticky lg:top-6">
-            <ContentEditorNav />
+  return (
+    <div className="mx-auto max-w-6xl space-y-8 pb-28">
+      <header className="admin-surface-elevated overflow-hidden rounded-2xl p-6 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--admin-accent)]">
+              Storefront CMS
+            </p>
+            <h1 className="mt-2 font-sans text-3xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-[2.1rem]">
+              Storefront content
+            </h1>
+            <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-[var(--admin-muted)]">
+              Open shopper tabs pick up published changes immediately (including theme colors). Use the{" "}
+              <Link
+                className="font-semibold text-[var(--admin-accent)] underline decoration-[var(--admin-accent)]/30 underline-offset-4 hover:decoration-[var(--admin-accent)]"
+                href="/admin/storefront/homepage"
+              >
+                homepage block map
+              </Link>{" "}
+              for a modular overview, edit any section here, then{" "}
+              <span className="font-semibold text-[var(--admin-ink)]">Preview draft</span> before{" "}
+              <span className="font-semibold text-[var(--admin-ink)]">Save changes</span> (or{" "}
+              <span className="font-semibold text-[var(--admin-ink)]">Discard</span>) to publish.
+            </p>
+            {isDirty ? (
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200/90 bg-amber-50/90 px-3 py-1 font-sans text-xs font-medium text-amber-950">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" aria-hidden />
+                Unsaved changes
+              </p>
+            ) : (
+              <p className="mt-3 font-sans text-xs text-[var(--admin-faint)]">In sync with published site</p>
+            )}
           </div>
-        </aside>
-        <div className="min-w-0 flex-1">{children}</div>
-      </div>
+          {actionRow}
+        </div>
+      </header>
+
+      {!isPreviewRoute && msg ? (
+        <p className="rounded-xl border border-emerald-200/80 bg-emerald-50/90 px-4 py-3 font-sans text-sm font-medium text-emerald-900">
+          {msg}
+        </p>
+      ) : null}
+
+      <div className="min-w-0">{children}</div>
 
       {!isPreviewRoute ? (
-        <div className="flex flex-col items-stretch justify-end gap-3 border-t border-slate-200 pt-8 sm:flex-row sm:items-center sm:justify-end">
+        <div className="admin-surface flex flex-col items-stretch justify-end gap-2 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           <Link
             href="/admin/content/preview/hero"
-            className="rounded-full border border-slate-200 bg-white px-6 py-2.5 text-center font-sans text-xs font-medium uppercase tracking-[0.16em] text-slate-800 shadow-sm transition hover:bg-slate-50 sm:px-8"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--admin-border-strong)] bg-[var(--admin-surface-raised)] px-6 py-2.5 text-center font-sans text-xs font-semibold uppercase tracking-[0.14em] text-[var(--admin-ink)] shadow-sm transition hover:border-[var(--admin-accent)]/35 hover:bg-[var(--admin-accent-soft)] sm:min-w-[10rem]"
           >
             Preview draft
           </Link>
@@ -82,15 +102,15 @@ function ContentEditorChrome({ children }: { children: ReactNode }) {
             type="button"
             disabled={!isDirty}
             onClick={() => discardDraft()}
-            className="rounded-full border border-slate-200 px-6 py-2.5 font-sans text-xs font-medium uppercase tracking-[0.16em] text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 sm:px-8"
+            className="rounded-full border border-[var(--admin-border)] px-6 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.14em] text-[var(--admin-muted)] transition hover:bg-black/[0.04] hover:text-[var(--admin-ink)] disabled:cursor-not-allowed disabled:opacity-35 sm:min-w-[9rem]"
           >
-            Discard changes
+            Discard
           </button>
           <button
             type="button"
             disabled={!isDirty}
             onClick={() => void save()}
-            className="rounded-full bg-slate-900 px-8 py-2.5 font-sans text-xs font-medium uppercase tracking-[0.18em] text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 sm:px-10"
+            className="rounded-full bg-gradient-to-b from-[#292524] to-[#1c1917] px-8 py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.16em] text-white shadow-md ring-1 ring-white/10 transition hover:from-[#44403c] hover:to-[#292524] disabled:cursor-not-allowed disabled:opacity-35 sm:min-w-[11rem]"
           >
             Save changes
           </button>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
+import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 import type { MediaAsset } from "@/types";
 
 const categories = ["general", "banner", "homepage", "collection", "campaign", "lookbook", "product"];
@@ -52,6 +53,7 @@ export default function AdminMediaPage() {
           category: form.category,
         }),
       });
+      publishStorefrontSettingsChanged();
       setForm({ url: "", name: "", tags: "", category: form.category });
       await load();
     } finally {
@@ -62,6 +64,7 @@ export default function AdminMediaPage() {
   async function remove(id: string) {
     if (!token || !confirm("Remove this asset from the library?")) return;
     await apiFetch(`/media/${id}`, { method: "DELETE", token });
+    publishStorefrontSettingsChanged();
     await load();
   }
 

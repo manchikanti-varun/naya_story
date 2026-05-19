@@ -12,9 +12,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowRight, CircleDollarSign, Package, Users } from "lucide-react";
+import { ArrowRight, CircleDollarSign, ClipboardList, Package, Users } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 
 type Overview = {
   revenue: number;
@@ -53,26 +54,24 @@ export default function AdminDashboardPage() {
   }, [token]);
 
   if (!data) {
-    return <p className="font-sans text-sm text-slate-500">Loading overview…</p>;
+    return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading overview…</p>;
   }
 
   const stockAttention =
     (data.outOfStockCount ?? 0) > 0 || (data.lowStock?.length ?? 0) > 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10">
-      <header className="border-b border-slate-200/80 pb-8">
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-          Command center
-        </p>
-        <h1 className="mt-2 font-display text-3xl tracking-tight text-slate-900 md:text-4xl">Business overview</h1>
-        <p className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-slate-600">
-          Sales, orders, and customers. Stock levels are managed separately under{" "}
-          <strong className="font-medium text-slate-800">Stock</strong> so this page stays focused on revenue.
-        </p>
-      </header>
-
-      <section className="grid gap-4 sm:grid-cols-3">
+    <AdminPageShell
+      eyebrow="Dashboard"
+      title="Command center"
+      description={
+        <>
+          Revenue, fulfilment signals, and recent orders. Homepage and catalog content are managed under{" "}
+          <strong className="font-medium text-[var(--admin-ink)]">Storefront CMS</strong> in the sidebar.
+        </>
+      }
+    >
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Lifetime revenue"
           value={`₹${data.revenue.toLocaleString("en-IN")}`}
@@ -80,6 +79,14 @@ export default function AdminDashboardPage() {
         />
         <MetricCard label="Orders placed" value={String(data.ordersCount)} icon={Package} />
         <MetricCard label="Registered customers" value={String(data.customersCount)} icon={Users} />
+        <MetricCard
+          label="Orders in flight"
+          value={String(
+            data.recentOrders.filter((o) => o.status !== "delivered" && o.status !== "cancelled").length,
+          )}
+          icon={ClipboardList}
+          hint="Recent sample — open Orders for full queue"
+        />
       </section>
 
       {stockAttention ? (
@@ -104,11 +111,11 @@ export default function AdminDashboardPage() {
         </section>
       ) : null}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="admin-surface rounded-2xl p-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-display text-xl text-slate-900 md:text-2xl">Revenue trend</h2>
-            <p className="mt-1 font-sans text-xs text-slate-500">Paid orders, last 30 days</p>
+            <h2 className="font-sans text-lg font-semibold text-[var(--admin-ink)] md:text-xl">Revenue trend</h2>
+            <p className="mt-1 font-sans text-xs text-[var(--admin-muted)]">Paid orders, last 30 days</p>
           </div>
         </div>
         <div className="mt-6 h-72">
@@ -137,33 +144,33 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="font-display text-xl text-slate-900 md:text-2xl">Recent orders</h2>
-        <p className="mt-1 font-sans text-xs text-slate-500">Latest eight, newest first</p>
-        <ul className="mt-6 divide-y divide-slate-100 font-sans text-sm">
+      <section className="admin-surface rounded-2xl p-6">
+        <h2 className="font-sans text-lg font-semibold text-[var(--admin-ink)] md:text-xl">Recent orders</h2>
+        <p className="mt-1 font-sans text-xs text-[var(--admin-muted)]">Latest eight, newest first</p>
+        <ul className="mt-6 divide-y divide-[var(--admin-border)] font-sans text-sm">
           {data.recentOrders.map((o) => (
             <li key={o._id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0">
-              <span className="font-medium text-slate-800">{o.orderNumber}</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+              <span className="font-medium text-[var(--admin-ink)]">{o.orderNumber}</span>
+              <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-muted)]">
                 {o.status}
               </span>
-              <span className="ml-auto font-medium tabular-nums text-slate-900">
+              <span className="ml-auto font-medium tabular-nums text-[var(--admin-ink)]">
                 ₹{o.total.toLocaleString("en-IN")}
               </span>
             </li>
           ))}
         </ul>
-        <div className="mt-4 border-t border-slate-100 pt-4">
+        <div className="mt-4 border-t border-[var(--admin-border)] pt-4">
           <Link
             href="/admin/orders"
-            className="inline-flex items-center gap-1 font-sans text-xs font-semibold uppercase tracking-[0.14em] text-slate-700 hover:text-slate-900"
+            className="inline-flex items-center gap-1 font-sans text-xs font-semibold uppercase tracking-[0.14em] text-[var(--admin-muted)] hover:text-[var(--admin-ink)]"
           >
             View all orders
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
       </section>
-    </div>
+    </AdminPageShell>
   );
 }
 
@@ -171,18 +178,25 @@ function MetricCard({
   label,
   value,
   icon: Icon,
+  hint,
 }: {
   label: string;
   value: string;
   icon: LucideIcon;
+  hint?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="admin-surface rounded-2xl p-5">
       <div className="flex items-start justify-between gap-3">
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-        <Icon className="h-4 w-4 shrink-0 text-slate-300" strokeWidth={1.5} aria-hidden />
+        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-faint)]">
+          {label}
+        </p>
+        <Icon className="h-4 w-4 shrink-0 text-[var(--admin-faint)]" strokeWidth={1.5} aria-hidden />
       </div>
-      <p className="mt-3 font-display text-2xl tabular-nums tracking-tight text-slate-900 md:text-3xl">{value}</p>
+      <p className="mt-3 font-sans text-2xl font-semibold tabular-nums tracking-tight text-[var(--admin-ink)] md:text-3xl">
+        {value}
+      </p>
+      {hint ? <p className="mt-2 font-sans text-[11px] text-[var(--admin-muted)]">{hint}</p> : null}
     </div>
   );
 }

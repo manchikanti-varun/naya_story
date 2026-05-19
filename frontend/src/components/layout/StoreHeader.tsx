@@ -22,7 +22,7 @@ import { useAuth } from "@/context/auth-context";
 import { useCart } from "@/context/cart-context";
 import { SITE_NAME, STORE_LOGO_PUBLIC_PATH, bustLocalPublicAsset } from "@/lib/constants";
 import { cn } from "@/lib/cn";
-import type { TopPromoBarConfig } from "@/types/homepage";
+import type { TopPromoBarConfig, SectionTextColors } from "@/types/homepage";
 
 const iconClassBase =
   "rounded-full p-2.5 transition-[color,transform] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold/35";
@@ -36,7 +36,13 @@ const iconMotion = {
   transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-export function StoreHeader({ topPromoBar }: { topPromoBar?: TopPromoBarConfig | null }) {
+export function StoreHeader({
+  topPromoBar,
+  topPromoTextColors,
+}: {
+  topPromoBar?: TopPromoBarConfig | null;
+  topPromoTextColors?: SectionTextColors | null;
+}) {
   const pathname = usePathname();
   const { openCart, lines } = useCart();
   const { user, wishlistIds } = useAuth();
@@ -89,7 +95,7 @@ export function StoreHeader({ topPromoBar }: { topPromoBar?: TopPromoBarConfig |
 
   return (
     <>
-      <TopPromoBar config={topPromoBar} />
+      <TopPromoBar config={topPromoBar} textColors={topPromoTextColors} />
       <motion.header
         layout
         className={headerSurface}

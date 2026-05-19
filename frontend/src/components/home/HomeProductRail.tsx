@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Product } from "@/types";
+import type { SectionTextColors } from "@/types/homepage";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { sectionTextStyles } from "@/lib/section-text-styles";
 import { cn } from "@/lib/cn";
 
 type Props = {
@@ -16,6 +18,7 @@ type Props = {
   tone?: "ivory" | "mist";
   compactTop?: boolean;
   compactBottom?: boolean;
+  sectionText?: SectionTextColors | null;
 };
 
 export function HomeProductRail({
@@ -27,7 +30,9 @@ export function HomeProductRail({
   tone = "ivory",
   compactTop = false,
   compactBottom = false,
+  sectionText,
 }: Props) {
+  const st = sectionTextStyles(sectionText);
   return (
     <section
       className={cn(
@@ -44,13 +49,16 @@ export function HomeProductRail({
       <div className="lux-shell">
         <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between md:gap-12">
           <div className="max-w-xl">
-            <p className="lux-kicker text-gold/90">
+            <p className="lux-kicker text-gold/90" style={st.kicker}>
               Curated
             </p>
-            <h2 className="mt-3 font-display text-[clamp(2rem,4vw,3.5rem)] font-normal leading-[1.04] tracking-[-0.02em] text-ink">
+            <h2
+              className="mt-3 font-display text-[clamp(2rem,4vw,3.5rem)] font-normal leading-[1.04] tracking-[-0.02em] text-ink"
+              style={st.heading}
+            >
               {title}
             </h2>
-            <p className="lux-copy mt-4 max-w-md">
+            <p className="lux-copy mt-4 max-w-md" style={st.subheading}>
               {subtitle}
             </p>
           </div>
@@ -88,6 +96,7 @@ export function HomeProductRail({
             <Link
               href={cta.href}
               className="rounded-full border border-ivory-deep/70 bg-transparent px-8 py-3 font-sans text-[11px] font-light uppercase tracking-[0.28em] text-ink transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-gold hover:text-gold"
+              style={st.link}
             >
               {cta.label}
             </Link>

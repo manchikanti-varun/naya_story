@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
-import type { TopPromoBarConfig } from "@/types/homepage";
+import type { TopPromoBarConfig, SectionTextColors } from "@/types/homepage";
+import { sectionTextStyles } from "@/lib/section-text-styles";
 import { cn } from "@/lib/cn";
 
 const STORAGE_KEY = "naya_store_promo_dismiss_sig";
@@ -20,9 +21,11 @@ const variantClass: Record<NonNullable<TopPromoBarConfig["variant"]>, string> = 
 
 type Props = {
   config?: TopPromoBarConfig | null;
+  /** Optional message / link hex (overrides variant text). */
+  textColors?: SectionTextColors | null;
 };
 
-export function TopPromoBar({ config }: Props) {
+export function TopPromoBar({ config, textColors }: Props) {
   const [storageChecked, setStorageChecked] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -70,6 +73,7 @@ export function TopPromoBar({ config }: Props) {
 
   const link = config.linkHref?.trim();
   const linkLabel = config.linkLabel?.trim();
+  const st = sectionTextStyles(textColors);
 
   return (
     <div
@@ -79,6 +83,7 @@ export function TopPromoBar({ config }: Props) {
       )}
       role="region"
       aria-label="Promotion"
+      style={st.body}
     >
       <div className="lux-shell flex h-full min-w-0 flex-1 items-center gap-2 px-1 sm:gap-3">
         <div className="no-scrollbar flex min-h-0 min-w-0 flex-1 items-center overflow-x-auto py-1 text-center sm:text-left">
@@ -92,6 +97,7 @@ export function TopPromoBar({ config }: Props) {
                 <Link
                   href={link}
                   className="shrink-0 underline underline-offset-2 opacity-90 decoration-current/40 hover:opacity-100 hover:decoration-current"
+                  style={st.link}
                 >
                   {linkLabel}
                 </Link>

@@ -36,7 +36,51 @@ export type TopPromoBarConfig = {
   variant?: "ink" | "sand" | "gold";
 };
 
+/** Per-role hex overrides for a single homepage block (sanitized server-side). */
+export type SectionTextColors = Partial<{
+  kicker: string;
+  heading: string;
+  subheading: string;
+  body: string;
+  link: string;
+}>;
+
+export type HomepageSectionTextKey =
+  | "hero"
+  | "bestsellers"
+  | "newIn"
+  | "categories"
+  | "newsletter"
+  | "promoBar";
+
+/** Optional hex overrides for storefront text (see Tailwind `text-ink`, `text-gold`, etc.). */
+export type StorefrontTheme = {
+  textInk?: string;
+  textInkMuted?: string;
+  textInkSoft?: string;
+  accentGold?: string;
+  foreground?: string;
+};
+
+export type HomepageLayoutBlockType =
+  | "promoBar"
+  | "theme"
+  | "hero"
+  | "bestsellers"
+  | "newIn"
+  | "categories"
+  | "newsletter"
+  | "footer";
+
+export type HomepageLayoutBlock = {
+  id: string;
+  type: HomepageLayoutBlockType;
+  enabled: boolean;
+  order: number;
+};
+
 export type HomepageConfig = {
+  theme?: StorefrontTheme;
   heroTitle?: string;
   heroSubtitle?: string;
   heroImage?: string;
@@ -123,6 +167,8 @@ export type HomepageConfig = {
       gallery?: string[];
     }>;
   };
+  /** Optional typography colors per homepage section (inline styles on storefront). */
+  sectionTextColors?: Partial<Record<HomepageSectionTextKey, SectionTextColors>>;
   footer: {
     logoUrl: string;
     logoAlt: string;
@@ -143,4 +189,5 @@ export type HomepageConfig = {
     ctaLinks: Array<{ label: string; href: string; enabled: boolean; order: number }>;
     copyrightText: string;
   };
+  layoutBlocks?: HomepageLayoutBlock[];
 };

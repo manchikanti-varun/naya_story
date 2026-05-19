@@ -1,20 +1,23 @@
 import Link from "next/link";
 import { ImageIcon, Link2, Server } from "lucide-react";
 import { API_BASE } from "@/lib/api";
+import { AdminPageShell } from "@/components/admin/AdminPageShell";
 
 export default function AdminEnvironmentPage() {
   return (
-    <div className="mx-auto max-w-2xl space-y-10">
-      <header className="border-b border-slate-200/80 pb-8">
-        <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">System</p>
-        <h1 className="mt-2 font-display text-3xl tracking-tight text-slate-900 md:text-4xl">Environment</h1>
-        <p className="mt-2 font-sans text-sm leading-relaxed text-slate-600">
-          This page is <strong className="font-medium text-slate-800">not</strong> where you change shipping rules,
-          tax, or store policies. It only shows <strong className="font-medium text-slate-800">technical readouts</strong>{" "}
-          so developers and operators can confirm which API this browser build is talking to.
-        </p>
-      </header>
-
+    <AdminPageShell
+      eyebrow="System"
+      title="Environment"
+      maxWidthClass="max-w-2xl"
+      description={
+        <>
+          This page is <strong className="font-medium text-[var(--admin-ink)]">not</strong> where you change shipping
+          rules, tax, or store policies. It only shows{" "}
+          <strong className="font-medium text-[var(--admin-ink)]">technical readouts</strong> so developers and
+          operators can confirm which API this browser build is talking to.
+        </>
+      }
+    >
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex gap-4">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
@@ -68,6 +71,6 @@ export default function AdminEnvironmentPage() {
           </div>
         </div>
       </section>
-    </div>
+    </AdminPageShell>
   );
 }

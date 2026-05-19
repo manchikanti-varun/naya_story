@@ -7,15 +7,24 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Boxes,
+  ChevronDown,
   ChevronLeft,
+  Eye,
   ImageIcon,
   LayoutDashboard,
+  LayoutGrid,
+  LayoutList,
+  Layers,
   Menu,
+  Megaphone,
   Package,
   PanelsTopLeft,
+  Percent,
   Server,
+  Settings2,
   ShoppingBag,
-  TicketPercent,
+  Sparkles,
+  Truck,
   Users,
   X,
 } from "lucide-react";
@@ -24,81 +33,137 @@ import { cn } from "@/lib/cn";
 
 type NavItem = { href: string; label: string; icon?: LucideIcon };
 
-type NavGroup = { label: string; items: NavItem[] };
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
 
-/** Production labels: catalog vs storefront vs ops. Icons only on primary nav rows (not shortcuts). */
 const navGroups: NavGroup[] = [
   {
-    label: "Overview",
-    items: [{ href: "/admin", label: "Home", icon: LayoutDashboard }],
+    label: "Dashboard",
+    items: [{ href: "/admin", label: "Overview", icon: LayoutDashboard }],
   },
   {
-    label: "Catalog & assets",
+    label: "Catalog",
     items: [
-      { href: "/admin/products", label: "Product catalog", icon: Package },
-      { href: "/admin/media", label: "Media", icon: ImageIcon },
+      { href: "/admin/products", label: "Products", icon: Package },
+      { href: "/admin/catalog/categories", label: "Categories", icon: LayoutGrid },
+      { href: "/admin/catalog/collections", label: "Collections", icon: Layers },
+      { href: "/admin/inventory", label: "Inventory", icon: Boxes },
     ],
   },
   {
-    label: "Storefront",
-    items: [{ href: "/admin/content", label: "Content editor", icon: PanelsTopLeft }],
-  },
-  {
-    label: "Customers & orders",
+    label: "Media",
     items: [
-      { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-      { href: "/admin/customers", label: "Customers", icon: Users },
-      { href: "/admin/coupons", label: "Discount codes", icon: TicketPercent },
-      { href: "/admin/inventory", label: "Stock", icon: Boxes },
+      { href: "/admin/media", label: "Media library", icon: ImageIcon },
+      { href: "/admin/media/banners", label: "Banners", icon: Sparkles },
     ],
   },
   {
-    label: "Reports",
-    items: [{ href: "/admin/analytics", label: "Analytics", icon: BarChart3 }],
+    label: "Storefront CMS",
+    items: [
+      { href: "/admin/storefront", label: "CMS home", icon: PanelsTopLeft },
+      { href: "/admin/storefront/homepage", label: "Homepage blocks", icon: LayoutGrid },
+      { href: "/admin/content/hero", label: "Hero", icon: ImageIcon },
+      { href: "/admin/content/home-layout", label: "Home layout", icon: LayoutList },
+      { href: "/admin/content/bestsellers", label: "Bestsellers", icon: Package },
+      { href: "/admin/content/new-in-home", label: "New In (home)", icon: Sparkles },
+      { href: "/admin/content/new-in-page", label: "New In page", icon: Sparkles },
+      { href: "/admin/content/categories", label: "Shop categories", icon: Layers },
+      { href: "/admin/content/collections", label: "Collections page", icon: Layers },
+      { href: "/admin/content/our-story", label: "Our Story", icon: Sparkles },
+      { href: "/admin/content/preview/hero", label: "Live preview", icon: Eye },
+      { href: "/admin/content/theme", label: "Text colors", icon: Sparkles },
+      { href: "/admin/content/promo-bar", label: "Promo bar", icon: Megaphone },
+      { href: "/admin/content/newsletter", label: "Newsletter", icon: Megaphone },
+      { href: "/admin/content/footer", label: "Footer", icon: LayoutGrid },
+      { href: "/admin/storefront/navigation", label: "Navigation", icon: Settings2 },
+    ],
+  },
+  {
+    label: "Orders",
+    items: [
+      { href: "/admin/orders", label: "All orders", icon: ShoppingBag },
+      { href: "/admin/orders/shipping", label: "Shipping", icon: Truck },
+      { href: "/admin/orders/tracking", label: "Tracking", icon: Truck },
+    ],
+  },
+  {
+    label: "Customers",
+    items: [
+      { href: "/admin/customers", label: "Customer list", icon: Users },
+      { href: "/admin/customers/segments", label: "Segments", icon: Users },
+      { href: "/admin/customers/activity", label: "Activity", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Marketing",
+    items: [
+      { href: "/admin/coupons", label: "Coupons", icon: Percent },
+      { href: "/admin/marketing/campaigns", label: "Campaigns", icon: Megaphone },
+      { href: "/admin/marketing/featured", label: "Featured products", icon: Package },
+    ],
+  },
+  {
+    label: "Analytics",
+    items: [{ href: "/admin/analytics", label: "Reports", icon: BarChart3 }],
   },
   {
     label: "System",
-    items: [{ href: "/admin/settings", label: "Environment", icon: Server }],
+    items: [
+      { href: "/admin/settings", label: "Settings", icon: Server },
+      { href: "/admin/system/roles", label: "Roles & permissions", icon: Settings2 },
+      { href: "/admin/pages", label: "Admin map", icon: LayoutGrid },
+    ],
   },
 ];
+
+function isActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  if (href === "/admin") return pathname === "/admin";
+  /** CMS hub is exact only — child routes like /admin/storefront/homepage stay distinct. */
+  if (href === "/admin/storefront") return pathname === "/admin/storefront";
+  if (href.startsWith("/admin/content/preview")) {
+    return pathname.startsWith("/admin/content/preview");
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 function NavLinks({
   pathname,
   onNavigate,
 }: {
-  pathname: string;
+  pathname: string | null;
   onNavigate?: () => void;
 }) {
   return (
-    <div className="space-y-7">
+    <div className="space-y-1">
       {navGroups.map((group) => (
-        <div key={group.label}>
-          <p className="px-3 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+        <details key={group.label} className="admin-nav-group group" open>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-2 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--admin-faint)] outline-none marker:hidden hover:text-[var(--admin-muted)] [&::-webkit-details-marker]:hidden">
             {group.label}
-          </p>
-          <nav className="mt-2 space-y-0.5">
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[var(--admin-faint)] transition group-open:rotate-180" strokeWidth={1.75} aria-hidden />
+          </summary>
+          <nav className="mt-1 space-y-0.5 pb-2 pl-0.5" aria-label={group.label}>
             {group.items.map(({ href, label, icon: Icon }) => {
-              const active =
-                href === "/admin"
-                  ? pathname === "/admin"
-                  : pathname === href || pathname.startsWith(`${href}/`);
+              const active = isActive(pathname, href);
               return (
                 <Link
                   key={href}
                   href={href}
                   onClick={onNavigate}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+                    "flex items-center gap-3 rounded-xl px-3 py-2 font-sans text-[13px] transition-colors",
                     active
-                      ? "bg-slate-900 font-medium text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100",
+                      ? "border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] font-medium text-[var(--admin-nav-active)] shadow-sm ring-1 ring-black/[0.03]"
+                      : "text-[var(--admin-sidebar-text)] hover:bg-black/[0.04]",
                   )}
                 >
                   {Icon ? (
                     <Icon
                       className={cn(
                         "h-[15px] w-[15px] shrink-0",
-                        active ? "text-white/90" : "text-slate-500",
+                        active ? "text-[var(--admin-accent)]" : "text-[var(--admin-faint)]",
                       )}
                       strokeWidth={1.65}
                       aria-hidden
@@ -106,32 +171,13 @@ function NavLinks({
                   ) : (
                     <span className="w-[15px] shrink-0" aria-hidden />
                   )}
-                  {label}
+                  <span className="min-w-0 truncate">{label}</span>
                 </Link>
               );
             })}
           </nav>
-        </div>
+        </details>
       ))}
-      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-3">
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-          Quick links
-        </p>
-        <Link
-          href="/admin/content/collections"
-          onClick={onNavigate}
-          className="mt-2 block text-xs leading-snug text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
-        >
-          Collections page settings
-        </Link>
-        <Link
-          href="/admin/pages"
-          onClick={onNavigate}
-          className="mt-2 block text-xs leading-snug text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline"
-        >
-          Admin directory
-        </Link>
-      </div>
     </div>
   );
 }
@@ -152,7 +198,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (loading || !user || user.role !== "admin") {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-slate-50 font-sans text-sm text-slate-500">
+      <div className="flex min-h-[60vh] items-center justify-center font-sans text-sm text-[var(--admin-muted)]">
         Verifying administrator access…
       </div>
     );
@@ -162,19 +208,19 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (isPreviewRoute) {
     return (
-      <div className="min-h-screen bg-[#faf8f5]">
-        <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-black/5 bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80 md:px-6">
+      <div className="min-h-screen bg-[var(--admin-surface-raised)]">
+        <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-[var(--admin-border)] bg-[var(--admin-surface)]/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-[var(--admin-surface)]/85 md:px-6">
           <Link
             href="/admin/products"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-sans text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1.5 font-sans text-xs font-medium text-[var(--admin-ink)] shadow-sm hover:bg-[var(--admin-surface-raised)]"
           >
             <ChevronLeft className="h-4 w-4" strokeWidth={1.5} aria-hidden />
             Back to catalog
           </Link>
-          <p className="hidden font-sans text-xs text-slate-500 sm:block">Live storefront preview</p>
+          <p className="hidden font-sans text-xs text-[var(--admin-muted)] sm:block">Storefront preview</p>
           <Link
             href="/"
-            className="text-xs font-medium text-slate-500 underline-offset-4 hover:text-slate-900 hover:underline"
+            className="text-xs font-medium text-[var(--admin-muted)] underline-offset-4 hover:text-[var(--admin-ink)] hover:underline"
           >
             Open shop
           </Link>
@@ -185,32 +231,34 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f4f6f9] text-slate-900">
+    <div className="flex min-h-screen">
       {sidebarOpen ? (
         <button
           type="button"
           aria-label="Close menu"
-          className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-[1px] lg:hidden"
+          className="fixed inset-0 z-40 bg-stone-900/20 backdrop-blur-[1px] lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-slate-200/90 bg-white px-4 py-6 shadow-[4px_0_24px_-12px_rgba(15,23,42,0.08)] transition-transform duration-200 lg:static lg:translate-x-0",
+          "admin-sidebar-inner fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col border-r px-3 py-5 shadow-[4px_0_28px_-18px_rgba(28,25,23,0.18)] transition-transform duration-200 lg:static lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-4">
-          <div className="min-w-0 pl-0.5">
-            <p className="truncate font-display text-lg tracking-tight text-slate-900">Naya Studio</p>
-            <p className="mt-0.5 font-sans text-[10px] font-medium uppercase tracking-[0.2em] text-slate-400">
-              Commerce admin
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--admin-border)] px-1 pb-4">
+          <div className="min-w-0">
+            <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--admin-accent)]">
+              Naya Studio
+            </p>
+            <p className="mt-1 font-sans text-base font-semibold tracking-tight text-[var(--admin-ink)]">
+              Commerce control
             </p>
           </div>
           <button
             type="button"
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
+            className="rounded-lg p-2 text-[var(--admin-muted)] hover:bg-black/[0.05] lg:hidden"
             onClick={() => setSidebarOpen(false)}
             aria-label="Close sidebar"
           >
@@ -218,20 +266,20 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <div className="mt-6 flex-1 overflow-y-auto pr-0.5">
+        <div className="mt-4 flex-1 overflow-y-auto overscroll-contain pr-0.5">
           <NavLinks pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
         </div>
 
-        <div className="mt-auto space-y-1 border-t border-slate-100 pt-4">
+        <div className="mt-auto space-y-0.5 border-t border-[var(--admin-border)] pt-4">
           <Link
             href="/"
-            className="block rounded-xl px-3 py-2.5 font-sans text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+            className="block rounded-xl px-3 py-2.5 font-sans text-sm text-[var(--admin-sidebar-text)] transition hover:bg-black/[0.04] hover:text-[var(--admin-ink)]"
           >
             View live store
           </Link>
           <button
             type="button"
-            className="w-full rounded-xl px-3 py-2.5 text-left font-sans text-sm text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+            className="w-full rounded-xl px-3 py-2.5 text-left font-sans text-sm text-[var(--admin-sidebar-text)] transition hover:bg-black/[0.04] hover:text-[var(--admin-ink)]"
             onClick={() => {
               logout();
               router.push("/login");
@@ -243,18 +291,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-slate-200/80 bg-[#f4f6f9]/95 px-4 py-3 backdrop-blur lg:hidden">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--admin-border)] bg-[var(--admin-canvas)]/90 px-4 py-3 backdrop-blur lg:hidden">
           <button
             type="button"
-            className="rounded-lg border border-slate-200 bg-white p-2 text-slate-700 shadow-sm"
+            className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-2 text-[var(--admin-ink)] shadow-sm"
             onClick={() => setSidebarOpen(true)}
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" strokeWidth={1.5} />
           </button>
-          <span className="font-display text-lg text-slate-900">Naya admin</span>
+          <span className="font-sans text-sm font-semibold text-[var(--admin-ink)]">Naya admin</span>
         </header>
-        <main className="flex-1 overflow-x-auto px-4 py-8 sm:px-6 lg:px-10 lg:py-10">{children}</main>
+        <main className="flex-1 overflow-x-auto px-4 py-8 sm:px-6 lg:px-10 lg:py-11">{children}</main>
       </div>
     </div>
   );
