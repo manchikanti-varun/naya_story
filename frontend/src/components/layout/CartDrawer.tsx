@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { lineKey, useCart } from "@/context/cart-context";
+import { validateCouponCode, useCouponDiscount } from "@/hooks/use-coupon-discount";
 import { cn } from "@/lib/cn";
 import { FREE_SHIPPING_THRESHOLD_INR } from "@/lib/store-shipping";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
@@ -22,18 +23,13 @@ export function CartDrawer() {
     setCoupon,
   } = useCart();
   const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
 
   const shipping = useMemo(
     () => (subtotal >= FREE_SHIPPING_THRESHOLD_INR ? 0 : 299),
     [subtotal],
   );
-  const discount = useMemo(() => {
-    if (!coupon) return 0;
-    const c = coupon.toUpperCase();
-    if (c === "NAYA10") return Math.round(subtotal * 0.1);
-    if (c === "WELCOME500") return Math.min(500, subtotal);
-    return 0;
-  }, [coupon, subtotal]);
+  const { discount } = useCouponDiscount(coupon, subtotal);
 
   const total = Math.max(0, subtotal + shipping - discount);
 
@@ -183,13 +179,31 @@ export function CartDrawer() {
                   <button
                     type="button"
                     onClick={() => {
-                      setCoupon(couponInput.trim() || undefined);
+                      void (async () => {
+                        const code = couponInput.trim();
+                        if (!code) {
+                          setCoupon(undefined);
+                          setCouponError(null);
+                          return;
+                        }
+                        const res = await validateCouponCode(code, subtotal);
+                        if (!res.valid) {
+                          setCoupon(undefined);
+                          setCouponError("Invalid or expired promo code.");
+                          return;
+                        }
+                        setCoupon(res.code ?? code);
+                        setCouponError(null);
+                      })();
                     }}
                     className="lux-btn-ink shrink-0"
                   >
                     Apply
                   </button>
                 </div>
+                {couponError ? (
+                  <p className="mt-2 font-sans text-xs text-red-700">{couponError}</p>
+                ) : null}
                 {coupon ? (
                   <p className="mt-2 font-sans text-xs text-ink-muted">
                     Applied: <span className="text-gold">{coupon}</span>

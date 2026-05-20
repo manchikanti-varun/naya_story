@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { lineKey, useCart } from "@/context/cart-context";
+import { useCouponDiscount } from "@/hooks/use-coupon-discount";
 import { FREE_SHIPPING_THRESHOLD_INR } from "@/lib/store-shipping";
 
 type PaymentPreview = {
@@ -35,14 +36,7 @@ export function CheckoutForm() {
   const [error, setError] = useState<string | null>(null);
 
   const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD_INR ? 0 : 299;
-
-  const discount = useMemo(() => {
-    if (!coupon) return 0;
-    const c = coupon.toUpperCase();
-    if (c === "NAYA10") return Math.round(subtotal * 0.1);
-    if (c === "WELCOME500") return Math.min(500, subtotal);
-    return 0;
-  }, [coupon, subtotal]);
+  const { discount } = useCouponDiscount(coupon, subtotal);
 
   const total = Math.max(0, subtotal + shippingFee - discount);
 

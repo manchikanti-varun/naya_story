@@ -26,8 +26,8 @@ function LoginInner() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
-  const [email, setEmail] = useState("client@nayastory.com");
-  const [password, setPassword] = useState("Client123!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

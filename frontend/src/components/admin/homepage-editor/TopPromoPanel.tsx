@@ -34,7 +34,7 @@ export function ContentEditorTopPromoPanel() {
           className="md:col-span-2"
         >
           <AdminInput
-            placeholder="e.g. Use code NAYA10 for 10% off your first order"
+            placeholder="e.g. Use code SUMMER20 for 10% off your first order"
             value={bar.message}
             onChange={(e) =>
               setHp({

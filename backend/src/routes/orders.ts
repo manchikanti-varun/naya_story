@@ -3,40 +3,14 @@ import { Router } from "express";
 import { body, validationResult } from "express-validator";
 import type { LeanOrder, LeanProduct } from "../lean.js";
 import { verifyAccessToken } from "../lib/accessJwt.js";
-import { Coupon } from "../models/Coupon.js";
 import { Order } from "../models/Order.js";
 import { Product } from "../models/Product.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
+import { resolveCoupon } from "../lib/coupon-utils.js";
 
 function orderNumber() {
   const n = Math.floor(Math.random() * 90000 + 10000);
   return `NS-${Date.now().toString(36).toUpperCase()}-${n}`;
-}
-
-async function resolveCoupon(code: string | undefined, subtotal: number) {
-  if (!code?.trim())
-    return {
-      discount: 0,
-      couponCode: undefined as string | undefined,
-      coupon: null as InstanceType<typeof Coupon> | null,
-    };
-
-  const coupon = await Coupon.findOne({
-    code: code.trim().toUpperCase(),
-    active: true,
-  });
-  if (!coupon)
-    return { discount: 0, couponCode: undefined, coupon: null };
-  if (coupon.expiresAt && coupon.expiresAt < new Date())
-    return { discount: 0, couponCode: undefined, coupon: null };
-  if (coupon.usageLimit != null && coupon.usedCount >= coupon.usageLimit)
-    return { discount: 0, couponCode: undefined, coupon: null };
-
-  let discount = 0;
-  if (coupon.type === "percent") discount = Math.round((subtotal * coupon.value) / 100);
-  else discount = Math.min(coupon.value, subtotal);
-
-  return { discount, couponCode: coupon.code, coupon };
 }
 
 export function createOrdersRouter(secret: string) {
