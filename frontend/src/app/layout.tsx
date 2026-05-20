@@ -6,9 +6,11 @@ import {
   SITE_DESCRIPTION,
   SITE_NAME,
   STORE_LOGO_PUBLIC_PATH,
-  bustLocalPublicAsset,
 } from "@/lib/constants";
 import { getSiteUrl } from "@/lib/site-url";
+import { bustLogoPath, getLogoCacheRev } from "@/lib/logo-cache";
+
+const logoIconUrl = bustLogoPath(STORE_LOGO_PUBLIC_PATH, getLogoCacheRev());
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -43,11 +45,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: STORE_LOGO_PUBLIC_PATH, type: "image/png" },
-      { url: bustLocalPublicAsset(STORE_LOGO_PUBLIC_PATH), type: "image/png" },
+      { url: logoIconUrl, type: "image/png" },
     ],
-    apple: STORE_LOGO_PUBLIC_PATH,
-    shortcut: STORE_LOGO_PUBLIC_PATH,
+    apple: logoIconUrl,
+    shortcut: logoIconUrl,
   },
 };
 

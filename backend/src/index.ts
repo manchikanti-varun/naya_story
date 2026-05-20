@@ -12,6 +12,7 @@ import { createAuthRouter } from "./routes/auth.js";
 import { createContentRouter } from "./routes/content.js";
 import { createCouponsRouter } from "./routes/coupons.js";
 import { createIntegrationsRouter } from "./routes/integrations.js";
+import { createLegalPagesRouter } from "./routes/legalPages.js";
 import { createMediaRouter } from "./routes/media.js";
 import { createOrdersRouter } from "./routes/orders.js";
 import { createProductsRouter } from "./routes/products.js";
@@ -98,6 +99,7 @@ async function main() {
   app.use("/api/media", createMediaRouter(JWT_SECRET));
   app.use("/api/coupons", createCouponsRouter(JWT_SECRET));
   app.use("/api/content", createContentRouter(JWT_SECRET));
+  app.use("/api/legal-pages", createLegalPagesRouter(JWT_SECRET));
   app.use(
     "/api/integrations",
     createIntegrationsRouter({

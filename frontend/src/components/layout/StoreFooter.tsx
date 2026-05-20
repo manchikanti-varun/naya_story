@@ -4,7 +4,10 @@ import Link from "next/link";
 import { FaWhatsapp } from "react-icons/fa6";
 import { SiInstagram } from "react-icons/si";
 import type { HomepageConfig } from "@/types/homepage";
-import { SITE_NAME, STORE_LOGO_PUBLIC_PATH, bustLocalPublicAsset } from "@/lib/constants";
+import type { LegalPageSummary } from "@/types/legal-page";
+import { legalPageHref } from "@/types/legal-page";
+import { bustLogoPath } from "@/lib/logo-cache";
+import { SITE_NAME, STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
 
 const fallbackFooter: HomepageConfig["footer"] = {
   logoUrl: STORE_LOGO_PUBLIC_PATH,
@@ -16,7 +19,7 @@ const fallbackFooter: HomepageConfig["footer"] = {
   legalLinks: [
     { label: "Terms & Conditions", href: "/policies/terms", enabled: true, order: 0 },
     { label: "Privacy Policy", href: "/policies/privacy", enabled: true, order: 1 },
-    { label: "Refund Policy", href: "/policies/terms", enabled: true, order: 2 },
+    { label: "Refund & Cancellation", href: "/policies/refund-cancellation", enabled: true, order: 2 },
     { label: "Shipping & Delivery", href: "/policies/shipping", enabled: true, order: 3 },
   ],
   contactTitle: "Contact",
@@ -54,9 +57,29 @@ function SocialIcon({
   );
 }
 
-export function StoreFooter({ footer }: { footer?: HomepageConfig["footer"] }) {
+export function StoreFooter({
+  footer,
+  legalPages,
+  logoRev,
+}: {
+  footer?: HomepageConfig["footer"];
+  legalPages?: LegalPageSummary[];
+  logoRev?: string;
+}) {
   const safeFooter = footer ?? fallbackFooter;
-  const legal = safeFooter.legalLinks
+  const dynamicLegal =
+    legalPages && legalPages.length > 0
+      ? legalPages
+          .filter((p) => p.published)
+          .sort((a, b) => a.order - b.order)
+          .map((p) => ({
+            label: p.title,
+            href: legalPageHref(p.slug),
+            enabled: true,
+            order: p.order,
+          }))
+      : null;
+  const legal = (dynamicLegal ?? safeFooter.legalLinks)
     .filter((l) => l.enabled)
     .sort((a, b) => a.order - b.order);
   const socials = safeFooter.socialLinks
@@ -69,7 +92,7 @@ export function StoreFooter({ footer }: { footer?: HomepageConfig["footer"] }) {
   const instagramHref =
     socials.find((s) => s.platform === "instagram")?.href ?? "https://instagram.com";
   const whatsappHref = `https://wa.me/${safeFooter.phone.replace(/[^\d]/g, "")}`;
-  const footerLogoSrc = bustLocalPublicAsset(safeFooter.logoUrl);
+  const footerLogoSrc = bustLogoPath(safeFooter.logoUrl, logoRev);
 
   return (
     <footer className="relative overflow-hidden border-t border-ivory-deep bg-gradient-to-b from-ivory via-ivory-muted to-ivory-soft">

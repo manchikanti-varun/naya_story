@@ -78,7 +78,13 @@ function NavLink({
   );
 }
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+export function AdminShell({
+  children,
+  logoSrc,
+}: {
+  children: React.ReactNode;
+  logoSrc?: string;
+}) {
   const { user, loading, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
@@ -122,7 +128,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <ChevronLeft className="h-4 w-4" strokeWidth={1.5} aria-hidden />
             <span className="hidden sm:inline">Back</span>
           </Link>
-          <AdminBrand href="/admin" showSubtitle={false} align="center" logoClassName="h-8 w-[108px] sm:h-9 sm:w-[124px]" />
+          <AdminBrand href="/admin" showSubtitle={false} align="center" logoClassName="h-8 w-[108px] sm:h-9 sm:w-[124px]" logoSrc={logoSrc} />
           <Link
             href="/"
             className="justify-self-end text-xs font-medium text-[var(--admin-muted)] underline-offset-4 hover:text-[var(--admin-ink)] hover:underline"
@@ -161,7 +167,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           >
             <X className="h-5 w-5" strokeWidth={1.5} />
           </button>
-          <AdminBrand align="center" className="px-6 lg:px-2" />
+          <AdminBrand align="center" className="px-6 lg:px-2" logoSrc={logoSrc} />
         </div>
 
         <nav
@@ -204,7 +210,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <Menu className="h-5 w-5" strokeWidth={1.5} />
             </button>
             <div className="flex min-w-0 flex-1 justify-center lg:hidden">
-              <AdminBrand showSubtitle={false} align="center" logoClassName="h-8 w-[108px]" />
+              <AdminBrand showSubtitle={false} align="center" logoClassName="h-8 w-[108px]" logoSrc={logoSrc} />
             </div>
             <div className="hidden min-w-0 flex-1 lg:block">
               <AdminBreadcrumbs />

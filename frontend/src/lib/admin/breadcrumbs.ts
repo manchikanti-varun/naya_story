@@ -18,6 +18,7 @@ const LABEL_OVERRIDES: Record<string, string> = {
   analytics: "Analytics",
   system: "System",
   "announcement-bar": "Announcement bar",
+  "legal-pages": "Legal pages",
   theme: "Theme Studio",
   inventory: "Inventory",
   settings: "Settings",

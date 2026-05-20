@@ -20,7 +20,7 @@ import { StoreNavLinks } from "@/components/layout/store-header/nav-links";
 import { WishlistPop } from "@/components/layout/store-header/wishlist-pop";
 import { useAuth } from "@/context/auth-context";
 import { useCart } from "@/context/cart-context";
-import { SITE_NAME, STORE_LOGO_PUBLIC_PATH, bustLocalPublicAsset } from "@/lib/constants";
+import { SITE_NAME, STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import type { TopPromoBarConfig, SectionTextColors } from "@/types/homepage";
 
@@ -42,9 +42,14 @@ const cartCountBadgeClass =
 export function StoreHeader({
   topPromoBar,
   topPromoTextColors,
+  logoSrc,
+  logoAlt,
 }: {
   topPromoBar?: TopPromoBarConfig | null;
   topPromoTextColors?: SectionTextColors | null;
+  /** Pre-built logo URL (with cache-bust query when local). Set by store layout. */
+  logoSrc?: string;
+  logoAlt?: string | null;
 }) {
   const pathname = usePathname();
   const { openCart, lines } = useCart();
@@ -57,7 +62,8 @@ export function StoreHeader({
 
   const count = lines.reduce((n, l) => n + l.quantity, 0);
   const wishCount = wishlistIds.length;
-  const logoSrc = bustLocalPublicAsset(STORE_LOGO_PUBLIC_PATH);
+  const resolvedLogoSrc = logoSrc?.trim() || STORE_LOGO_PUBLIC_PATH;
+  const logoAltText = logoAlt?.trim() || SITE_NAME;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -120,8 +126,8 @@ export function StoreHeader({
                 className="relative h-11 w-[152px] min-[400px]:h-12 min-[400px]:w-[172px]"
               >
                 <Image
-                  src={logoSrc}
-                  alt={SITE_NAME}
+                  src={resolvedLogoSrc}
+                  alt={logoAltText}
                   fill
                   className={cn(
                     "object-contain object-left",
@@ -186,8 +192,8 @@ export function StoreHeader({
                   )}
                 >
                   <Image
-                    src={logoSrc}
-                    alt={SITE_NAME}
+                    src={resolvedLogoSrc}
+                    alt={logoAltText}
                     fill
                     className={cn(
                       "object-contain object-left",

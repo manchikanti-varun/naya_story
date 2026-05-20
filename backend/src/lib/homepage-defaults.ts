@@ -411,8 +411,8 @@ export function defaultHomepageConfig(): HomepageConfig {
           order: 1,
         },
         {
-          label: "Refund Policy",
-          href: "/policies/terms",
+          label: "Refund & Cancellation",
+          href: "/policies/refund-cancellation",
           enabled: true,
           order: 2,
         },

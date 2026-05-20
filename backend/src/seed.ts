@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { connectDb } from "./config/db.js";
 import { defaultHomepageConfig } from "./lib/homepage-defaults.js";
+import { defaultLegalPages } from "./lib/legal-page-defaults.js";
 import { Coupon } from "./models/Coupon.js";
+import { LegalPage } from "./models/LegalPage.js";
 import { HomepageRevision } from "./models/HomepageRevision.js";
 import { MediaAsset } from "./models/MediaAsset.js";
 import { Order } from "./models/Order.js";
@@ -37,6 +39,7 @@ async function seed() {
     ProcessedWebhook.deleteMany({}),
     HomepageRevision.deleteMany({}),
     MediaAsset.deleteMany({}),
+    LegalPage.deleteMany({}),
   ]);
 
   const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
@@ -52,7 +55,17 @@ async function seed() {
   hp.newIn.productIds = [];
   await SiteSettings.create({ homepage: hp, banners: [] });
 
-  console.log("Seed complete — admin account and empty CMS only.");
+  await LegalPage.insertMany(
+    defaultLegalPages.map((p) => ({
+      title: p.title,
+      slug: p.slug,
+      body: p.body,
+      order: p.order,
+      published: true,
+    })),
+  );
+
+  console.log("Seed complete — admin account, empty CMS, and default legal pages.");
   console.log(`Admin email: ${ADMIN_EMAIL}`);
   await mongoose.disconnect();
 }

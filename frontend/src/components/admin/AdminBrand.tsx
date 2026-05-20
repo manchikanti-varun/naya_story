@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { SITE_NAME, STORE_LOGO_PUBLIC_PATH, bustLocalPublicAsset } from "@/lib/constants";
+import { SITE_NAME, STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 
 type Props = {
@@ -9,6 +9,8 @@ type Props = {
   align?: "left" | "center";
   className?: string;
   logoClassName?: string;
+  /** Cache-busted logo URL from server layout */
+  logoSrc?: string;
 };
 
 export function AdminBrand({
@@ -17,8 +19,9 @@ export function AdminBrand({
   align = "center",
   className,
   logoClassName,
+  logoSrc: logoSrcProp,
 }: Props) {
-  const logoSrc = bustLocalPublicAsset(STORE_LOGO_PUBLIC_PATH);
+  const logoSrc = logoSrcProp?.trim() || STORE_LOGO_PUBLIC_PATH;
   const centered = align === "center";
 
   return (

@@ -85,6 +85,12 @@ export const adminNavGroups: AdminNavGroup[] = [
         keywords: ["legal", "social", "links"],
       },
       {
+        href: "/admin/website/legal-pages",
+        label: "Legal pages",
+        icon: Shield,
+        keywords: ["terms", "privacy", "refund", "shipping", "policies"],
+      },
+      {
         href: "/admin/website/announcement-bar",
         label: "Announcement bar",
         icon: Megaphone,

@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { fetchApi } from "@/lib/server-fetch";
 import { getSiteUrl } from "@/lib/site-url";
+import type { LegalPage } from "@/types/legal-page";
+import { legalPageHref } from "@/types/legal-page";
 
 export const revalidate = 3600;
 
@@ -13,9 +15,6 @@ const STATIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[0]["c
     { path: "/compare", changeFrequency: "weekly", priority: 0.5 },
     { path: "/login", changeFrequency: "monthly", priority: 0.3 },
     { path: "/register", changeFrequency: "monthly", priority: 0.3 },
-    { path: "/policies/privacy", changeFrequency: "yearly", priority: 0.2 },
-    { path: "/policies/terms", changeFrequency: "yearly", priority: 0.2 },
-    { path: "/policies/shipping", changeFrequency: "yearly", priority: 0.2 },
   ];
 
 async function fetchAllProductSlugs(): Promise<string[]> {
@@ -51,6 +50,19 @@ async function fetchAllProductSlugs(): Promise<string[]> {
   return [...slugs];
 }
 
+async function fetchLegalPagePaths(): Promise<string[]> {
+  try {
+    const res = await fetchApi("/api/legal-pages");
+    if (!res.ok) return [];
+    const data = (await res.json()) as { pages?: LegalPage[] };
+    return (data.pages ?? [])
+      .filter((p) => p.published && p.slug?.trim())
+      .map((p) => legalPageHref(p.slug));
+  } catch {
+    return [];
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
   const lastModified = new Date();
@@ -77,5 +89,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // API unavailable at build/runtime — static URLs still published.
   }
 
-  return [...staticEntries, ...productEntries];
+  let legalEntries: MetadataRoute.Sitemap = [];
+  try {
+    const paths = await fetchLegalPagePaths();
+    legalEntries = paths.map((path) => ({
+      url: `${base}${path}`,
+      lastModified,
+      changeFrequency: "yearly" as const,
+      priority: 0.2,
+    }));
+  } catch {
+    /* ignore */
+  }
+
+  return [...staticEntries, ...legalEntries, ...productEntries];
 }

@@ -1228,8 +1228,15 @@ export function ContentEditorFooterPanel() {
               </label>
             </div>
             <div className="mt-6 grid gap-6 md:grid-cols-2">
+              <p className="font-sans text-sm text-slate-500 md:col-span-2">
+                Policy links in the footer are managed in{" "}
+                <a href="/admin/website/legal-pages" className="font-medium text-[var(--admin-accent)] underline-offset-2 hover:underline">
+                  Website → Legal pages
+                </a>
+                . The field below is a fallback only when no legal pages exist in the database.
+              </p>
               <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Legal links (label|href|enabled|order per line)
+                Legal links fallback (label|href|enabled|order per line)
                 <textarea
                   rows={6}
                   className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 font-mono text-xs"
