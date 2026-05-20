@@ -7,6 +7,9 @@ export type LeanProduct = {
   description?: string;
   price: number;
   category: string;
+  /** Optional merchandising grouping (related products, filters). */
+  collection?: string;
+  storefrontVisible?: boolean;
   images: string[];
   variants: { sku: string; size: string; color: string; stock: number }[];
 };

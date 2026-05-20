@@ -52,16 +52,11 @@ export function ProductCard({ product, className, badge }: Props) {
       className={cn("group", className)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link href={`/products/${product.slug}`} className="block">
-        <div
-          className={cn(
-            "relative aspect-[3/4] overflow-hidden rounded-[24px] bg-ivory-soft",
-            storefrontImageShellClass,
-          )}
-        >
+        <div className={cn("lux-product-frame", storefrontImageShellClass)}>
           {primary ? (
             <Image
               src={primary}
@@ -70,7 +65,7 @@ export function ProductCard({ product, className, badge }: Props) {
               loading="lazy"
               sizes="(max-width:768px) 50vw, 25vw"
               className={cn(
-                "object-cover transition duration-[1.35s] ease-out",
+                "lux-image-zoom object-cover",
                 secondImage && hovered ? "scale-[1.03] opacity-0" : "scale-100 opacity-100",
               )}
               {...storefrontImageProps}
@@ -84,14 +79,14 @@ export function ProductCard({ product, className, badge }: Props) {
               loading="lazy"
               sizes="(max-width:768px) 50vw, 25vw"
               className={cn(
-                "object-cover transition duration-[1.35s] ease-out",
+                "lux-image-zoom object-cover",
                 hovered ? "scale-[1.03] opacity-100" : "opacity-0",
               )}
               {...storefrontImageProps}
             />
           ) : null}
           {badge ? (
-            <span className="pointer-events-none absolute left-4 top-4 rounded-full border border-ivory/55 bg-ink/30 px-3 py-1 font-sans text-[9px] font-light uppercase tracking-[0.22em] text-ivory/95 backdrop-blur-sm">
+            <span className="pointer-events-none absolute left-4 top-4 rounded-full border border-[rgb(245_241_236/0.55)] bg-[rgb(44_40_37/0.3)] px-3 py-1 font-sans text-[9px] font-light uppercase tracking-[0.22em] text-[rgb(245_241_236/0.95)] backdrop-blur-sm">
               {badge === "bestseller"
                 ? "Best seller"
                 : badge === "latest"
@@ -99,7 +94,7 @@ export function ProductCard({ product, className, badge }: Props) {
                   : "New"}
             </span>
           ) : null}
-          <div className="absolute right-4 top-4 z-[1] flex translate-y-1 gap-2 opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+          <div className="absolute right-3 top-3 z-[1] flex gap-2 opacity-100 transition duration-500 sm:right-4 sm:top-4 sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
             <button
               type="button"
               onClick={(e) => {
@@ -107,7 +102,7 @@ export function ProductCard({ product, className, badge }: Props) {
                 e.stopPropagation();
                 setQuickOpen(true);
               }}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white shadow-sm backdrop-blur transition duration-500 hover:bg-black/85"
+              className="lux-card-action h-11 w-11"
               aria-label="Quick view"
             >
               <Eye className="h-5 w-5" strokeWidth={1.25} />
@@ -115,7 +110,7 @@ export function ProductCard({ product, className, badge }: Props) {
             <button
               type="button"
               onClick={toggleWishlist}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white shadow-sm backdrop-blur transition duration-500 hover:bg-black/85"
+              className="lux-card-action h-11 w-11"
               aria-label={liked ? "Remove from wishlist" : "Add to wishlist"}
             >
               <Heart
@@ -124,19 +119,13 @@ export function ProductCard({ product, className, badge }: Props) {
               />
             </button>
           </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink/35 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[rgb(44_40_37/0.35)] to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
         </div>
-        <div className="mt-5 space-y-2">
-          <h3 className="font-display text-xl text-ink transition-colors group-hover:text-gold">
-            {product.name}
-          </h3>
-          <p className="font-sans text-[11px] uppercase tracking-[0.22em] text-ink-soft">
-            {product.category}
-          </p>
+        <div className="mt-3 space-y-1.5">
+          <h3 className="lux-product-name">{product.name}</h3>
+          <p className="lux-product-meta">{product.category}</p>
           <div className="flex items-baseline gap-3">
-            <span className="font-sans text-sm tracking-wide text-ink">
-              ₹{product.price.toLocaleString("en-IN")}
-            </span>
+            <span className="lux-product-price">₹{product.price.toLocaleString("en-IN")}</span>
             {product.compareAtPrice && product.compareAtPrice > product.price ? (
               <span className="font-sans text-xs text-ink-soft line-through">
                 ₹{product.compareAtPrice.toLocaleString("en-IN")}

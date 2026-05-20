@@ -9,7 +9,7 @@ export default function AccountHomePage() {
   return (
     <div className="space-y-10 rounded-[32px] border border-ivory-deep bg-white/70 p-10 backdrop-blur">
       <div>
-        <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">Studio profile</p>
+        <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">Your account</p>
         <h1 className="mt-4 font-display text-4xl text-ink">Welcome, {user?.name.split(" ")[0]}.</h1>
         <p className="mt-4 max-w-xl font-sans text-sm leading-relaxed text-ink-muted">
           Your wishlist, shipment timelines, and addresses stay here — calm, organized, within reach.

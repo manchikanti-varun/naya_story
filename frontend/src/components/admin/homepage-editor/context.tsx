@@ -11,8 +11,13 @@ import {
 } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
+import type { HomepageCmsMeta } from "@/types/cms-meta";
 import type { CategoryCard, HeroSlide, HomepageConfig, SectionOrderEntry } from "@/types/homepage";
-import { withRefreshedLayoutBlocks } from "@/lib/homepage-layout-blocks";
+import {
+  moveHomepageStorefrontBlock,
+  withRefreshedLayoutBlocks,
+} from "@/lib/homepage-layout-blocks";
+import type { HomepageStorefrontBlockType } from "@/types/homepage";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 
 export function sortSlides(slides: HeroSlide[]) {
@@ -28,14 +33,19 @@ type HomepageEditorContextValue = {
   setHp: React.Dispatch<React.SetStateAction<HomepageConfig | null>>;
   /** Last saved copy from the server (baseline for discard / dirty). */
   committedHp: HomepageConfig | null;
+  /** Server-side draft vs published (admin only). */
+  cmsMeta: HomepageCmsMeta | null;
   isDirty: boolean;
   discardDraft: () => void;
   load: () => Promise<void>;
   save: () => Promise<void>;
+  /** Promotes saved draft to live storefront homepage. */
+  publish: () => Promise<void>;
   msg: string | null;
   token: string | null;
   moveSlide: (index: number, dir: -1 | 1) => void;
   moveSection: (index: number, dir: -1 | 1) => void;
+  moveStorefrontBlock: (type: HomepageStorefrontBlockType, dir: -1 | 1) => void;
   updateSlide: (id: string, patch: Partial<HeroSlide>) => void;
   updateCategory: (id: string, patch: Partial<CategoryCard>) => void;
   updateCollectionsCategory: (
@@ -50,20 +60,25 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
   const { token } = useAuth();
   const [hp, setHp] = useState<HomepageConfig | null>(null);
   const [committedHp, setCommittedHp] = useState<HomepageConfig | null>(null);
+  const [cmsMeta, setCmsMeta] = useState<HomepageCmsMeta | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const data = await apiFetch<{ settings: { homepage: HomepageConfig } }>("/content/site");
+    const data = await apiFetch<{
+      settings: { homepage: HomepageConfig; cms?: HomepageCmsMeta };
+    }>("/content/site", { token: token ?? undefined });
     const next = data.settings.homepage;
     const snap = structuredClone(next);
     setHp(snap);
     setCommittedHp(structuredClone(next));
-  }, []);
+    setCmsMeta(data.settings.cms ?? null);
+  }, [token]);
 
   useEffect(() => {
     void load().catch(() => {
       setHp(null);
       setCommittedHp(null);
+      setCmsMeta(null);
     });
   }, [load]);
 
@@ -90,10 +105,18 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       token,
       body: JSON.stringify({ homepage: hp }),
     });
-    publishStorefrontSettingsChanged();
-    setMsg("Saved.");
+    setMsg("Draft saved.");
     await load();
   }, [token, hp, load]);
+
+  const publish = useCallback(async () => {
+    if (!token) return;
+    setMsg(null);
+    await apiFetch("/content/site/publish", { method: "POST", token });
+    publishStorefrontSettingsChanged();
+    setMsg("Published to storefront.");
+    await load();
+  }, [token, load]);
 
   const moveSlide = useCallback((index: number, dir: -1 | 1) => {
     setHp((prev) => {
@@ -119,14 +142,16 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
     setHp((prev) => {
       if (!prev) return prev;
       const list = sortSections(prev.sectionsOrder);
-      const j = index + dir;
-      if (j < 0 || j >= list.length) return prev;
-      const swapped = [...list];
-      [swapped[index], swapped[j]] = [swapped[j], swapped[index]];
-      return withRefreshedLayoutBlocks({
-        ...prev,
-        sectionsOrder: swapped.map((s, i) => ({ ...s, order: i })),
-      });
+      const entry = list[index];
+      if (!entry) return prev;
+      return moveHomepageStorefrontBlock(prev, entry.id, dir);
+    });
+  }, []);
+
+  const moveStorefrontBlock = useCallback((type: HomepageStorefrontBlockType, dir: -1 | 1) => {
+    setHp((prev) => {
+      if (!prev) return prev;
+      return moveHomepageStorefrontBlock(prev, type, dir);
     });
   }, []);
 
@@ -179,14 +204,17 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       hp,
       setHp,
       committedHp,
+      cmsMeta,
       isDirty,
       discardDraft,
       load,
       save,
+      publish,
       msg,
       token,
       moveSlide,
       moveSection,
+      moveStorefrontBlock,
       updateSlide,
       updateCategory,
       updateCollectionsCategory,
@@ -194,14 +222,17 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
     [
       hp,
       committedHp,
+      cmsMeta,
       isDirty,
       discardDraft,
       load,
       save,
+      publish,
       msg,
       token,
       moveSlide,
       moveSection,
+      moveStorefrontBlock,
       updateSlide,
       updateCategory,
       updateCollectionsCategory,

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
-import { apiFetch, googleAuthUrl } from "@/lib/api";
+import { apiFetch, googleAuthUrl, ApiError } from "@/lib/api";
 import type { User } from "@/types";
 
 export default function LoginPage() {
@@ -26,9 +26,18 @@ function LoginInner() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
-  const [email, setEmail] = useState("client@nayastudio.com");
+  const [email, setEmail] = useState("client@nayastory.com");
   const [password, setPassword] = useState("Client123!");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const err = params.get("error");
+    if (err === "admin_portal") {
+      setError("Administrator accounts must sign in at /admin/login.");
+    } else if (err === "google") {
+      setError("Google sign-in failed. Please try again.");
+    }
+  }, [params]);
 
   useEffect(() => {
     const token = params.get("token");
@@ -38,7 +47,7 @@ function LoginInner() {
     void (async () => {
       try {
         const me = await apiFetch<{ user: User }>("/auth/me", { token });
-        window.location.href = me.user.role === "admin" ? "/admin" : "/account";
+        window.location.href = "/account";
       } catch {
         window.location.href = "/account";
       }
@@ -46,7 +55,7 @@ function LoginInner() {
   }, [params]);
 
   useEffect(() => {
-    if (!loading && user) router.replace(user.role === "admin" ? "/admin" : "/account");
+    if (!loading && user) router.replace("/account");
   }, [loading, user, router]);
 
   return (
@@ -63,10 +72,14 @@ function LoginInner() {
           e.preventDefault();
           setError(null);
           try {
-            const signedIn = await login(email, password);
-            router.push(signedIn.role === "admin" ? "/admin" : "/account");
-          } catch {
-            setError("Unable to sign in — check your credentials.");
+            await login(email, password);
+            router.push("/account");
+          } catch (err) {
+            setError(
+              err instanceof ApiError
+                ? err.message
+                : "Unable to sign in — check your credentials.",
+            );
           }
         }}
       >

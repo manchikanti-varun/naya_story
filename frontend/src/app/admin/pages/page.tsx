@@ -1,67 +1,64 @@
 import Link from "next/link";
-import { ArrowUpRight, Home, ImageIcon, LayoutGrid, Package } from "lucide-react";
+import { ArrowUpRight, Globe, Home, ImageIcon, Package, ShoppingBag } from "lucide-react";
+import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
+import { AdminCard } from "@/components/admin/ui/AdminCard";
+
+import { websitePagesUrl } from "@/lib/admin/website-pages";
 
 const cards = [
   {
-    title: "Storefront CMS",
-    description:
-      "Homepage block map, section editors, and live preview — the operating center for everything shoppers see.",
-    href: "/admin/storefront",
+    title: "Website → Pages",
+    description: "Homepage builder, collections browse, New In, and Our Story.",
+    href: websitePagesUrl("homepage"),
     icon: Home,
   },
   {
     title: "Products",
-    description: "Global catalog — single source for everything on the store. Rails below pick from here (no duplicate IDs).",
+    description: "Catalog — what you sell. Homepage rails pick from here.",
     href: "/admin/products",
     icon: Package,
   },
   {
+    title: "Orders",
+    description: "Fulfillment status and tracking.",
+    href: "/admin/orders",
+    icon: ShoppingBag,
+  },
+  {
     title: "Media library",
-    description: "Reusable banner and campaign URLs to paste into the site editor or product media.",
+    description: "Reusable image URLs for CMS and products.",
     href: "/admin/media",
     icon: ImageIcon,
   },
-  {
-    title: "Collections page block",
-    description: "Jump straight to the collections browse settings (tabs, copy, limits).",
-    href: "/admin/content/collections",
-    icon: LayoutGrid,
-  },
 ];
 
-export default function AdminPagesHub() {
+export default function AdminMapPage() {
   return (
-    <div className="space-y-10">
-      <header>
-        <p className="font-sans text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Reference</p>
-        <h1 className="mt-2 font-display text-3xl text-slate-900 md:text-4xl">Admin map</h1>
-        <p className="mt-3 max-w-2xl font-sans text-sm leading-relaxed text-slate-600">
-          Sidebar groups mirror how the app is built: <strong className="font-medium text-slate-800">Catalog</strong>,{" "}
-          <strong className="font-medium text-slate-800">Storefront</strong>, then{" "}
-          <strong className="font-medium text-slate-800">Customers & orders</strong>.
-        </p>
-      </header>
-      <div className="grid gap-5 md:grid-cols-2">
+    <AdminPageLayout
+      eyebrow="System"
+      title="Admin map"
+      maxWidthClass="max-w-3xl"
+      description="Quick reference — sidebar follows workflows: Website, Products, Orders, Customers, Marketing."
+    >
+      <ul className="grid gap-4 sm:grid-cols-2">
         {cards.map(({ title, description, href, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300 hover:shadow-md"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <span className="inline-flex rounded-xl bg-slate-100 p-2.5 text-slate-700">
-                <Icon className="h-5 w-5" strokeWidth={1.5} />
-              </span>
-              <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-slate-900" />
-            </div>
-            <h2 className="mt-4 font-display text-xl text-slate-900">{title}</h2>
-            <p className="mt-2 flex-1 font-sans text-sm leading-relaxed text-slate-600">{description}</p>
-            <span className="mt-5 font-sans text-xs font-semibold uppercase tracking-[0.2em] text-slate-900">
-              Open
-            </span>
-          </Link>
+          <li key={href}>
+            <Link href={href} className="group block h-full">
+              <AdminCard className="flex h-full flex-col transition hover:border-[var(--admin-border-strong)]" padding="md">
+                <Icon className="h-5 w-5 text-[var(--admin-accent)]" strokeWidth={1.5} aria-hidden />
+                <h2 className="mt-3 font-sans text-sm font-semibold text-[var(--admin-ink)]">{title}</h2>
+                <p className="mt-2 flex-1 font-sans text-xs text-[var(--admin-muted)]">{description}</p>
+                <ArrowUpRight className="mt-3 h-4 w-4 text-[var(--admin-faint)] group-hover:text-[var(--admin-ink)]" />
+              </AdminCard>
+            </Link>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+      <p className="font-sans text-xs text-[var(--admin-muted)]">
+        <Globe className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+        Legacy URLs under <code className="font-mono">/admin/content/*</code> and{" "}
+        <code className="font-mono">/admin/storefront/*</code> redirect automatically.
+      </p>
+    </AdminPageLayout>
   );
 }

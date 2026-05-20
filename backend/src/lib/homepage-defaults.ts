@@ -7,6 +7,8 @@ import type {
   StorefrontTheme,
 } from "../types/homepage.js";
 import { mergeLayoutBlocksIntoHomepage } from "./layout-blocks.js";
+import { defaultHomepageEditorial } from "./editorial-defaults.js";
+import type { HomepageEditorialConfig } from "../types/homepage.js";
 
 function sanitizeHexColor(input: string): string | null {
   const s = input.trim();
@@ -46,7 +48,35 @@ const SECTION_TEXT_SECTION_KEYS: HomepageSectionTextKey[] = [
   "categories",
   "newsletter",
   "promoBar",
+  "brandStory",
+  "lookbook",
+  "craftsmanship",
+  "asSeenIn",
+  "editorialJournal",
+  "luxuryPromise",
+  "instagramGallery",
 ];
+
+function mergeEditorial(raw: unknown): HomepageEditorialConfig {
+  const d = defaultHomepageEditorial();
+  if (!raw || typeof raw !== "object") return d;
+  const r = raw as Record<string, unknown>;
+  const pick = <K extends keyof HomepageEditorialConfig>(key: K): HomepageEditorialConfig[K] => {
+    const base = d[key];
+    const patch = r[key];
+    if (!patch || typeof patch !== "object") return base;
+    return { ...base, ...(patch as object) } as HomepageEditorialConfig[K];
+  };
+  return {
+    brandStory: pick("brandStory"),
+    lookbook: pick("lookbook"),
+    craftsmanship: pick("craftsmanship"),
+    asSeenIn: pick("asSeenIn"),
+    editorialJournal: pick("editorialJournal"),
+    luxuryPromise: pick("luxuryPromise"),
+    instagramGallery: pick("instagramGallery"),
+  };
+}
 
 function mergeOneSectionTextColors(raw: unknown): SectionTextColors | undefined {
   if (!raw || typeof raw !== "object") return undefined;
@@ -160,7 +190,7 @@ const defaultCategories: CategoryCard[] = [
 export function defaultHomepageConfig(): HomepageConfig {
   return {
     theme: {},
-    heroTitle: "Naya Studio",
+    heroTitle: "Naya Story",
     heroSubtitle: "Timeless silhouettes for modern femininity.",
     heroImage: IMG("photo-1521572163474-6864f9cf17ab"),
     announcements: [],
@@ -181,6 +211,7 @@ export function defaultHomepageConfig(): HomepageConfig {
       { id: "categories", enabled: true, order: 2 },
       { id: "newsletter", enabled: true, order: 3 },
     ],
+    editorial: defaultHomepageEditorial(),
     bestsellers: {
       enabled: true,
       title: "Our Bestsellers",
@@ -209,15 +240,16 @@ export function defaultHomepageConfig(): HomepageConfig {
     },
     newsletter: {
       enabled: true,
-      title: "Join the Naya world",
+      title: "Notes from Naya Story",
       description:
         "Receive updates on new collections and exclusive releases.",
       placeholder: "Email address",
       buttonLabel: "Subscribe",
     },
     collectionsPage: {
+      kicker: "Naya Story",
       title: "Collections",
-      subtitle: "Explore curated silhouettes from Naya Studio.",
+      subtitle: "Explore curated silhouettes from Naya Story.",
       paginationLimit: 16,
       usePinnedProducts: false,
       pinnedProductIds: [],
@@ -253,6 +285,37 @@ export function defaultHomepageConfig(): HomepageConfig {
           order: 3,
         },
       ],
+      filters: {
+        showSize: true,
+        showColor: true,
+        showPrice: true,
+        showAvailability: true,
+        showSort: true,
+        sizeOptions: ["XS", "S", "M", "L", "XL"],
+        colorOptions: ["Ivory", "Sand", "Noir", "Rose"],
+        priceBands: [
+          { id: "0-5000", label: "Under ₹5,000", min: 0, max: 5000, enabled: true },
+          { id: "5000-10000", label: "₹5,000 – ₹10,000", min: 5000, max: 10000, enabled: true },
+          { id: "10000-25000", label: "₹10,000 – ₹25,000", min: 10000, max: 25000, enabled: true },
+          { id: "25000-50000", label: "₹25,000 – ₹50,000", min: 25000, max: 50000, enabled: true },
+        ],
+        sortOptions: [
+          { value: "newest", label: "Newest", enabled: true },
+          { value: "popular", label: "Bestselling", enabled: true },
+          { value: "price_asc", label: "Price low–high", enabled: true },
+          { value: "price_desc", label: "Price high–low", enabled: true },
+        ],
+        defaultSort: "newest",
+      },
+      messages: {
+        loading: "Curating pieces…",
+        empty: "No garments matched — soften your filters.",
+        mobileFiltersLabel: "Filters & Sort",
+        mobileDrawerTitle: "Refine",
+        availabilityInStock: "In stock",
+        availabilityAll: "All",
+        filterAll: "All",
+      },
     },
     ourStoryPage: {
       title: "Our Story",
@@ -265,8 +328,8 @@ export function defaultHomepageConfig(): HomepageConfig {
           id: "philosophy",
           enabled: true,
           order: 0,
-          heading: "A language of quiet luxury",
-          body: "Naya Studio is built on an intentional rhythm - fewer pieces, deeper meaning. We design for women who value softness, clarity, and timeless presence.",
+          heading: "Our philosophy",
+          body: "Naya Story is built on an intentional rhythm - fewer pieces, deeper meaning. We design for women who value softness, clarity, and timeless presence.",
           secondaryBody:
             "Each silhouette is composed to move with the body, balancing elegance with ease from morning to evening.",
           image: IMG("photo-1483985988355-763728e1935b", 1400),
@@ -276,7 +339,7 @@ export function defaultHomepageConfig(): HomepageConfig {
           id: "founder",
           enabled: true,
           order: 1,
-          heading: "The vision behind Naya",
+          heading: "The vision behind Naya Story",
           body: "What began as sketches in a quiet studio became a contemporary wardrobe shaped by craft, femininity, and emotional detail.",
           secondaryBody:
             "Our founder believes luxury should feel intimate - a garment that remembers your movement and reveals confidence without effort.",
@@ -288,7 +351,7 @@ export function defaultHomepageConfig(): HomepageConfig {
           enabled: true,
           order: 2,
           heading: "Moments, textures, movement",
-          body: "From drape to daylight, every frame tells the Naya mood - calm, cinematic, and deeply feminine.",
+          body: "From drape to daylight, every frame tells the Naya Story mood - calm, cinematic, and deeply feminine.",
           gallery: [
             IMG("photo-1512436991641-6745cdb1723f", 1200),
             IMG("photo-1496747611175-843222e1935b", 1200),
@@ -320,7 +383,7 @@ export function defaultHomepageConfig(): HomepageConfig {
           enabled: true,
           order: 5,
           heading: "A wardrobe for becoming",
-          body: "Naya Studio is a world of quiet confidence, where modern design meets timeless emotion.",
+          body: "Naya Story is a world of quiet confidence, where modern design meets timeless emotion.",
           image: IMG("photo-1469334031218-e382a71b716b", 1800),
           imageAlt: "Closing campaign moment",
         },
@@ -328,9 +391,9 @@ export function defaultHomepageConfig(): HomepageConfig {
     },
     footer: {
       logoUrl: "/naya_logo.png",
-      logoAlt: "Naya Studio",
+      logoAlt: "Naya Story",
       brandDescription:
-        "Naya Studio creates timeless silhouettes for modern femininity.",
+        "Naya Story creates timeless silhouettes for modern femininity.",
       supportingText:
         "Designed with intention, elegance, and everyday luxury.",
       legalTitle: "Legal",
@@ -361,7 +424,7 @@ export function defaultHomepageConfig(): HomepageConfig {
         },
       ],
       contactTitle: "Contact",
-      email: "hello@nayastudio.com",
+      email: "hello@nayastory.com",
       phone: "+91 00000 00000",
       location: "Mumbai, India",
       socialLinks: [
@@ -384,21 +447,8 @@ export function defaultHomepageConfig(): HomepageConfig {
           order: 2,
         },
       ],
-      ctaLinks: [
-        {
-          label: "Explore Collections",
-          href: "/collections",
-          enabled: true,
-          order: 0,
-        },
-        {
-          label: "Our Story",
-          href: "/our-story",
-          enabled: true,
-          order: 1,
-        },
-      ],
-      copyrightText: "© 2026 Naya Studio. All rights reserved.",
+      ctaLinks: [],
+      copyrightText: "© 2026 Naya Story. All rights reserved.",
     },
   };
 }
@@ -415,10 +465,20 @@ function mergeSlides(raw: unknown): HeroSlide[] {
         order: typeof s.order === "number" ? s.order : i,
         desktopImage: String(s.desktopImage || base.desktopImage),
         mobileImage: String(s.mobileImage ?? ""),
+        kicker: typeof s.kicker === "string" ? s.kicker : "",
         heading: String(s.heading || base.heading),
         subheading: String(s.subheading ?? base.subheading ?? ""),
         ctaLabel: String(s.ctaLabel ?? base.ctaLabel ?? ""),
         ctaHref: String(s.ctaHref || base.ctaHref),
+        metaLabel: typeof s.metaLabel === "string" ? s.metaLabel : "",
+        styles:
+          s.styles && typeof s.styles === "object"
+            ? (s.styles as HeroSlide["styles"])
+            : undefined,
+        textColors:
+          s.textColors && typeof s.textColors === "object"
+            ? (s.textColors as HeroSlide["textColors"])
+            : undefined,
       } satisfies HeroSlide;
     });
   return list.sort((a, b) => a.order - b.order);
@@ -472,6 +532,130 @@ function mergeTopPromoBar(
   };
 }
 
+export function mergeCollectionsPage(
+  raw: unknown,
+  defaults: HomepageConfig["collectionsPage"],
+): HomepageConfig["collectionsPage"] {
+  const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const filtersRaw =
+    r.filters && typeof r.filters === "object" ? (r.filters as Record<string, unknown>) : {};
+  const messagesRaw =
+    r.messages && typeof r.messages === "object" ? (r.messages as Record<string, unknown>) : {};
+  const dFilters = defaults.filters!;
+  const dMessages = defaults.messages!;
+
+  const rawCategories = Array.isArray(r.categories) ? r.categories : defaults.categories;
+
+  const priceBands = Array.isArray(filtersRaw.priceBands)
+    ? (filtersRaw.priceBands as Record<string, unknown>[])
+        .filter((b) => Boolean(b) && typeof b === "object")
+        .map((b, i) => {
+          const fb = dFilters.priceBands[i] ?? dFilters.priceBands[0]!;
+          return {
+            id: String(b.id ?? fb.id),
+            label: String(b.label ?? fb.label),
+            min: typeof b.min === "number" ? b.min : fb.min,
+            max: typeof b.max === "number" ? b.max : fb.max,
+            enabled: b.enabled !== false,
+          };
+        })
+    : dFilters.priceBands;
+
+  const sortValues = new Set(["newest", "popular", "price_asc", "price_desc"]);
+  const sortOptions = Array.isArray(filtersRaw.sortOptions)
+    ? (filtersRaw.sortOptions as Record<string, unknown>[])
+        .filter((s) => Boolean(s) && typeof s === "object")
+        .map((s, i) => {
+          const fb = dFilters.sortOptions[i] ?? dFilters.sortOptions[0]!;
+          const valueRaw = String(s.value ?? fb.value);
+          const value = sortValues.has(valueRaw) ? (valueRaw as typeof fb.value) : fb.value;
+          return {
+            value,
+            label: String(s.label ?? fb.label),
+            enabled: s.enabled !== false,
+          };
+        })
+    : dFilters.sortOptions;
+
+  const defaultSortRaw = String(filtersRaw.defaultSort ?? dFilters.defaultSort);
+  const defaultSort = sortValues.has(defaultSortRaw)
+    ? (defaultSortRaw as typeof dFilters.defaultSort)
+    : dFilters.defaultSort;
+
+  return {
+    kicker: typeof r.kicker === "string" ? r.kicker : defaults.kicker,
+    title: typeof r.title === "string" ? r.title : defaults.title,
+    subtitle: typeof r.subtitle === "string" ? r.subtitle : defaults.subtitle,
+    paginationLimit:
+      typeof r.paginationLimit === "number"
+        ? Math.min(Math.max(r.paginationLimit, 8), 48)
+        : defaults.paginationLimit,
+    usePinnedProducts: r.usePinnedProducts === true,
+    pinnedProductIds: Array.isArray(r.pinnedProductIds)
+      ? r.pinnedProductIds.map(String).filter(Boolean)
+      : [],
+    categories: rawCategories
+      .filter((entry) => Boolean(entry) && typeof entry === "object")
+      .map((entry, index) => {
+        const safe = entry as Record<string, unknown>;
+        const fallback = defaults.categories[index % defaults.categories.length];
+        const typeRaw = safe.type;
+        const type =
+          typeRaw === "all" || typeRaw === "bestselling" || typeRaw === "category"
+            ? typeRaw
+            : fallback.type;
+        return {
+          id: String(safe.id ?? fallback.id),
+          label: String(safe.label ?? fallback.label),
+          type,
+          value: String(safe.value ?? fallback.value ?? ""),
+          enabled: safe.enabled !== false,
+          order: typeof safe.order === "number" ? safe.order : index,
+        };
+      })
+      .sort((a, b) => a.order - b.order),
+    filters: {
+      showSize: filtersRaw.showSize !== false,
+      showColor: filtersRaw.showColor !== false,
+      showPrice: filtersRaw.showPrice !== false,
+      showAvailability: filtersRaw.showAvailability !== false,
+      showSort: filtersRaw.showSort !== false,
+      sizeOptions: Array.isArray(filtersRaw.sizeOptions)
+        ? filtersRaw.sizeOptions.map(String).filter(Boolean)
+        : dFilters.sizeOptions,
+      colorOptions: Array.isArray(filtersRaw.colorOptions)
+        ? filtersRaw.colorOptions.map(String).filter(Boolean)
+        : dFilters.colorOptions,
+      priceBands: priceBands.length ? priceBands : dFilters.priceBands,
+      sortOptions: sortOptions.length ? sortOptions : dFilters.sortOptions,
+      defaultSort,
+    },
+    messages: {
+      loading:
+        typeof messagesRaw.loading === "string" ? messagesRaw.loading : dMessages.loading,
+      empty: typeof messagesRaw.empty === "string" ? messagesRaw.empty : dMessages.empty,
+      mobileFiltersLabel:
+        typeof messagesRaw.mobileFiltersLabel === "string"
+          ? messagesRaw.mobileFiltersLabel
+          : dMessages.mobileFiltersLabel,
+      mobileDrawerTitle:
+        typeof messagesRaw.mobileDrawerTitle === "string"
+          ? messagesRaw.mobileDrawerTitle
+          : dMessages.mobileDrawerTitle,
+      availabilityInStock:
+        typeof messagesRaw.availabilityInStock === "string"
+          ? messagesRaw.availabilityInStock
+          : dMessages.availabilityInStock,
+      availabilityAll:
+        typeof messagesRaw.availabilityAll === "string"
+          ? messagesRaw.availabilityAll
+          : dMessages.availabilityAll,
+      filterAll:
+        typeof messagesRaw.filterAll === "string" ? messagesRaw.filterAll : dMessages.filterAll,
+    },
+  };
+}
+
 export function mergeHomepageConfig(
   raw: Partial<HomepageConfig> | null | undefined,
 ): HomepageConfig {
@@ -490,13 +674,6 @@ export function mergeHomepageConfig(
   const newIn = { ...d.newIn, ...(r.newIn as object) };
   const catRaw = r.categories as HomepageConfig["categories"] | undefined;
   const newsletter = { ...d.newsletter, ...(r.newsletter as object) };
-  const collectionsPage = {
-    ...d.collectionsPage,
-    ...((r.collectionsPage as object) ?? {}),
-  } as HomepageConfig["collectionsPage"];
-  const rawCategories = Array.isArray(collectionsPage.categories)
-    ? collectionsPage.categories
-    : d.collectionsPage.categories;
   const ourStoryPage = {
     ...d.ourStoryPage,
     ...((r.ourStoryPage as object) ?? {}),
@@ -520,9 +697,14 @@ export function mergeHomepageConfig(
         typeof carousel.autoplayMs === "number"
           ? carousel.autoplayMs
           : d.carousel.autoplayMs,
+      styles:
+        carousel.styles && typeof carousel.styles === "object"
+          ? (carousel.styles as HomepageConfig["carousel"]["styles"])
+          : d.carousel.styles,
       slides: mergeSlides(carousel.slides),
     },
     sectionsOrder,
+    editorial: mergeEditorial(r.editorial),
     bestsellers: {
       ...bestsellers,
       productIds: Array.isArray(bestsellers.productIds)
@@ -542,44 +724,7 @@ export function mergeHomepageConfig(
       items: mergeCategories(catRaw?.items),
     },
     newsletter,
-    collectionsPage: {
-      title:
-        typeof collectionsPage.title === "string"
-          ? collectionsPage.title
-          : d.collectionsPage.title,
-      subtitle:
-        typeof collectionsPage.subtitle === "string"
-          ? collectionsPage.subtitle
-          : d.collectionsPage.subtitle,
-      paginationLimit:
-        typeof collectionsPage.paginationLimit === "number"
-          ? Math.min(Math.max(collectionsPage.paginationLimit, 8), 48)
-          : d.collectionsPage.paginationLimit,
-      usePinnedProducts: collectionsPage.usePinnedProducts === true,
-      pinnedProductIds: Array.isArray(collectionsPage.pinnedProductIds)
-        ? collectionsPage.pinnedProductIds.map(String).filter(Boolean)
-        : [],
-      categories: rawCategories
-        .filter((entry) => Boolean(entry) && typeof entry === "object")
-        .map((entry, index) => {
-          const safe = entry as Record<string, unknown>;
-          const fallback = d.collectionsPage.categories[index % d.collectionsPage.categories.length];
-          const typeRaw = safe.type;
-          const type =
-            typeRaw === "all" || typeRaw === "bestselling" || typeRaw === "category"
-              ? typeRaw
-              : fallback.type;
-          return {
-            id: String(safe.id ?? fallback.id),
-            label: String(safe.label ?? fallback.label),
-            type,
-            value: String(safe.value ?? fallback.value ?? ""),
-            enabled: safe.enabled !== false,
-            order: typeof safe.order === "number" ? safe.order : index,
-          };
-        })
-        .sort((a, b) => a.order - b.order),
-    },
+    collectionsPage: mergeCollectionsPage(r.collectionsPage, d.collectionsPage),
     ourStoryPage: {
       title:
         typeof ourStoryPage.title === "string" ? ourStoryPage.title : d.ourStoryPage.title,

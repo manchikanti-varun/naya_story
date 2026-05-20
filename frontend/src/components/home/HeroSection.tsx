@@ -1,9 +1,10 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
+import { SITE_NAME } from "@/lib/constants";
 
 export function HeroSection() {
   const ref = useRef<HTMLElement>(null);
@@ -18,7 +19,7 @@ export function HeroSection() {
       <motion.div style={{ y }} className="absolute inset-0">
         <Image
           src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1920&q=85"
-          alt="Naya Studio hero"
+          alt={`${SITE_NAME} hero`}
           fill
           priority
           className="object-cover opacity-90 animate-slow-zoom"
@@ -27,7 +28,7 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-ink/55 via-ink/35 to-ivory/90" />
       </motion.div>
 
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1400px] flex-col justify-end px-6 pb-24 pt-32 md:px-10 md:pb-32">
+      <div className="lux-shell relative z-10 flex min-h-[100svh] flex-col justify-end pb-24 pt-32 md:pb-32">
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
@@ -35,7 +36,7 @@ export function HeroSection() {
           className="max-w-3xl text-balance"
         >
           <p className="font-sans text-[11px] uppercase tracking-[0.42em] text-ivory/80">
-            Naya Studio
+            {SITE_NAME}
           </p>
           <h1 className="mt-6 font-display text-[clamp(2.75rem,7vw,5rem)] font-normal leading-[1.05] text-ivory">
             Timeless silhouettes for modern femininity.

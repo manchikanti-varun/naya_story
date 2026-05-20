@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { HomepageConfig } from "@/types/homepage";
+import { SITE_NAME } from "@/lib/constants";
 
 type StorySection = HomepageConfig["ourStoryPage"]["sections"][number];
 
@@ -19,7 +20,7 @@ export function OurStoryPageView({ story }: { story: HomepageConfig["ourStoryPag
   const closing = get("closing");
 
   return (
-    <div className="bg-[#f5f1ea] text-ink">
+    <div className="bg-ivory text-ink">
       <section className="relative min-h-[78vh] overflow-hidden md:min-h-[88vh]">
         <Image
           src={story.heroImage}
@@ -38,7 +39,7 @@ export function OurStoryPageView({ story }: { story: HomepageConfig["ourStoryPag
         >
           <div className="max-w-3xl text-ivory">
             <p className="lux-kicker text-[#f0debd]">
-              Naya Studio
+              {SITE_NAME}
             </p>
             <h1 className="mt-5 font-display text-6xl leading-[0.9] md:text-8xl">{story.title}</h1>
             <p className="mt-6 max-w-2xl font-sans text-base leading-relaxed text-[#f4ede1] md:text-lg">

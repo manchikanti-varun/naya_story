@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Product } from "@/types";
-import type { SectionTextColors } from "@/types/homepage";
+import type { SectionDesign, SectionTextColors } from "@/types/homepage";
+import { SectionShell } from "@/components/cms/SectionShell";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { sectionTextStyles } from "@/lib/section-text-styles";
 import { cn } from "@/lib/cn";
@@ -19,6 +20,7 @@ type Props = {
   compactTop?: boolean;
   compactBottom?: boolean;
   sectionText?: SectionTextColors | null;
+  design?: SectionDesign | null;
 };
 
 export function HomeProductRail({
@@ -31,10 +33,12 @@ export function HomeProductRail({
   compactTop = false,
   compactBottom = false,
   sectionText,
+  design,
 }: Props) {
   const st = sectionTextStyles(sectionText);
   return (
-    <section
+    <SectionShell
+      design={design}
       className={cn(
         compactTop
           ? compactBottom
@@ -43,7 +47,7 @@ export function HomeProductRail({
           : compactBottom
             ? "pt-section pb-10 md:pb-14"
             : "py-section",
-        tone === "mist" ? "bg-ivory-muted/80" : "bg-ivory",
+        !design?.backgroundColor && (tone === "mist" ? "bg-ivory-muted/80" : "bg-ivory"),
       )}
     >
       <div className="lux-shell">
@@ -53,7 +57,7 @@ export function HomeProductRail({
               Curated
             </p>
             <h2
-              className="mt-3 font-display text-[clamp(2rem,4vw,3.5rem)] font-normal leading-[1.04] tracking-[-0.02em] text-ink"
+              className="lux-heading-rail mt-2"
               style={st.heading}
             >
               {title}
@@ -72,7 +76,7 @@ export function HomeProductRail({
             hidden: {},
             show: { transition: { staggerChildren: 0.06 } },
           }}
-          className="mt-16 grid grid-cols-2 gap-x-5 gap-y-12 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-14"
+          className="mt-10 grid grid-cols-2 gap-x-3 gap-y-10 sm:mt-16 sm:gap-x-5 sm:gap-y-12 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-14"
         >
           {products.map((p) => (
             <motion.div
@@ -103,6 +107,6 @@ export function HomeProductRail({
           </div>
         ) : null}
       </div>
-    </section>
+    </SectionShell>
   );
 }

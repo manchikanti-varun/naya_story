@@ -36,6 +36,9 @@ const iconMotion = {
   transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
 };
 
+const cartCountBadgeClass =
+  "absolute -right-1 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold px-1 font-sans text-[10px] font-semibold leading-none tabular-nums text-ivory shadow-[0_1px_3px_rgba(44,40,37,0.2)] ring-2 ring-ivory";
+
 export function StoreHeader({
   topPromoBar,
   topPromoTextColors,
@@ -82,15 +85,15 @@ export function StoreHeader({
     setWishOpen((v) => !v);
   };
 
-  const iconClass = cn(iconClassBase, "text-black hover:text-gold");
+  const iconClass = cn(iconClassBase, "text-ink hover:text-gold");
 
   const headerSurface = cn(
     "fixed inset-x-0 top-[var(--store-promo-bar-h,0px)] z-50 border-b transition-[border-color,background-color,box-shadow,backdrop-filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
     scrolled
-      ? "border-ivory-deep/35 bg-[#F5F1EC]/94 shadow-[0_1px_0_rgba(232,224,214,0.45)] backdrop-blur-xl"
+      ? "border-ivory-deep/35 bg-ivory/94 shadow-[0_1px_0_rgba(232,224,214,0.45)] backdrop-blur-xl"
       : overDarkBanner
-        ? "border-transparent bg-[#faf8f4]/94 backdrop-blur-md"
-      : "border-transparent bg-[#faf8f4]/92 backdrop-blur-md",
+        ? "border-transparent bg-ivory/90 backdrop-blur-md"
+        : "border-transparent bg-ivory/92 backdrop-blur-md",
   );
 
   return (
@@ -144,7 +147,7 @@ export function StoreHeader({
                 type="button"
                 {...iconMotion}
                 className={cn(iconClass, "relative")}
-                aria-label="Open cart"
+                aria-label={count > 0 ? `Open cart, ${count} item${count === 1 ? "" : "s"}` : "Open cart"}
                 onClick={() => openCart()}
               >
                 <ShoppingBag
@@ -152,7 +155,7 @@ export function StoreHeader({
                   strokeWidth={1.05}
                 />
                 {count > 0 ? (
-                  <span className="absolute right-1 top-1 flex h-3 min-w-3 items-center justify-center rounded-full bg-gold/14 px-0.5 font-sans text-[7px] font-medium tabular-nums text-gold/95">
+                  <span className={cartCountBadgeClass} aria-hidden>
                     {count > 9 ? "9+" : count}
                   </span>
                 ) : null}
@@ -261,7 +264,7 @@ export function StoreHeader({
                     strokeWidth={1.05}
                   />
                   {wishCount > 0 ? (
-                    <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-gold/45 ring-2 ring-[#F5F1EC]/90" />
+                    <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-gold/45 ring-2 ring-ivory/90" />
                   ) : null}
                 </motion.button>
                 <WishlistPop
@@ -274,7 +277,7 @@ export function StoreHeader({
                 type="button"
                 {...iconMotion}
                 className={cn(iconClass, "relative")}
-                aria-label="Open cart"
+                aria-label={count > 0 ? `Open cart, ${count} item${count === 1 ? "" : "s"}` : "Open cart"}
                 onClick={() => openCart()}
               >
                 <ShoppingBag
@@ -282,7 +285,7 @@ export function StoreHeader({
                   strokeWidth={1.05}
                 />
                 {count > 0 ? (
-                  <span className="absolute right-0.5 top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-gold/12 px-1 font-sans text-[8px] font-medium tabular-nums text-gold">
+                  <span className={cartCountBadgeClass} aria-hidden>
                     {count > 9 ? "9+" : count}
                   </span>
                 ) : null}

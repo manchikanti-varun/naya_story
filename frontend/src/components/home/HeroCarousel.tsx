@@ -4,7 +4,18 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { HeroSlide, SectionTextColors } from "@/types/homepage";
+import type { HeroSlide, SectionDesign, SectionTextColors } from "@/types/homepage";
+import { SITE_NAME } from "@/lib/constants";
+import {
+  heroCtaStyle,
+  heroHeadingStyle,
+  heroKickerStyle,
+  heroOverlayStyle,
+  heroSubheadingStyle,
+  mergeSectionDesign,
+  mergeSectionTextColors,
+  sectionDesignStyle,
+} from "@/lib/cms/section-design";
 import { sectionTextStyles } from "@/lib/section-text-styles";
 import { cn } from "@/lib/cn";
 
@@ -13,11 +24,12 @@ const easeLux = [0.22, 1, 0.36, 1] as const;
 type Props = {
   slides: HeroSlide[];
   autoplayMs: number;
-  /** CMS hex overrides for hero copy (kicker, heading, subheading, link). */
+  carouselStyles?: SectionDesign | null;
+  /** CMS hex overrides for hero copy (fallback when slide has no override). */
   sectionText?: SectionTextColors | null;
 };
 
-export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
+export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }: Props) {
   const active = [...slides]
     .filter((s) => s.enabled)
     .sort((a, b) => a.order - b.order);
@@ -27,7 +39,12 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
   const count = active.length || 1;
   const safeIndex = ((index % count) + count) % count;
   const slide = active[safeIndex] ?? active[0];
-  const st = sectionTextStyles(sectionText);
+
+  const slideDesign = mergeSectionDesign(carouselStyles, slide?.styles);
+  const mergedText = mergeSectionTextColors(sectionText, slide?.textColors);
+  const st = sectionTextStyles(mergedText);
+  const overlayCustom = heroOverlayStyle(slideDesign);
+  const sectionStyle = sectionDesignStyle(slideDesign);
 
   const go = useCallback(
     (dir: -1 | 1) => {
@@ -45,8 +62,8 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
 
   if (!slide) {
     return (
-      <section className="relative min-h-[100svh] bg-[#f2efe9] md:min-h-[100dvh]">
-        <div className="flex min-h-[100svh] items-center justify-center font-display text-2xl font-light text-ink-muted md:min-h-[100dvh]">
+      <section className="relative min-h-[var(--store-hero-min-h)] bg-[#f2efe9]">
+        <div className="flex min-h-[var(--store-hero-min-h)] items-center justify-center font-display text-xl font-light text-ink-muted">
           Add hero slides in the admin studio.
         </div>
       </section>
@@ -55,9 +72,20 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
 
   const desktop = slide.desktopImage?.trim() || "";
   const mobile = slide.mobileImage?.trim() || desktop;
+  const kickerText =
+    slide.kicker?.trim() || `${SITE_NAME} — ${String(safeIndex + 1).padStart(2, "0")}`;
+  const alignClass =
+    slideDesign?.align === "center"
+      ? "text-center items-center"
+      : slideDesign?.align === "right"
+        ? "text-right items-end"
+        : "text-left";
 
   return (
-    <section className="relative min-h-[100svh] overflow-hidden bg-[#f2efe9] md:min-h-[100dvh]">
+    <section
+      className="relative min-h-[var(--store-hero-min-h)] overflow-hidden bg-[#f2efe9]"
+      style={sectionStyle}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={slide.id}
@@ -75,20 +103,38 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
               className="h-full w-full object-cover object-center animate-slow-zoom"
             />
           </picture>
-          {/* Image-forward: no ivory wash — mobile: soft bottom veil; desktop: narrow left legibility */}
-          <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/48 via-ink/12 to-transparent md:hidden"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 hidden w-[min(55%,500px)] bg-gradient-to-r from-ink/45 via-ink/10 to-transparent md:block"
-            aria-hidden
-          />
+          {overlayCustom ? (
+            <div className="pointer-events-none absolute inset-0" style={overlayCustom} aria-hidden />
+          ) : (
+            <>
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/48 via-ink/12 to-transparent md:hidden"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 hidden w-[min(55%,500px)] bg-gradient-to-r from-ink/45 via-ink/10 to-transparent md:block"
+                aria-hidden
+              />
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
 
+      <motion.div
+        className="pointer-events-none absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 md:bottom-14 md:gap-3"
+        aria-hidden
+      >
+        <span className="font-sans text-[9px] uppercase tracking-[0.32em] text-ivory/55 sm:tracking-[0.4em]">
+          Scroll
+        </span>
+        <span className="h-10 w-px bg-ivory/45 animate-scroll-line md:h-12" />
+      </motion.div>
+
       <div
-        className="relative z-10 mx-auto flex min-h-[100svh] max-w-[1400px] flex-col justify-end px-6 pb-32 pt-28 text-left md:min-h-[100dvh] md:px-12 md:pb-40 md:pt-32 lg:px-16"
+        className={cn(
+          "relative z-10 lux-shell flex min-h-[var(--store-hero-min-h)] flex-col justify-end pb-[max(5.5rem,env(safe-area-inset-bottom))] pt-20 sm:pb-24 sm:pt-24 md:grid md:grid-cols-12 md:items-end md:pb-28 md:pt-28",
+          alignClass,
+        )}
         onTouchStart={(e) => {
           touchStart.current = e.touches[0]?.clientX ?? 0;
         }}
@@ -106,34 +152,39 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 1.15, ease: easeLux }}
-            className="max-w-3xl text-balance md:max-w-[42rem] [text-shadow:0_2px_40px_rgba(0,0,0,0.35)]"
+            className={cn(
+              "max-w-3xl text-balance md:col-span-7 md:max-w-none [text-shadow:0_2px_40px_rgba(0,0,0,0.35)]",
+              slideDesign?.align === "center" && "mx-auto",
+              slideDesign?.align === "right" && "md:col-start-6",
+            )}
+            style={slideDesign?.maxWidth ? { maxWidth: slideDesign.maxWidth } : undefined}
           >
             <p
-              className="font-sans text-[10px] font-light uppercase tracking-[0.48em] text-ivory/80"
-              style={st.kicker}
+              className="lux-hero-kicker [text-shadow:0_1px_24px_rgba(0,0,0,0.35)]"
+              style={heroKickerStyle(slideDesign, st.kicker)}
             >
-              Naya Studio
+              {kickerText}
             </p>
             <h1
-              className="mt-5 font-display text-[clamp(2.35rem,6.2vw,4.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-ivory"
-              style={st.heading}
+              className="lux-hero-title mt-3 sm:mt-4 [text-shadow:0_2px_40px_rgba(0,0,0,0.35)]"
+              style={heroHeadingStyle(slideDesign, st.heading)}
             >
               {slide.heading}
             </h1>
             {slide.subheading ? (
               <p
-                className="mt-5 max-w-xl font-sans text-[15px] font-light leading-relaxed text-ivory/90 md:text-base"
-                style={st.subheading}
+                className="lux-hero-sub mt-5 max-w-xl [text-shadow:0_1px_20px_rgba(0,0,0,0.3)]"
+                style={heroSubheadingStyle(slideDesign, st.subheading)}
               >
                 {slide.subheading}
               </p>
             ) : null}
             {slide.ctaLabel ? (
-              <div className="mt-11 flex flex-wrap gap-4">
+              <div className="mt-8 flex flex-wrap gap-3 sm:mt-11 sm:gap-4">
                 <Link
                   href={slide.ctaHref || "/collections"}
-                  className="rounded-full border border-ivory/45 bg-transparent px-9 py-3.5 font-sans text-[11px] font-light uppercase tracking-[0.3em] text-ivory transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-gold/80 hover:text-gold md:px-11 md:py-4"
-                  style={st.link}
+                  className="lux-hero-cta"
+                  style={heroCtaStyle(slideDesign, st.link)}
                 >
                   {slide.ctaLabel}
                 </Link>
@@ -141,11 +192,27 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
             ) : null}
           </motion.div>
         </AnimatePresence>
+        {slide.metaLabel?.trim() ? (
+          <motion.div
+            key={slide.id + "-meta"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 1 }}
+            className="mt-6 max-w-xs md:col-span-4 md:col-start-9 md:mt-0 md:pb-2 md:text-right"
+          >
+            <p
+              className="lux-hero-kicker text-ivory/55"
+              style={st.kicker}
+            >
+              {slide.metaLabel}
+            </p>
+          </motion.div>
+        ) : null}
       </div>
 
       {count > 1 ? (
         <>
-          <div className="pointer-events-none absolute inset-x-0 bottom-10 z-20 flex justify-start px-6 md:bottom-14 md:px-12 lg:px-16">
+          <div className="pointer-events-none absolute inset-x-0 bottom-[max(5.5rem,env(safe-area-inset-bottom))] z-20 flex justify-between px-4 sm:bottom-10 sm:justify-start sm:px-6 md:bottom-14 md:px-12 lg:px-16">
             <div className="flex gap-2" style={{ pointerEvents: "auto" }}>
               {active.map((s, i) => (
                 <button
@@ -153,7 +220,7 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
                   type="button"
                   aria-label={`Slide ${i + 1}`}
                   className={cn(
-                    "h-1 rounded-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                    "lux-hero-dot",
                     i === safeIndex ? "w-9 bg-ivory" : "w-1.5 bg-ivory/30 hover:bg-ivory/50",
                   )}
                   onClick={() => setIndex(i)}
@@ -164,7 +231,7 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
           <button
             type="button"
             aria-label="Previous slide"
-            className="absolute left-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-ivory/20 bg-ink/15 p-3 text-ivory/90 backdrop-blur-sm transition-all duration-700 hover:border-gold/40 hover:text-gold md:left-6 md:block"
+            className="lux-hero-nav absolute left-2 top-1/2 z-20 -translate-y-1/2 sm:left-3 md:left-6"
             onClick={() => go(-1)}
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.05} />
@@ -172,7 +239,7 @@ export function HeroCarousel({ slides, autoplayMs, sectionText }: Props) {
           <button
             type="button"
             aria-label="Next slide"
-            className="absolute right-3 top-1/2 z-20 hidden -translate-y-1/2 rounded-full border border-ivory/20 bg-ink/15 p-3 text-ivory/90 backdrop-blur-sm transition-all duration-700 hover:border-gold/40 hover:text-gold md:right-6 md:block"
+            className="lux-hero-nav absolute right-2 top-1/2 z-20 -translate-y-1/2 sm:right-3 md:right-6"
             onClick={() => go(1)}
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.05} />

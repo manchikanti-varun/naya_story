@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
+import { CmsColorField } from "@/components/admin/cms/CmsColorField";
 import { sanitizeHexColor } from "@/lib/storefront-theme";
 import type { HomepageSectionTextKey, HomepageConfig, SectionTextColors } from "@/types/homepage";
 
@@ -24,69 +24,14 @@ const SECTION_FIELDS: Record<CmsTextSection, FieldKey[]> = {
   categories: ["kicker", "heading", "subheading", "link"],
   newsletter: ["kicker", "heading", "body", "link"],
   promoBar: ["body", "link"],
+  brandStory: ["kicker", "heading", "body"],
+  lookbook: ["kicker", "heading", "subheading"],
+  craftsmanship: ["kicker", "heading", "body", "link"],
+  asSeenIn: ["kicker"],
+  editorialJournal: ["kicker", "heading", "link"],
+  luxuryPromise: ["kicker", "heading", "body"],
+  instagramGallery: ["kicker", "heading"],
 };
-
-function ColorRow({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [draft, setDraft] = useState(value);
-  useEffect(() => setDraft(value), [value]);
-  const safe = sanitizeHexColor(value) ?? "#2c2825";
-  const commit = () => {
-    const t = draft.trim();
-    if (!t) {
-      onChange("");
-      return;
-    }
-    const h = sanitizeHexColor(t);
-    if (h) onChange(h);
-    else setDraft(value);
-  };
-  return (
-    <label className="block font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
-      {label}
-      <div className="mt-1.5 flex flex-wrap items-center gap-2">
-        <input
-          type="color"
-          aria-label={`${label} color`}
-          className="h-9 w-12 cursor-pointer rounded border border-slate-200 bg-white p-0.5"
-          value={safe}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="#2C2825 or empty"
-          className="min-w-[8rem] flex-1 rounded-lg border border-slate-200 px-2 py-1.5 font-mono text-xs text-slate-800"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              (e.target as HTMLInputElement).blur();
-            }
-          }}
-        />
-        <button
-          type="button"
-          className="rounded-full border border-slate-200 px-2 py-1 text-[10px] uppercase text-slate-600 hover:bg-slate-50"
-          onClick={() => {
-            setDraft("");
-            onChange("");
-          }}
-        >
-          Clear
-        </button>
-      </div>
-    </label>
-  );
-}
 
 export function SectionTypographyFields({
   section,
@@ -128,13 +73,24 @@ export function SectionTypographyFields({
   };
 
   return (
-    <div className="mt-8 rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-5">
-      <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Section typography</p>
-      <p className="mt-2 font-sans text-xs leading-relaxed text-slate-600">{intro}</p>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        {fields.map((fk) => (
-          <ColorRow key={fk} label={LABELS[fk]} value={cur[fk] ?? ""} onChange={(v) => patch(fk, v)} />
-        ))}
+    <div className="admin-cms-group">
+      <div className="admin-cms-group-header">
+        <div>
+          <h4 className="admin-cms-kicker">Section typography</h4>
+          <p className="mt-1.5 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">{intro}</p>
+        </div>
+      </div>
+      <div className="admin-cms-group-body">
+        <div className="grid gap-5 sm:grid-cols-2">
+          {fields.map((fk) => (
+            <CmsColorField
+              key={fk}
+              label={LABELS[fk]}
+              value={cur[fk] ?? ""}
+              onChange={(v) => patch(fk, v)}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

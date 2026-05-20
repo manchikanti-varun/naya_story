@@ -7,6 +7,7 @@ import { Minus, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { lineKey, useCart } from "@/context/cart-context";
 import { cn } from "@/lib/cn";
+import { FREE_SHIPPING_THRESHOLD_INR } from "@/lib/store-shipping";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
 
 export function CartDrawer() {
@@ -22,7 +23,10 @@ export function CartDrawer() {
   } = useCart();
   const [couponInput, setCouponInput] = useState("");
 
-  const shipping = useMemo(() => (subtotal >= 15000 ? 0 : 299), [subtotal]);
+  const shipping = useMemo(
+    () => (subtotal >= FREE_SHIPPING_THRESHOLD_INR ? 0 : 299),
+    [subtotal],
+  );
   const discount = useMemo(() => {
     if (!coupon) return 0;
     const c = coupon.toUpperCase();
@@ -59,7 +63,8 @@ export function CartDrawer() {
           >
             <div className="flex items-center justify-between border-b border-ivory-deep px-6 py-5">
               <div>
-                <p className="font-display text-2xl text-ink">Your bag</p>
+                <p className="lux-kicker">Shopping</p>
+                <h2 className="lux-title-section mt-1">Your bag</h2>
                 <p className="mt-1 font-sans text-xs uppercase tracking-[0.22em] text-ink-soft">
                   {lines.length} item{lines.length === 1 ? "" : "s"}
                 </p>
@@ -77,11 +82,11 @@ export function CartDrawer() {
             <div className="flex-1 overflow-y-auto px-6 py-6">
               {lines.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center gap-6 py-16 text-center">
-                  <p className="font-display text-xl text-ink-muted">Your bag is resting.</p>
+                  <p className="lux-copy text-ink-muted">Your bag is resting.</p>
                   <Link
                     href="/collections"
                     onClick={closeCart}
-                    className="rounded-full border border-gold px-8 py-3 font-sans text-[11px] uppercase tracking-[0.26em] text-gold transition-colors hover:bg-gold hover:text-white"
+                    className="lux-btn-outline"
                   >
                     Explore collections
                   </Link>
@@ -94,7 +99,7 @@ export function CartDrawer() {
                       <li key={key} className="flex gap-4">
                         <div
                           className={cn(
-                            "relative h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-ivory-soft",
+                            "relative h-28 w-24 shrink-0 overflow-hidden rounded-lux bg-ivory-soft",
                             storefrontImageShellClass,
                           )}
                         >
@@ -113,7 +118,7 @@ export function CartDrawer() {
                               <Link
                                 href={`/products/${line.slug}`}
                                 onClick={closeCart}
-                                className="font-display text-lg leading-snug text-ink hover:text-gold"
+                                className="lux-product-name text-lg leading-snug"
                               >
                                 {line.name}
                               </Link>
@@ -180,7 +185,7 @@ export function CartDrawer() {
                     onClick={() => {
                       setCoupon(couponInput.trim() || undefined);
                     }}
-                    className="rounded-full bg-ink px-5 py-3 font-sans text-[11px] uppercase tracking-[0.2em] text-ivory transition-colors hover:bg-gold"
+                    className="lux-btn-ink shrink-0"
                   >
                     Apply
                   </button>
@@ -218,7 +223,7 @@ export function CartDrawer() {
                 <Link
                   href="/checkout"
                   onClick={closeCart}
-                  className="mt-6 flex w-full items-center justify-center rounded-full bg-gold py-4 font-sans text-[11px] uppercase tracking-[0.28em] text-white transition-transform hover:scale-[1.01]"
+                  className="lux-btn-primary mt-6"
                 >
                   Checkout
                 </Link>

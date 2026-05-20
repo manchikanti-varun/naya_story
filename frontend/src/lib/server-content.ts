@@ -1,7 +1,5 @@
 import type { HomepageConfig } from "@/types/homepage";
-
-const apiOrigin =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:4000";
+import { fetchApi } from "@/lib/server-fetch";
 
 export type SiteSettingsPayload = {
   homepage: HomepageConfig;
@@ -10,7 +8,7 @@ export type SiteSettingsPayload = {
 };
 
 export async function getSiteSettings(): Promise<{ settings: SiteSettingsPayload }> {
-  const res = await fetch(`${apiOrigin}/api/content/site`, { cache: "no-store" });
+  const res = await fetchApi("/api/content/site");
   if (!res.ok) throw new Error(`Failed to load site settings (${res.status})`);
   return res.json() as Promise<{ settings: SiteSettingsPayload }>;
 }
@@ -18,7 +16,7 @@ export async function getSiteSettings(): Promise<{ settings: SiteSettingsPayload
 export async function getProductsByIds(ids: string[]): Promise<import("@/types").Product[]> {
   if (ids.length === 0) return [];
   const q = encodeURIComponent(ids.join(","));
-  const res = await fetch(`${apiOrigin}/api/products?ids=${q}`, { cache: "no-store" });
+  const res = await fetchApi(`/api/products?ids=${q}`);
   if (!res.ok) return [];
   const data = (await res.json()) as { products: import("@/types").Product[] };
   return data.products ?? [];

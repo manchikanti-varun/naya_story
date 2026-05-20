@@ -1,8 +1,8 @@
 import type { RequestHandler } from "express";
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
-import jwt from "jsonwebtoken";
 import type { LeanOrder, LeanProduct } from "../lean.js";
+import { verifyAccessToken } from "../lib/accessJwt.js";
 import { Coupon } from "../models/Coupon.js";
 import { Order } from "../models/Order.js";
 import { Product } from "../models/Product.js";
@@ -114,7 +114,7 @@ export function createOrdersRouter(secret: string) {
       let userId: string | undefined;
       if (authHeader?.startsWith("Bearer ")) {
         try {
-          const payload = jwt.verify(authHeader.slice(7), secret) as { sub: string };
+          const payload = verifyAccessToken(authHeader.slice(7), secret);
           userId = payload.sub;
         } catch {
           /* guest checkout */

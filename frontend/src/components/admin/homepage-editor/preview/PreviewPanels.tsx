@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import type { HomepageConfig } from "@/types/homepage";
 import { sortSlides, sortSections } from "@/components/admin/homepage-editor/context";
 import { PreviewCmsImage } from "@/components/admin/homepage-editor/preview/PreviewCmsImage";
+import { useAdminProductCatalog } from "@/hooks/use-admin-product-catalog";
+import { formatProductIdList } from "@/lib/admin/product-catalog";
 import { cn } from "@/lib/cn";
 import type { PreviewSectionSlug } from "@/components/admin/homepage-editor/preview/PreviewSectionNav";
 
@@ -33,6 +35,18 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function Mono({ children }: { children: ReactNode }) {
   return <pre className="mt-1 max-h-48 overflow-auto rounded-lg bg-slate-50 p-3 font-mono text-[11px] leading-relaxed text-slate-700">{children}</pre>;
+}
+
+function PreviewProductList({ ids }: { ids: string[] }) {
+  const { byId, loading } = useAdminProductCatalog();
+  if (ids.length === 0) {
+    return <p className="mt-1 text-sm text-slate-500">No products — rail uses catalog defaults.</p>;
+  }
+  if (loading) {
+    return <p className="mt-1 text-sm text-slate-500">Loading product names…</p>;
+  }
+  const lines = formatProductIdList(ids, byId);
+  return <Mono>{lines.join("\n")}</Mono>;
 }
 
 export function renderPreviewSection(slug: PreviewSectionSlug, hp: HomepageConfig): ReactNode {
@@ -223,12 +237,9 @@ function PreviewBestsellers({ hp }: { hp: HomepageConfig }) {
       <Field label="Visible on homepage">{b.enabled !== false ? "Yes" : "No"}</Field>
       <Field label="Title">{b.title}</Field>
       <Field label="Subtitle">{b.subtitle}</Field>
-      <div>
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-          productIds ({b.productIds.length})
-        </p>
-        {b.productIds.length ? <Mono>{b.productIds.join("\n")}</Mono> : <p className="mt-1 text-sm text-slate-500">No IDs — rail uses catalog defaults.</p>}
-      </div>
+      <Field label={`Products (${b.productIds.length})`}>
+        <PreviewProductList ids={b.productIds} />
+      </Field>
     </PanelShell>
   );
 }
@@ -242,12 +253,9 @@ function PreviewNewInHome({ hp }: { hp: HomepageConfig }) {
       <Field label="Subtitle">{n.subtitle}</Field>
       <Field label="CTA label">{n.ctaLabel}</Field>
       <Field label="CTA href">{n.ctaHref}</Field>
-      <div>
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-          productIds ({n.productIds.length})
-        </p>
-        {n.productIds.length ? <Mono>{n.productIds.join("\n")}</Mono> : <p className="mt-1 text-sm text-slate-500">None</p>}
-      </div>
+      <Field label={`Products (${n.productIds.length})`}>
+        <PreviewProductList ids={n.productIds} />
+      </Field>
     </PanelShell>
   );
 }
@@ -259,12 +267,9 @@ function PreviewNewInPage({ hp }: { hp: HomepageConfig }) {
       <Field label="Curated mode (fixed order)">{p.useCuratedOrder ? "On" : "Off"}</Field>
       <Field label="Page heading">{p.heading}</Field>
       <Field label="Page subheading">{p.subheading?.trim() || "—"}</Field>
-      <div>
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-          productIds ({p.productIds?.length ?? 0})
-        </p>
-        {p.productIds?.length ? <Mono>{p.productIds.join("\n")}</Mono> : <p className="mt-1 text-sm text-slate-500">None</p>}
-      </div>
+      <Field label={`Products (${p.productIds?.length ?? 0})`}>
+        <PreviewProductList ids={p.productIds ?? []} />
+      </Field>
     </PanelShell>
   );
 }

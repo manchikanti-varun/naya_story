@@ -1,18 +1,18 @@
 import type { Request, RequestHandler } from "express";
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
-import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import type { LeanProduct } from "../lean.js";
 import { Product } from "../models/Product.js";
 import { User } from "../models/User.js";
 import { requireAdmin } from "../middleware/auth.js";
+import { verifyAccessToken } from "../lib/accessJwt.js";
 
 async function requestIsAdmin(req: Request, secret: string): Promise<boolean> {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) return false;
   try {
-    const payload = jwt.verify(header.slice(7), secret) as { sub: string };
+    const payload = verifyAccessToken(header.slice(7), secret);
     const user = await User.findById(payload.sub).select("role").lean();
     const role = user && !Array.isArray(user) && "role" in user ? (user as { role?: string }).role : undefined;
     return role === "admin";
@@ -138,12 +138,19 @@ export function createProductsRouter(secret: string) {
     if (!admin && row.storefrontVisible === false)
       return res.status(404).json({ message: "Not found" });
     const product = raw as unknown as LeanProduct;
+    const relatedOr: Record<string, unknown>[] = [{ category: product.category }];
+    if (product.collection?.trim()) {
+      relatedOr.push({ collection: product.collection.trim() });
+    }
     const relatedFilter: Record<string, unknown> = {
-      category: product.category,
+      $or: relatedOr,
       _id: { $ne: product._id },
     };
     if (!admin) relatedFilter.storefrontVisible = { $ne: false };
-    const related = await Product.find(relatedFilter).limit(4).lean();
+    const related = await Product.find(relatedFilter)
+      .sort({ createdAt: -1 })
+      .limit(16)
+      .lean();
     res.json({ product, related });
   });
 

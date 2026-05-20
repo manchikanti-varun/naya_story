@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/cn";
+import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 
 type Props = {
   eyebrow?: string;
@@ -7,36 +7,33 @@ type Props = {
   description?: ReactNode;
   children: ReactNode;
   className?: string;
-  /** Wider layouts for tables and editors */
   maxWidthClass?: string;
+  actions?: ReactNode;
+  toolbar?: ReactNode;
 };
 
+/** @deprecated Use AdminPageLayout — kept for backward compatibility. */
 export function AdminPageShell({
   eyebrow,
   title,
   description,
   children,
   className,
-  maxWidthClass = "max-w-6xl",
+  maxWidthClass,
+  actions,
+  toolbar,
 }: Props) {
   return (
-    <div className={cn("admin-page-shell mx-auto space-y-8", maxWidthClass, className)}>
-      <header className="admin-surface-elevated rounded-2xl p-6 sm:p-8">
-        {eyebrow ? (
-          <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--admin-accent)]">
-            {eyebrow}
-          </p>
-        ) : null}
-        <h1 className="mt-2 font-sans text-3xl font-semibold tracking-tight text-[var(--admin-ink)] md:text-4xl">
-          {title}
-        </h1>
-        {description ? (
-          <div className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-[var(--admin-muted)]">
-            {description}
-          </div>
-        ) : null}
-      </header>
+    <AdminPageLayout
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
+      actions={actions}
+      toolbar={toolbar}
+      className={className}
+      maxWidthClass={maxWidthClass}
+    >
       {children}
-    </div>
+    </AdminPageLayout>
   );
 }

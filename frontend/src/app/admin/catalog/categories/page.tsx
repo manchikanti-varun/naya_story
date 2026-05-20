@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
+import { websitePagesUrl } from "@/lib/admin/website-pages";
 
 export default function CatalogCategoriesRedirectPage() {
-  redirect("/admin/content/categories");
+  redirect(websitePagesUrl("homepage", { edit: "categories" }));
 }

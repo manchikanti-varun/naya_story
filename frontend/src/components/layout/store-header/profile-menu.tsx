@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { FiLogOut } from "react-icons/fi";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/cn";
 
@@ -46,7 +47,7 @@ export function ProfileMenu({ open, onClose }: Props) {
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
-            "absolute right-0 top-[calc(100%+0.75rem)] z-[60] w-[min(92vw,220px)] rounded-2xl border border-ivory-deep/60 bg-ivory/98 py-2 shadow-[0_12px_40px_-8px_rgba(44,40,37,0.12)] backdrop-blur-md",
+            "absolute right-0 top-[calc(100%+0.75rem)] z-[60] w-[min(92vw,220px)] rounded-2xl border border-ivory-deep bg-ivory py-2 shadow-[0_16px_48px_-12px_rgba(44,40,37,0.18)] ring-1 ring-ink/5",
           )}
         >
           {user ? (
@@ -79,13 +80,14 @@ export function ProfileMenu({ open, onClose }: Props) {
               <button
                 type="button"
                 role="menuitem"
-                className="w-full px-5 py-3 text-left font-sans text-[13px] font-light tracking-wide text-ink-muted transition-colors hover:bg-ivory-soft hover:text-ink"
+                className="flex w-full items-center gap-2.5 px-5 py-3 text-left font-sans text-[13px] font-light tracking-wide text-ink-muted transition-colors hover:bg-ivory-soft hover:text-ink"
                 onClick={() => {
                   logout();
                   onClose();
                 }}
               >
-                Logout
+                <FiLogOut className="h-4 w-4 shrink-0" aria-hidden />
+                Sign out
               </button>
             </>
           ) : (

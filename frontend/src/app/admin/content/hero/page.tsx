@@ -1,5 +1,6 @@
-import { ContentEditorHeroPanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
+import { websitePagesUrl } from "@/lib/admin/website-pages";
 
-export default function AdminContentHeroPage() {
-  return <ContentEditorHeroPanel />;
+export default function LegacyHeroRedirect() {
+  redirect(websitePagesUrl("homepage", { edit: "hero" }));
 }

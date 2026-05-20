@@ -1,5 +1,6 @@
-import { ContentEditorCategoriesPanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
+import { websitePagesUrl } from "@/lib/admin/website-pages";
 
-export default function AdminContentCategoriesPage() {
-  return <ContentEditorCategoriesPanel />;
+export default function LegacyCategoriesRedirect() {
+  redirect(websitePagesUrl("homepage", { edit: "categories" }));
 }

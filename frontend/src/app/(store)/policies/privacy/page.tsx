@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
           tokens are exchanged directly with providers over TLS.
         </p>
         <p>
-          You may request deletion of personal data by emailing privacy@nayastudio.com unless
+          You may request deletion of personal data by emailing privacy@nayastory.com unless
           accounting statutes require retention.
         </p>
       </div>

@@ -26,6 +26,14 @@ export type Product = {
   fitType?: string;
   fabricDetails?: string;
   stylingSuggestions?: string;
+  /** Overrides default “print placement” line on PDP when non-empty. */
+  pdpPrintDisclaimer?: string;
+  /** Overrides computed estimated delivery date range line. */
+  pdpDeliveryRange?: string;
+  /** Overrides “Orders over ₹…” free shipping line. */
+  pdpFreeShippingNote?: string;
+  /** “Delivery & care” accordion; falls back to site default copy. */
+  pdpDeliveryAndCare?: string;
   featured?: boolean;
   bestseller?: boolean;
   trending?: boolean;
@@ -90,6 +98,7 @@ export type OrderItem = {
 export type Order = {
   _id: string;
   orderNumber: string;
+  guestEmail?: string;
   status: string;
   items: OrderItem[];
   subtotal: number;

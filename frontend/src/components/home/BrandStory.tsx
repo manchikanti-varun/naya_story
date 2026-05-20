@@ -2,21 +2,35 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { SectionShell } from "@/components/cms/SectionShell";
+import { defaultHomepageEditorial } from "@/lib/cms/editorial-defaults";
+import { sectionTextStyles } from "@/lib/section-text-styles";
+import type { HomepageEditorialConfig, SectionTextColors } from "@/types/homepage";
 
-export function BrandStory() {
+type Props = {
+  config?: HomepageEditorialConfig["brandStory"];
+  sectionText?: SectionTextColors | null;
+};
+
+export function BrandStory({ config, sectionText }: Props) {
+  const c = config ?? defaultHomepageEditorial().brandStory;
+  if (c.enabled === false) return null;
+  const text = sectionTextStyles(sectionText);
+  const titleLines = c.title.split("\n");
+
   return (
-    <section id="story" className="bg-ivory-soft px-6 py-section md:px-10">
-      <div className="mx-auto grid max-w-[1400px] gap-14 lg:grid-cols-2 lg:items-center lg:gap-20">
+    <SectionShell id="story" design={c.styles} className="bg-ivory-soft py-section-sm sm:py-section">
+      <div className="lux-shell grid gap-10 sm:gap-14 lg:grid-cols-2 lg:items-center lg:gap-20">
         <motion.div
-          initial={{ opacity: 0, x: -24 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.9 }}
-          className="relative aspect-[4/5] overflow-hidden rounded-[32px]"
+          className="relative order-1 aspect-[4/5] overflow-hidden rounded-lux-lg lg:order-none"
         >
           <Image
-            src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80"
-            alt="Atelier mood"
+            src={c.image}
+            alt={c.imageAlt}
             fill
             className="object-cover"
             sizes="(max-width:1024px) 100vw, 50vw"
@@ -25,28 +39,31 @@ export function BrandStory() {
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.9 }}
-          className="space-y-8"
+          className="order-2 space-y-6 sm:space-y-8 lg:order-none"
         >
-          <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">
-            Brand story
+          <p className="lux-kicker text-gold/90" style={text.kicker}>
+            {c.kicker}
           </p>
-          <h2 className="font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-tight text-ink">
-            Studio-born,
-            <br />
-            silhouette-led.
+          <h2
+            className="lux-heading-rail"
+            style={text.heading}
+          >
+            {titleLines.map((line, i) => (
+              <span key={i}>
+                {line}
+                {i < titleLines.length - 1 ? <br /> : null}
+              </span>
+            ))}
           </h2>
-          <p className="max-w-xl font-sans text-base leading-relaxed text-ink-muted md:text-lg">
-            Naya Studio is a women&apos;s atelier devoted to calm luxury — garments that feel
-            cinematic in stillness, engineered with tactile honesty and tailored grace.
-          </p>
-          <p className="max-w-xl font-sans text-base leading-relaxed text-ink-muted">
-            We privilege cloth that breathes, seams that disappear, and palettes that echo ivory,
-            warmth, and gold — an invitation to dress with intention.
-          </p>
+          {c.body.map((paragraph) => (
+            <p key={paragraph.slice(0, 24)} className="lux-copy max-w-xl" style={text.body}>
+              {paragraph}
+            </p>
+          ))}
         </motion.div>
       </div>
-    </section>
+    </SectionShell>
   );
 }

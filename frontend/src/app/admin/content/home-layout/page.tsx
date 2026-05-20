@@ -1,5 +1,6 @@
-import { ContentEditorHomeLayoutPanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
+import { websitePagesUrl } from "@/lib/admin/website-pages";
 
-export default function AdminContentHomeLayoutPage() {
-  return <ContentEditorHomeLayoutPanel />;
+export default function LegacyHomeLayoutRedirect() {
+  redirect(websitePagesUrl("homepage"));
 }

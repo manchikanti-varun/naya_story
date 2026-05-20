@@ -191,7 +191,8 @@ export function NewInEditorial() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
-          <h1 className="mt-4 font-display text-6xl leading-[0.92] tracking-[-0.02em] text-ink md:text-8xl">
+          <p className="lux-kicker text-gold/90">Latest arrivals</p>
+          <h1 className="mt-3 font-display text-[clamp(2rem,5vw,3.25rem)] font-normal leading-[1.04] tracking-[-0.02em] text-ink md:text-4xl">
             {heading}
           </h1>
           {sub ? (

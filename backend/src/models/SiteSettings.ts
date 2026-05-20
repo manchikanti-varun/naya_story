@@ -2,7 +2,12 @@ import mongoose from "mongoose";
 
 const SiteSettingsSchema = new mongoose.Schema(
   {
+    /** Live storefront homepage (published). */
     homepage: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
+    /** Admin working copy; when null, editor starts from `homepage`. */
+    homepageDraft: { type: mongoose.Schema.Types.Mixed, default: null },
+    homepagePublishedAt: { type: Date, default: null },
+    homepageCmsVersion: { type: Number, default: 0 },
     banners: [
       {
         title: String,

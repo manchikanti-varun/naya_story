@@ -1,16 +1,23 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { body, validationResult } from "express-validator";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import type { Response } from "express";
 import type { LeanUserFull } from "../lean.js";
 import { User } from "../models/User.js";
+import { RefreshToken } from "../models/RefreshToken.js";
 import { requireAuth } from "../middleware/auth.js";
+import { signAccessToken } from "../lib/accessJwt.js";
+import {
+  clearRefreshTokenCookie,
+  readRefreshRaw,
+  setRefreshTokenCookie,
+} from "../lib/authCookies.js";
+import { generateRefreshRaw, hashRefreshToken } from "../lib/refreshTokenCrypto.js";
 
-function tokenFor(userId: string, secret: string) {
-  return jwt.sign({ sub: userId }, secret, { expiresIn: "14d" });
-}
+const REFRESH_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function createAuthRouter(env: {
   jwtSecret: string;
@@ -20,6 +27,23 @@ export function createAuthRouter(env: {
   clientOrigin: string;
 }) {
   const r = Router();
+
+  const credentialLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Too many attempts. Try again later." },
+  });
+
+  const refreshLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  const secureCookie = process.env.NODE_ENV === "production";
 
   function serialize(user: InstanceType<typeof User>) {
     return {
@@ -31,8 +55,22 @@ export function createAuthRouter(env: {
     };
   }
 
+  async function issueAuthSession(user: InstanceType<typeof User>, res: Response) {
+    await RefreshToken.deleteMany({ userId: user._id });
+    const raw = generateRefreshRaw();
+    await RefreshToken.create({
+      userId: user._id,
+      tokenHash: hashRefreshToken(raw),
+      expiresAt: new Date(Date.now() + REFRESH_LIFETIME_MS),
+    });
+    const access = signAccessToken(user.id, env.jwtSecret);
+    setRefreshTokenCookie(res, raw, secureCookie);
+    return { access, refresh: raw, user: serialize(user) };
+  }
+
   r.post(
     "/register",
+    credentialLimiter,
     body("email").isEmail(),
     body("password").isLength({ min: 8 }),
     body("name").trim().notEmpty(),
@@ -49,13 +87,14 @@ export function createAuthRouter(env: {
       if (exists) return res.status(409).json({ message: "Email already registered" });
       const passwordHash = await bcrypt.hash(password, 10);
       const user = await User.create({ email, passwordHash, name, role: "customer" });
-      const token = tokenFor(user.id, env.jwtSecret);
-      return res.json({ token, user: serialize(user) });
+      const session = await issueAuthSession(user, res);
+      return res.json({ token: session.access, refreshToken: session.refresh, user: session.user });
     },
   );
 
   r.post(
     "/login",
+    credentialLimiter,
     body("email").isEmail(),
     body("password").notEmpty(),
     async (req, res) => {
@@ -68,10 +107,74 @@ export function createAuthRouter(env: {
         return res.status(401).json({ message: "Invalid credentials" });
       const ok = await bcrypt.compare(password, user.passwordHash);
       if (!ok) return res.status(401).json({ message: "Invalid credentials" });
-      const token = tokenFor(user.id, env.jwtSecret);
-      return res.json({ token, user: serialize(user) });
+      if (user.role === "admin") {
+        return res
+          .status(403)
+          .json({ message: "Administrator accounts must sign in via the admin portal." });
+      }
+      const session = await issueAuthSession(user, res);
+      return res.json({ token: session.access, refreshToken: session.refresh, user: session.user });
     },
   );
+
+  r.post(
+    "/admin/login",
+    credentialLimiter,
+    body("email").isEmail(),
+    body("password").notEmpty(),
+    async (req, res) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ message: "Validation failed", errors: errors.array() });
+      const { email, password } = req.body as { email: string; password: string };
+      const user = await User.findOne({ email });
+      if (!user?.passwordHash)
+        return res.status(401).json({ message: "Invalid credentials" });
+      const ok = await bcrypt.compare(password, user.passwordHash);
+      if (!ok) return res.status(401).json({ message: "Invalid credentials" });
+      if (user.role !== "admin") {
+        return res.status(403).json({ message: "Access denied. Administrator account required." });
+      }
+      const session = await issueAuthSession(user, res);
+      return res.json({ token: session.access, refreshToken: session.refresh, user: session.user });
+    },
+  );
+
+  r.post("/refresh", refreshLimiter, async (req, res) => {
+    try {
+      const raw = readRefreshRaw(req);
+      if (!raw) return res.status(401).json({ message: "Missing refresh token" });
+      const hash = hashRefreshToken(raw);
+      const doc = await RefreshToken.findOne({
+        tokenHash: hash,
+        expiresAt: { $gt: new Date() },
+      });
+      if (!doc) return res.status(401).json({ message: "Invalid or expired refresh token" });
+      await RefreshToken.deleteOne({ _id: doc._id });
+      const user = await User.findById(doc.userId);
+      if (!user) return res.status(401).json({ message: "User not found" });
+      const newRaw = generateRefreshRaw();
+      await RefreshToken.create({
+        userId: user._id,
+        tokenHash: hashRefreshToken(newRaw),
+        expiresAt: new Date(Date.now() + REFRESH_LIFETIME_MS),
+      });
+      setRefreshTokenCookie(res, newRaw, secureCookie);
+      const access = signAccessToken(user.id, env.jwtSecret);
+      return res.json({ token: access, refreshToken: newRaw, user: serialize(user) });
+    } catch {
+      return res.status(500).json({ message: "Refresh failed" });
+    }
+  });
+
+  r.post("/logout", async (req, res) => {
+    const raw = readRefreshRaw(req);
+    if (raw) {
+      await RefreshToken.deleteMany({ tokenHash: hashRefreshToken(raw) });
+    }
+    clearRefreshTokenCookie(res, secureCookie);
+    return res.json({ ok: true });
+  });
 
   r.get("/me", requireAuth(env.jwtSecret), async (req, res) => {
     const raw = await User.findById(req.user!._id).lean();
@@ -130,12 +233,18 @@ export function createAuthRouter(env: {
     r.get(
       "/google/callback",
       passport.authenticate("google", { session: false, failureRedirect: `${env.clientOrigin}/login?error=google` }),
-      (req, res) => {
+      async (req, res) => {
         const user = req.user as InstanceType<typeof User> | undefined;
         if (!user) return res.redirect(`${env.clientOrigin}/login?error=google`);
-        const token = tokenFor(user.id, env.jwtSecret);
-        const redirect = `${env.clientOrigin}/login?token=${encodeURIComponent(token)}`;
-        return res.redirect(redirect);
+        if (user.role === "admin") {
+          return res.redirect(`${env.clientOrigin}/login?error=admin_portal`);
+        }
+        const session = await issueAuthSession(user, res);
+        const access = encodeURIComponent(session.access);
+        const refresh = encodeURIComponent(session.refresh);
+        return res.redirect(
+          `${env.clientOrigin}/login?token=${access}&refresh=${refresh}`,
+        );
       },
     );
   } else {

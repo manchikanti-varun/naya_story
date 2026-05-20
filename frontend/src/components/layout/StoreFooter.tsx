@@ -4,13 +4,13 @@ import Link from "next/link";
 import { FaWhatsapp } from "react-icons/fa6";
 import { SiInstagram } from "react-icons/si";
 import type { HomepageConfig } from "@/types/homepage";
-import { STORE_LOGO_PUBLIC_PATH, bustLocalPublicAsset } from "@/lib/constants";
+import { SITE_NAME, STORE_LOGO_PUBLIC_PATH, bustLocalPublicAsset } from "@/lib/constants";
 
 const fallbackFooter: HomepageConfig["footer"] = {
   logoUrl: STORE_LOGO_PUBLIC_PATH,
-  logoAlt: "Naya Studio",
+  logoAlt: SITE_NAME,
   brandDescription:
-    "Naya Studio creates timeless silhouettes for modern femininity.",
+    `${SITE_NAME} creates timeless silhouettes for modern femininity — calm luxury, made to last.`,
   supportingText: "Designed with intention, elegance, and everyday luxury.",
   legalTitle: "Legal",
   legalLinks: [
@@ -20,7 +20,7 @@ const fallbackFooter: HomepageConfig["footer"] = {
     { label: "Shipping & Delivery", href: "/policies/shipping", enabled: true, order: 3 },
   ],
   contactTitle: "Contact",
-  email: "hello@nayastudio.com",
+  email: "hello@nayastory.com",
   phone: "+91 00000 00000",
   location: "Mumbai, India",
   socialLinks: [
@@ -28,11 +28,8 @@ const fallbackFooter: HomepageConfig["footer"] = {
     { platform: "pinterest", href: "https://pinterest.com", enabled: true, order: 1 },
     { platform: "facebook", href: "https://facebook.com", enabled: true, order: 2 },
   ],
-  ctaLinks: [
-    { label: "Explore Collections", href: "/collections", enabled: true, order: 0 },
-    { label: "Our Story", href: "/our-story", enabled: true, order: 1 },
-  ],
-  copyrightText: "© 2026 Naya Studio. All rights reserved.",
+  ctaLinks: [],
+  copyrightText: `© 2026 ${SITE_NAME}. All rights reserved.`,
 };
 
 function SocialIcon({
@@ -50,7 +47,7 @@ function SocialIcon({
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 text-ink/80 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-gold/50 hover:text-gold"
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/10 text-ink/75 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-gold/50 hover:text-gold"
     >
       {children}
     </Link>
@@ -65,46 +62,43 @@ export function StoreFooter({ footer }: { footer?: HomepageConfig["footer"] }) {
   const socials = safeFooter.socialLinks
     .filter((s) => s.enabled)
     .sort((a, b) => a.order - b.order);
-  const ctas = safeFooter.ctaLinks
-    .filter((c) => c.enabled)
-    .sort((a, b) => a.order - b.order);
   const year = new Date().getFullYear();
   const copyright =
     safeFooter.copyrightText?.trim().replace(/2026/g, String(year)) ||
-    `© ${year} Naya Studio. All rights reserved.`;
+    `© ${year} ${SITE_NAME}. All rights reserved.`;
   const instagramHref =
     socials.find((s) => s.platform === "instagram")?.href ?? "https://instagram.com";
   const whatsappHref = `https://wa.me/${safeFooter.phone.replace(/[^\d]/g, "")}`;
   const footerLogoSrc = bustLocalPublicAsset(safeFooter.logoUrl);
 
   return (
-    <footer className="relative overflow-hidden border-t border-[#e6ddd1] bg-gradient-to-b from-[#f8f4ef] via-[#f1ebe3] to-[#ece3d8]">
-      <div className="pointer-events-none absolute inset-0 opacity-[0.05] [background-image:radial-gradient(rgba(44,40,37,0.35)_0.45px,transparent_0.45px)] [background-size:3px_3px]" />
-      <div className="relative mx-auto max-w-[1480px] px-6 py-16 md:px-10 md:py-20 lg:px-14 lg:py-24">
-        <div className="grid gap-14 border-b border-[#dccfbe]/70 pb-12 md:grid-cols-3 md:gap-10 md:pb-14 lg:gap-16">
-          <div className="space-y-7 md:pr-6">
-            <Link href="/" className="relative inline-block h-12 w-[200px] md:h-14 md:w-[230px]">
+    <footer className="relative overflow-hidden border-t border-ivory-deep bg-gradient-to-b from-ivory via-ivory-muted to-ivory-soft">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-gradient(rgba(44,40,37,0.35)_0.45px,transparent_0.45px)] [background-size:3px_3px]" />
+      <div className="lux-shell relative py-10 md:py-12">
+        <div className="grid gap-10 border-b border-ivory-deep/70 pb-8 md:grid-cols-3 md:gap-8 md:pb-10 lg:gap-12">
+          <div className="space-y-5 md:pr-4">
+            <Link href="/" className="relative inline-block h-9 w-[168px] md:h-10 md:w-[188px]">
               <Image
                 src={footerLogoSrc}
                 alt={safeFooter.logoAlt}
                 fill
-                sizes="230px"
+                sizes="188px"
                 className="object-contain object-left"
               />
             </Link>
-            <p className="max-w-sm font-sans text-[15px] font-light leading-relaxed text-[#4f4943]">
+            <p className="max-w-xs font-sans text-[12px] font-light leading-relaxed text-ink-muted">
               {safeFooter.brandDescription}
             </p>
-            <p className="max-w-sm border-l border-[#d8cab8] pl-4 font-sans text-[11px] uppercase tracking-[0.22em] text-[#7c7268]">
+            <p className="max-w-xs border-l border-ivory-deep pl-3 font-sans text-[9px] font-light uppercase tracking-[0.24em] text-ink-soft">
               {safeFooter.supportingText}
             </p>
           </div>
 
-          <div className="md:px-4">
-            <p className="font-sans text-[10px] font-light uppercase tracking-[0.34em] text-[#8a7f73]">
+          <div className="md:px-3">
+            <p className="font-sans text-[9px] font-light uppercase tracking-[0.32em] text-ink-soft">
               {safeFooter.legalTitle}
             </p>
-            <ul className="mt-6 space-y-3.5 font-sans text-sm font-light text-[#524b44]">
+            <ul className="mt-4 space-y-2 font-sans text-[11px] font-light leading-snug text-ink-muted">
               {legal.map((item, idx) => (
                 <li key={`${item.href}-${item.label}-${idx}`}>
                   <Link
@@ -121,11 +115,11 @@ export function StoreFooter({ footer }: { footer?: HomepageConfig["footer"] }) {
             </ul>
           </div>
 
-          <div className="md:pl-6">
-            <p className="font-sans text-[10px] font-light uppercase tracking-[0.34em] text-[#8a7f73]">
+          <div className="md:pl-4">
+            <p className="font-sans text-[9px] font-light uppercase tracking-[0.32em] text-ink-soft">
               {safeFooter.contactTitle}
             </p>
-            <ul className="mt-6 space-y-3.5 font-sans text-sm font-light text-[#524b44]">
+            <ul className="mt-4 space-y-2 font-sans text-[11px] font-light leading-snug text-ink-muted">
               <li>
                 <Link href={`mailto:${safeFooter.email}`} className="transition-colors duration-500 hover:text-gold">
                   {safeFooter.email}
@@ -139,32 +133,20 @@ export function StoreFooter({ footer }: { footer?: HomepageConfig["footer"] }) {
               <li>{safeFooter.location}</li>
             </ul>
 
-            <div className="mt-6 flex flex-wrap items-center gap-2.5">
+            <div className="mt-5 flex flex-wrap items-center gap-2">
               <SocialIcon href={instagramHref} label="Instagram (opens in new tab)">
-                <SiInstagram className="h-[18px] w-[18px]" aria-hidden />
+                <SiInstagram className="h-[15px] w-[15px]" aria-hidden />
               </SocialIcon>
               <SocialIcon href={whatsappHref} label="WhatsApp (opens in new tab)">
-                <FaWhatsapp className="h-[19px] w-[19px]" aria-hidden />
+                <FaWhatsapp className="h-[16px] w-[16px]" aria-hidden />
               </SocialIcon>
             </div>
 
-            <div className="mt-7 space-y-2.5">
-              {ctas.map((cta) => (
-                <Link
-                  key={cta.href}
-                  href={cta.href}
-                  className="group inline-flex items-center gap-2.5 font-sans text-[11px] uppercase tracking-[0.22em] text-[#5f564d] transition-colors duration-500 hover:text-gold"
-                >
-                  {cta.label}
-                  <span className="transition-transform duration-500 group-hover:translate-x-1">→</span>
-                </Link>
-              ))}
-            </div>
           </div>
         </div>
 
-        <div className="mt-5 border-t border-[#dccfbe]/40 pt-4 md:mt-6 md:pt-5">
-          <p className="text-center font-sans text-[10px] font-light leading-snug tracking-[0.04em] text-[#9a8f84]">
+        <div className="mt-3 border-t border-ivory-deep/50 pt-2.5 md:mt-4 md:pt-3">
+          <p className="text-center font-sans text-[8px] font-light leading-none tracking-[0.12em] text-ink-soft">
             {copyright}
           </p>
         </div>

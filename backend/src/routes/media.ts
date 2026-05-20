@@ -3,6 +3,23 @@ import { Router } from "express";
 import { body, validationResult } from "express-validator";
 import { MediaAsset } from "../models/MediaAsset.js";
 import { requireAdmin } from "../middleware/auth.js";
+import { HttpError } from "../middleware/httpError.js";
+
+function assertSecureMediaUrl(url: string): void {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    throw new HttpError(400, "Invalid media URL");
+  }
+  if (process.env.NODE_ENV === "production" && u.protocol !== "https:") {
+    throw new HttpError(400, "Media URLs must use https in production");
+  }
+  const host = u.hostname.toLowerCase();
+  if (process.env.NODE_ENV === "production" && (host === "localhost" || host === "127.0.0.1")) {
+    throw new HttpError(400, "Localhost media URLs are not allowed in production");
+  }
+}
 
 export function createMediaRouter(secret: string) {
   const r = Router();
@@ -27,6 +44,8 @@ export function createMediaRouter(secret: string) {
       if (!errors.isEmpty())
         return res.status(400).json({ message: "Validation failed", errors: errors.array() });
       try {
+        const url = String(req.body.url ?? "");
+        assertSecureMediaUrl(url);
         const doc = await MediaAsset.create({
           url: req.body.url,
           name: req.body.name,
@@ -35,6 +54,7 @@ export function createMediaRouter(secret: string) {
         });
         res.status(201).json({ item: doc });
       } catch (e) {
+        if (e instanceof HttpError) return res.status(e.status).json({ message: e.message });
         res.status(400).json({ message: (e as Error).message });
       }
     },

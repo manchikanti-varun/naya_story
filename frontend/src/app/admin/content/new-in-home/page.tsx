@@ -1,5 +1,6 @@
-import { ContentEditorNewInHomePanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
+import { websitePagesUrl } from "@/lib/admin/website-pages";
 
-export default function AdminContentNewInHomePage() {
-  return <ContentEditorNewInHomePanel />;
+export default function LegacyNewInHomeRedirect() {
+  redirect(websitePagesUrl("homepage", { edit: "newIn" }));
 }

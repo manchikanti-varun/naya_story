@@ -1,705 +1,903 @@
 "use client";
 
 import { ProductIdListField } from "@/components/admin/ProductIdListField";
+import { HeroSlideEditorFields } from "@/components/admin/cms/HeroSlideEditorFields";
+import { CmsLayoutTabLink } from "@/components/admin/cms/CmsLayoutTabLink";
+import { CmsSectionEditorShell } from "@/components/admin/cms/CmsSectionEditorShell";
+import { CmsFieldGroup } from "@/components/admin/cms/CmsFieldGroup";
+import {
+  CmsFormGrid,
+  CmsPageEditorShell,
+  CmsSectionHeading,
+  CmsVisibilityToggle,
+} from "@/components/admin/cms/CmsFormHelpers";
+import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
 import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
-import { sortSlides, sortSections, useHomepageEditor } from "@/components/admin/homepage-editor/context";
+import { AdminField, AdminInput, AdminSelect, AdminTextarea } from "@/components/admin/ui/AdminField";
+import { HomepageLayoutSectionList } from "@/components/admin/homepage-editor/HomepageLayoutSectionList";
+import { sortSlides, useHomepageEditor } from "@/components/admin/homepage-editor/context";
+import { DEFAULT_COLLECTIONS_PAGE } from "@/lib/cms/collections-page-config";
 
 export function ContentEditorHeroPanel() {
-  const { hp, setHp, token, moveSlide, updateSlide } = useHomepageEditor();
+  const { hp, setHp, moveSlide, updateSlide } = useHomepageEditor();
   if (!hp) return null;
   const slides = sortSlides(hp.carousel.slides);
+
+  const contentTab = (
+    <>
+      <AdminField label="Autoplay (ms)" hint="Minimum 4000 ms between slides.">
+        <AdminInput
+          type="number"
+          min={4000}
+          step={500}
+          className="max-w-[10rem]"
+          value={hp.carousel.autoplayMs}
+          onChange={(e) =>
+            setHp({
+              ...hp,
+              carousel: { ...hp.carousel, autoplayMs: Number(e.target.value) || 9000 },
+            })
+          }
+        />
+      </AdminField>
+      <div className="mt-8 space-y-6">
+        {slides.map((slide, i) => (
+          <HeroSlideEditorFields
+            key={slide.id}
+            slide={slide}
+            index={i}
+            total={slides.length}
+            onUpdate={(patch) => updateSlide(slide.id, patch)}
+            onMove={(dir) => moveSlide(i, dir)}
+          />
+        ))}
+      </div>
+    </>
+  );
+
   return (
-    <section id="admin-section-hero" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Hero carousel</h2>
-            <label className="mt-6 block font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-              Autoplay (ms)
-              <input
-                type="number"
-                min={4000}
-                step={500}
-                className="mt-2 w-40 rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                value={hp.carousel.autoplayMs}
-                onChange={(e) =>
-                  setHp({
-                    ...hp,
-                    carousel: { ...hp.carousel, autoplayMs: Number(e.target.value) || 9000 },
-                  })
+    <CmsSectionEditorShell
+      sectionId="admin-section-hero"
+      title="Hero carousel"
+      description="Full-width cinematic slides — each slide has its own content, colors, fonts, and overlay."
+      previewHref="/admin/content/preview/hero"
+      tabs={[
+        { id: "content", content: contentTab },
+        {
+          id: "design",
+          content: (
+            <div className="space-y-8">
+              <p className="font-sans text-sm text-[var(--admin-muted)]">
+                Carousel-wide defaults apply to every slide unless a slide sets its own values in the Content tab.
+              </p>
+              <SectionDesignFields
+                value={hp.carousel.styles}
+                onChange={(styles) =>
+                  setHp({ ...hp, carousel: { ...hp.carousel, styles } })
                 }
+                showTypography
               />
-            </label>
-            <div className="mt-8 space-y-8">
-              {slides.map((slide, i) => (
-                <div
-                  key={slide.id}
-                  className="grid gap-4 rounded-2xl border border-slate-100 p-6 md:grid-cols-2"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-sans text-xs uppercase tracking-[0.2em] text-slate-400">
-                        Slide {i + 1}
-                      </span>
-                      <label className="flex items-center gap-2 font-sans text-xs text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={slide.enabled}
-                          onChange={(e) => updateSlide(slide.id, { enabled: e.target.checked })}
-                        />
-                        Enabled
-                      </label>
-                    </div>
-                    <input
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Heading"
-                      value={slide.heading}
-                      onChange={(e) => updateSlide(slide.id, { heading: e.target.value })}
-                    />
-                    <input
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Subheading"
-                      value={slide.subheading ?? ""}
-                      onChange={(e) => updateSlide(slide.id, { subheading: e.target.value })}
-                    />
-                    <input
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="CTA label"
-                      value={slide.ctaLabel ?? ""}
-                      onChange={(e) => updateSlide(slide.id, { ctaLabel: e.target.value })}
-                    />
-                    <input
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="CTA link (e.g. /collections)"
-                      value={slide.ctaHref}
-                      onChange={(e) => updateSlide(slide.id, { ctaHref: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <input
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Desktop image URL"
-                      value={slide.desktopImage}
-                      onChange={(e) => updateSlide(slide.id, { desktopImage: e.target.value })}
-                    />
-                    <input
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Mobile image URL (optional)"
-                      value={slide.mobileImage ?? ""}
-                      onChange={(e) => updateSlide(slide.id, { mobileImage: e.target.value })}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="rounded-full border border-slate-200 px-4 py-2 text-xs uppercase tracking-wide text-slate-600"
-                        onClick={() => moveSlide(i, -1)}
-                        disabled={i === 0}
-                      >
-                        Up
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-full border border-slate-200 px-4 py-2 text-xs uppercase tracking-wide text-slate-600"
-                        onClick={() => moveSlide(i, 1)}
-                        disabled={i === slides.length - 1}
-                      >
-                        Down
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              <SectionTypographyFields section="hero" />
             </div>
-            <SectionTypographyFields section="hero" />
-          </section>
+          ),
+        },
+        { id: "layout", content: <CmsLayoutTabLink /> },
+        {
+          id: "responsive",
+          hint: "Each slide supports separate desktop and mobile image URLs in the Content tab.",
+          content: (
+            <p className="font-sans text-sm text-[var(--admin-muted)]">
+              Use the mobile image field when a crop works better on small screens. Leave blank to reuse the desktop
+              asset.
+            </p>
+          ),
+        },
+        { id: "seo", disabled: true, content: null },
+        { id: "advanced", disabled: true, content: null },
+      ]}
+    />
   );
 }
 
 export function ContentEditorHomeLayoutPanel() {
-  const { hp, setHp, moveSection } = useHomepageEditor();
-  if (!hp) return null;
-  const sections = sortSections(hp.sectionsOrder);
   return (
     <section id="admin-section-home-order" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Section order & visibility</h2>
-            <p className="mt-2 font-sans text-sm text-slate-500">
-              Reorder blocks as they appear on the storefront (below the hero).
-            </p>
-            <ul className="mt-6 space-y-3">
-              {sections.map((s, i) => (
-                <li
-                  key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 px-4 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 font-sans text-sm text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={s.enabled}
-                        onChange={(e) => {
-                          const next = hp.sectionsOrder.map((x) =>
-                            x.id === s.id ? { ...x, enabled: e.target.checked } : x,
-                          );
-                          setHp({ ...hp, sectionsOrder: next });
-                        }}
-                      />
-                      <span className="capitalize">
-                        {s.id === "newIn"
-                          ? "New in"
-                          : s.id === "bestsellers"
-                            ? "Our bestsellers"
-                            : s.id === "categories"
-                              ? "Shop by category"
-                              : "Newsletter"}
-                      </span>
-                    </label>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="rounded-full border border-slate-200 px-3 py-1 text-xs"
-                      onClick={() => moveSection(i, -1)}
-                      disabled={i === 0}
-                    >
-                      Up
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-full border border-slate-200 px-3 py-1 text-xs"
-                      onClick={() => moveSection(i, 1)}
-                      disabled={i === sections.length - 1}
-                    >
-                      Down
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
+      <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">
+        Homepage section order
+      </h2>
+      <p className="mt-2 font-sans text-sm text-slate-500">
+        Reorder all homepage blocks. Changes apply on the live storefront after you save.
+      </p>
+      <div className="mt-6">
+        <HomepageLayoutSectionList showGlobalChrome={false} />
+      </div>
+    </section>
   );
 }
 
 export function ContentEditorBestsellersPanel() {
   const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
+
+  const contentTab = (
+    <div className="space-y-6">
+      <CmsVisibilityToggle
+        checked={hp.bestsellers.enabled !== false}
+        onChange={(enabled) =>
+          setHp({
+            ...hp,
+            bestsellers: { ...hp.bestsellers, enabled },
+          })
+        }
+      />
+      <CmsFormGrid>
+        <AdminField label="Title">
+          <AdminInput
+            value={hp.bestsellers.title}
+            onChange={(e) =>
+              setHp({ ...hp, bestsellers: { ...hp.bestsellers, title: e.target.value } })
+            }
+          />
+        </AdminField>
+        <AdminField label="Subtitle" className="md:col-span-2">
+          <AdminInput
+            value={hp.bestsellers.subtitle}
+            onChange={(e) =>
+              setHp({ ...hp, bestsellers: { ...hp.bestsellers, subtitle: e.target.value } })
+            }
+          />
+        </AdminField>
+        {token ? (
+          <div className="md:col-span-2">
+            <ProductIdListField
+              token={token}
+              label="Bestseller rail — products"
+              hint="Choose up to 8 pieces from the catalog. Order = homepage rail order. Already selected items are hidden from the list."
+              maxItems={8}
+              value={hp.bestsellers.productIds}
+              onChange={(productIds) =>
+                setHp({
+                  ...hp,
+                  bestsellers: { ...hp.bestsellers, productIds },
+                })
+              }
+            />
+          </div>
+        ) : null}
+      </CmsFormGrid>
+    </div>
+  );
+
   return (
-    <section id="admin-section-bestsellers" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Our bestsellers</h2>
-            <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={hp.bestsellers.enabled !== false}
-                onChange={(e) =>
-                  setHp({
-                    ...hp,
-                    bestsellers: { ...hp.bestsellers, enabled: e.target.checked },
-                  })
-                }
+    <CmsSectionEditorShell
+      sectionId="admin-section-bestsellers"
+      title="Bestsellers rail"
+      description="Curated product carousel on the homepage."
+      previewHref="/admin/content/preview/bestsellers"
+      tabs={[
+        { id: "content", content: contentTab },
+        {
+          id: "design",
+          content: (
+            <div className="space-y-8">
+              <SectionDesignFields
+                value={hp.bestsellers.styles}
+                onChange={(styles) => setHp({ ...hp, bestsellers: { ...hp.bestsellers, styles } })}
+                showTypography
               />
-              Visible on homepage
-            </label>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Title
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.bestsellers.title}
-                  onChange={(e) =>
-                    setHp({ ...hp, bestsellers: { ...hp.bestsellers, title: e.target.value } })
-                  }
-                />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400 md:col-span-2">
-                Subtitle
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.bestsellers.subtitle}
-                  onChange={(e) =>
-                    setHp({ ...hp, bestsellers: { ...hp.bestsellers, subtitle: e.target.value } })
-                  }
-                />
-              </label>
-              {token ? (
-                <ProductIdListField
-                  token={token}
-                  label="Bestseller rail — products"
-                  hint="Choose up to 8 pieces from the catalog. Order = homepage rail order. Already selected items are hidden from the list."
-                  maxItems={8}
-                  value={hp.bestsellers.productIds}
-                  onChange={(productIds) =>
-                    setHp({
-                      ...hp,
-                      bestsellers: { ...hp.bestsellers, productIds },
-                    })
-                  }
-                />
-              ) : null}
+              <SectionTypographyFields section="bestsellers" />
             </div>
-            <SectionTypographyFields section="bestsellers" />
-          </section>
+          ),
+        },
+        { id: "layout", content: <CmsLayoutTabLink /> },
+        { id: "seo", disabled: true, content: null },
+        { id: "responsive", disabled: true, content: null },
+        { id: "advanced", disabled: true, content: null },
+      ]}
+    />
   );
 }
 
 export function ContentEditorNewInHomePanel() {
   const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
+
+  const contentTab = (
+    <div className="space-y-6">
+      <CmsVisibilityToggle
+        checked={hp.newIn.enabled !== false}
+        onChange={(enabled) => setHp({ ...hp, newIn: { ...hp.newIn, enabled } })}
+      />
+      <CmsFormGrid>
+        <AdminField label="Title">
+          <AdminInput
+            value={hp.newIn.title}
+            onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, title: e.target.value } })}
+          />
+        </AdminField>
+        <AdminField label="Subtitle" className="md:col-span-2">
+          <AdminInput
+            value={hp.newIn.subtitle}
+            onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, subtitle: e.target.value } })}
+          />
+        </AdminField>
+        <AdminField label="CTA label">
+          <AdminInput
+            value={hp.newIn.ctaLabel}
+            onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, ctaLabel: e.target.value } })}
+          />
+        </AdminField>
+        <AdminField label="CTA URL">
+          <AdminInput
+            value={hp.newIn.ctaHref}
+            onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, ctaHref: e.target.value } })}
+          />
+        </AdminField>
+        {token ? (
+          <div className="md:col-span-2">
+            <ProductIdListField
+              token={token}
+              label="New In rail — featured picks (optional)"
+              hint="If set, these appear in the homepage New In rail (up to 8). The full New In page can still show the wider catalog."
+              maxItems={8}
+              value={hp.newIn.productIds}
+              onChange={(productIds) =>
+                setHp({
+                  ...hp,
+                  newIn: { ...hp.newIn, productIds },
+                })
+              }
+            />
+          </div>
+        ) : null}
+      </CmsFormGrid>
+    </div>
+  );
+
   return (
-    <section id="admin-section-newin-home" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">New in (homepage rail)</h2>
-            <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={hp.newIn.enabled !== false}
-                onChange={(e) =>
-                  setHp({ ...hp, newIn: { ...hp.newIn, enabled: e.target.checked } })
-                }
+    <CmsSectionEditorShell
+      sectionId="admin-section-newin-home"
+      title="New In rail"
+      description="Latest pieces on the homepage."
+      previewHref="/admin/content/preview/new-in-home"
+      tabs={[
+        { id: "content", content: contentTab },
+        {
+          id: "design",
+          content: (
+            <div className="space-y-8">
+              <SectionDesignFields
+                value={hp.newIn.styles}
+                onChange={(styles) => setHp({ ...hp, newIn: { ...hp.newIn, styles } })}
+                showTypography
               />
-              Visible on homepage
-            </label>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Title
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.newIn.title}
-                  onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, title: e.target.value } })}
-                />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400 md:col-span-2">
-                Subtitle
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.newIn.subtitle}
-                  onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, subtitle: e.target.value } })}
-                />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                CTA label
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.newIn.ctaLabel}
-                  onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, ctaLabel: e.target.value } })}
-                />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                CTA URL
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.newIn.ctaHref}
-                  onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, ctaHref: e.target.value } })}
-                />
-              </label>
-              {token ? (
-                <ProductIdListField
-                  token={token}
-                  label="New In rail — featured picks (optional)"
-                  hint="If set, these appear in the homepage New In rail (up to 8). The full New In page can still show the wider catalog."
-                  maxItems={8}
-                  value={hp.newIn.productIds}
-                  onChange={(productIds) =>
-                    setHp({
-                      ...hp,
-                      newIn: { ...hp.newIn, productIds },
-                    })
-                  }
-                />
-              ) : null}
+              <SectionTypographyFields section="newIn" />
             </div>
-            <SectionTypographyFields section="newIn" />
-          </section>
+          ),
+        },
+        { id: "layout", content: <CmsLayoutTabLink /> },
+        { id: "seo", disabled: true, content: null },
+        { id: "responsive", disabled: true, content: null },
+        { id: "advanced", disabled: true, content: null },
+      ]}
+    />
   );
 }
 
-export function ContentEditorNewInPagePanel() {
+export function ContentEditorNewInPagePanel({ embedded = false }: { embedded?: boolean }) {
   const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-newin-page" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">New In page (/new-in)</h2>
-            <p className="mt-2 font-sans text-sm text-slate-500">
-              Turn on curated mode to control exactly which products appear and in which order on the public New In
-              page. When off, the page lists every catalog item flagged as New In (same as before).
-            </p>
-            <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={hp.newInPage?.useCuratedOrder === true}
-                onChange={(e) =>
-                  setHp({
-                    ...hp,
-                    newInPage: {
-                      useCuratedOrder: e.target.checked,
-                      heading: hp.newInPage?.heading ?? "New In",
-                      subheading: hp.newInPage?.subheading ?? "",
-                      productIds: hp.newInPage?.productIds ?? [],
-                    },
-                  })
-                }
-              />
-              Curated grid (fixed products & order)
-            </label>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Page heading
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.newInPage?.heading ?? "New In"}
-                  onChange={(e) =>
-                    setHp({
-                      ...hp,
-                      newInPage: {
-                        useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
-                        heading: e.target.value,
-                        subheading: hp.newInPage?.subheading ?? "",
-                        productIds: hp.newInPage?.productIds ?? [],
-                      },
-                    })
-                  }
-                />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400 md:col-span-2">
-                Page subheading (optional)
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.newInPage?.subheading ?? ""}
-                  onChange={(e) =>
-                    setHp({
-                      ...hp,
-                      newInPage: {
-                        useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
-                        heading: hp.newInPage?.heading ?? "New In",
-                        subheading: e.target.value,
-                        productIds: hp.newInPage?.productIds ?? [],
-                      },
-                    })
-                  }
-                />
-              </label>
-            </div>
-            {token ? (
-              <ProductIdListField
-                token={token}
-                label="Curated products"
-                hint="Up to 60 items. Order matches storefront masonry."
-                maxItems={60}
-                value={hp.newInPage?.productIds ?? []}
-                onChange={(productIds) =>
-                  setHp({
-                    ...hp,
-                    newInPage: {
-                      useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
-                      heading: hp.newInPage?.heading ?? "New In",
-                      subheading: hp.newInPage?.subheading ?? "",
-                      productIds,
-                    },
-                  })
-                }
-              />
-            ) : null}
-          </section>
+    <CmsPageEditorShell
+      id="admin-section-newin-page"
+      embedded={embedded}
+      title="New In page (/new-in)"
+      description="Turn on curated mode to control exactly which products appear and in which order on the public New In page. When off, the page lists every catalog item flagged as New In."
+    >
+      <CmsVisibilityToggle
+        label="Curated grid (fixed products & order)"
+        checked={hp.newInPage?.useCuratedOrder === true}
+        onChange={(useCuratedOrder) =>
+          setHp({
+            ...hp,
+            newInPage: {
+              useCuratedOrder,
+              heading: hp.newInPage?.heading ?? "New In",
+              subheading: hp.newInPage?.subheading ?? "",
+              productIds: hp.newInPage?.productIds ?? [],
+            },
+          })
+        }
+      />
+      <CmsFormGrid className="mt-6">
+        <AdminField label="Page heading">
+          <AdminInput
+            value={hp.newInPage?.heading ?? "New In"}
+            onChange={(e) =>
+              setHp({
+                ...hp,
+                newInPage: {
+                  useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
+                  heading: e.target.value,
+                  subheading: hp.newInPage?.subheading ?? "",
+                  productIds: hp.newInPage?.productIds ?? [],
+                },
+              })
+            }
+          />
+        </AdminField>
+        <AdminField label="Page subheading (optional)" className="md:col-span-2">
+          <AdminInput
+            value={hp.newInPage?.subheading ?? ""}
+            onChange={(e) =>
+              setHp({
+                ...hp,
+                newInPage: {
+                  useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
+                  heading: hp.newInPage?.heading ?? "New In",
+                  subheading: e.target.value,
+                  productIds: hp.newInPage?.productIds ?? [],
+                },
+              })
+            }
+          />
+        </AdminField>
+      </CmsFormGrid>
+      {token ? (
+        <ProductIdListField
+          token={token}
+          label="Curated products"
+          hint="Up to 60 items. Order matches storefront masonry."
+          maxItems={60}
+          value={hp.newInPage?.productIds ?? []}
+          onChange={(productIds) =>
+            setHp({
+              ...hp,
+              newInPage: {
+                useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
+                heading: hp.newInPage?.heading ?? "New In",
+                subheading: hp.newInPage?.subheading ?? "",
+                productIds,
+              },
+            })
+          }
+        />
+      ) : null}
+    </CmsPageEditorShell>
   );
 }
 
 export function ContentEditorCategoriesPanel() {
   const { hp, setHp, updateCategory } = useHomepageEditor();
   if (!hp) return null;
+
+  const contentTab = (
+    <div className="space-y-6">
+      <CmsVisibilityToggle
+        checked={hp.categories.enabled !== false}
+        onChange={(enabled) =>
+          setHp({
+            ...hp,
+            categories: { ...hp.categories, enabled },
+          })
+        }
+      />
+      <CmsFormGrid>
+        <AdminField label="Section title" className="md:col-span-2">
+          <AdminInput
+            value={hp.categories.title}
+            onChange={(e) =>
+              setHp({ ...hp, categories: { ...hp.categories, title: e.target.value } })
+            }
+          />
+        </AdminField>
+        <AdminField label="Section subtitle" className="md:col-span-2">
+          <AdminInput
+            value={hp.categories.subtitle}
+            onChange={(e) =>
+              setHp({ ...hp, categories: { ...hp.categories, subtitle: e.target.value } })
+            }
+          />
+        </AdminField>
+      </CmsFormGrid>
+      <div className="space-y-4">
+        {hp.categories.items
+          .slice()
+          .sort((a, b) => a.order - b.order)
+          .map((cat) => (
+            <div key={cat.id} className="admin-cms-group">
+              <div className="admin-cms-group-header">
+                <CmsSectionHeading>Category card</CmsSectionHeading>
+                <CmsVisibilityToggle
+                  label="Visible"
+                  checked={cat.enabled}
+                  onChange={(enabled) => updateCategory(cat.id, { enabled })}
+                />
+              </div>
+              <div className="admin-cms-group-body">
+                <CmsFormGrid>
+                  <AdminField label="Name">
+                    <AdminInput
+                      placeholder="Name"
+                      value={cat.name}
+                      onChange={(e) => updateCategory(cat.id, { name: e.target.value })}
+                    />
+                  </AdminField>
+                  <AdminField label="Link">
+                    <AdminInput
+                      placeholder="/collections"
+                      value={cat.href}
+                      onChange={(e) => updateCategory(cat.id, { href: e.target.value })}
+                    />
+                  </AdminField>
+                  <AdminField label="Image URL" className="md:col-span-2">
+                    <AdminInput
+                      placeholder="https://…"
+                      value={cat.image}
+                      onChange={(e) => updateCategory(cat.id, { image: e.target.value })}
+                    />
+                  </AdminField>
+                </CmsFormGrid>
+              </div>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+
   return (
-    <section id="admin-section-categories" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Shop by category</h2>
-            <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={hp.categories.enabled !== false}
-                onChange={(e) =>
-                  setHp({
-                    ...hp,
-                    categories: { ...hp.categories, enabled: e.target.checked },
-                  })
-                }
+    <CmsSectionEditorShell
+      sectionId="admin-section-categories"
+      title="Shop by category"
+      description="Category cards linking into collections."
+      previewHref="/admin/content/preview/categories"
+      tabs={[
+        { id: "content", content: contentTab },
+        {
+          id: "design",
+          content: (
+            <div className="space-y-8">
+              <SectionDesignFields
+                value={hp.categories.styles}
+                onChange={(styles) => setHp({ ...hp, categories: { ...hp.categories, styles } })}
+                showTypography
               />
-              Visible on homepage
-            </label>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400 md:col-span-2">
-                Section title
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.categories.title}
-                  onChange={(e) =>
-                    setHp({ ...hp, categories: { ...hp.categories, title: e.target.value } })
-                  }
-                />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400 md:col-span-2">
-                Section subtitle
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.categories.subtitle}
-                  onChange={(e) =>
-                    setHp({ ...hp, categories: { ...hp.categories, subtitle: e.target.value } })
-                  }
-                />
-              </label>
+              <SectionTypographyFields section="categories" />
             </div>
-            <div className="mt-8 space-y-6">
-              {hp.categories.items
-                .slice()
-                .sort((a, b) => a.order - b.order)
-                .map((cat) => (
-                  <div
-                    key={cat.id}
-                    className="rounded-2xl border border-slate-100 p-4"
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="font-sans text-xs uppercase text-slate-400">Card</span>
-                      <label className="flex items-center gap-2 text-xs text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={cat.enabled}
-                          onChange={(e) => updateCategory(cat.id, { enabled: e.target.checked })}
-                        />
-                        Visible
-                      </label>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <input
-                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                        placeholder="Name"
-                        value={cat.name}
-                        onChange={(e) => updateCategory(cat.id, { name: e.target.value })}
-                      />
-                      <input
-                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                        placeholder="Link"
-                        value={cat.href}
-                        onChange={(e) => updateCategory(cat.id, { href: e.target.value })}
-                      />
-                      <input
-                        className="md:col-span-2 rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                        placeholder="Image URL"
-                        value={cat.image}
-                        onChange={(e) => updateCategory(cat.id, { image: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                ))}
-            </div>
-            <SectionTypographyFields section="categories" />
-          </section>
+          ),
+        },
+        { id: "layout", content: <CmsLayoutTabLink /> },
+        { id: "seo", disabled: true, content: null },
+        { id: "responsive", disabled: true, content: null },
+        { id: "advanced", disabled: true, content: null },
+      ]}
+    />
   );
 }
 
-export function ContentEditorCollectionsPanel() {
+export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?: boolean }) {
   const { hp, setHp, token, updateCollectionsCategory } = useHomepageEditor();
   if (!hp) return null;
+
+  const cp = hp.collectionsPage;
+  const filters = cp.filters ?? DEFAULT_COLLECTIONS_PAGE.filters!;
+  const messages = cp.messages ?? DEFAULT_COLLECTIONS_PAGE.messages!;
+  const kicker = cp.kicker ?? DEFAULT_COLLECTIONS_PAGE.kicker;
+
+  const patchCollections = (patch: Partial<typeof cp>) =>
+    setHp({ ...hp, collectionsPage: { ...cp, ...patch } });
+
+  const patchFilters = (patch: Partial<typeof filters>) =>
+    patchCollections({ filters: { ...filters, ...patch } });
+
+  const patchMessages = (patch: Partial<typeof messages>) =>
+    patchCollections({ messages: { ...messages, ...patch } });
+
+  const fieldLabel = "admin-cms-field-label block";
+  const fieldInput = "admin-input mt-1.5 w-full";
+
   return (
-    <section id="admin-section-collections" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Collections page</h2>
-            <p className="mt-2 font-sans text-sm text-slate-500">
-              Manage category tabs, pagination limit, and editorial copy for the collections browse page.
-            </p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Page title
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.collectionsPage.title}
-                  onChange={(e) =>
-                    setHp({
-                      ...hp,
-                      collectionsPage: { ...hp.collectionsPage, title: e.target.value },
-                    })
-                  }
-                />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Pagination limit
-                <input
-                  type="number"
-                  min={8}
-                  max={48}
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.collectionsPage.paginationLimit}
-                  onChange={(e) =>
-                    setHp({
-                      ...hp,
-                      collectionsPage: {
-                        ...hp.collectionsPage,
-                        paginationLimit: Number(e.target.value) || 16,
-                      },
-                    })
-                  }
-                />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400 md:col-span-2">
-                Page subtitle
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.collectionsPage.subtitle}
-                  onChange={(e) =>
-                    setHp({
-                      ...hp,
-                      collectionsPage: { ...hp.collectionsPage, subtitle: e.target.value },
-                    })
-                  }
-                />
-              </label>
-            </div>
-    
-            {token ? (
-              <div className="mt-8 space-y-4 border-t border-slate-100 pt-8">
-                <label className="flex items-center gap-2 font-sans text-sm text-slate-600">
+    <CmsPageEditorShell
+      id="admin-section-collections"
+      embedded={embedded}
+      title="Collections browse (/collections)"
+      description="Full control of the public collections page — header, category tabs, filters, sort options, copy, and pinned products."
+    >
+      <CmsFieldGroup title="Page header">
+        <CmsFormGrid>
+          <AdminField label="Kicker" hint="Small line above title.">
+            <AdminInput value={kicker} onChange={(e) => patchCollections({ kicker: e.target.value })} />
+          </AdminField>
+          <AdminField label="Pagination limit">
+            <AdminInput
+              type="number"
+              min={8}
+              max={48}
+              value={cp.paginationLimit}
+              onChange={(e) =>
+                patchCollections({ paginationLimit: Number(e.target.value) || 16 })
+              }
+            />
+          </AdminField>
+          <AdminField label="Page title" className="md:col-span-2">
+            <AdminInput value={cp.title} onChange={(e) => patchCollections({ title: e.target.value })} />
+          </AdminField>
+          <AdminField label="Page subtitle" className="md:col-span-2">
+            <AdminInput value={cp.subtitle} onChange={(e) => patchCollections({ subtitle: e.target.value })} />
+          </AdminField>
+        </CmsFormGrid>
+      </CmsFieldGroup>
+
+      <CmsFieldGroup title="Filters & sort">
+      <div className="mt-4 flex flex-wrap gap-4">
+        {(
+          [
+            ["showSize", "Size filter"],
+            ["showColor", "Color filter"],
+            ["showPrice", "Price filter"],
+            ["showAvailability", "Availability filter"],
+            ["showSort", "Sort filter"],
+          ] as const
+        ).map(([key, label]) => (
+          <label key={key} className="admin-cms-toggle">
+            <input
+              type="checkbox"
+              checked={filters[key]}
+              onChange={(e) => patchFilters({ [key]: e.target.checked })}
+            />
+            {label}
+          </label>
+        ))}
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <label className={fieldLabel}>
+          Size options (comma-separated)
+          <input
+            className={fieldInput}
+            value={filters.sizeOptions.join(", ")}
+            onChange={(e) =>
+              patchFilters({
+                sizeOptions: e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              })
+            }
+          />
+        </label>
+        <label className={fieldLabel}>
+          Color options (comma-separated)
+          <input
+            className={fieldInput}
+            value={filters.colorOptions.join(", ")}
+            onChange={(e) =>
+              patchFilters({
+                colorOptions: e.target.value
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean),
+              })
+            }
+          />
+        </label>
+        <label className={fieldLabel}>
+          Default sort
+          <select
+            className={fieldInput}
+            value={filters.defaultSort}
+            onChange={(e) =>
+              patchFilters({
+                defaultSort: e.target.value as typeof filters.defaultSort,
+              })
+            }
+          >
+            {filters.sortOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        <p className={fieldLabel}>Price bands</p>
+        {filters.priceBands.map((band, i) => (
+          <div key={band.id} className="grid gap-2 rounded-xl border border-slate-100 p-3 md:grid-cols-[1fr_5rem_5rem_auto]">
+            <input
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              placeholder="Label"
+              value={band.label}
+              onChange={(e) => {
+                const next = [...filters.priceBands];
+                next[i] = { ...band, label: e.target.value };
+                patchFilters({ priceBands: next });
+              }}
+            />
+            <input
+              type="number"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              placeholder="Min"
+              value={band.min}
+              onChange={(e) => {
+                const next = [...filters.priceBands];
+                next[i] = { ...band, min: Number(e.target.value) || 0 };
+                patchFilters({ priceBands: next });
+              }}
+            />
+            <input
+              type="number"
+              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              placeholder="Max"
+              value={band.max ?? ""}
+              onChange={(e) => {
+                const next = [...filters.priceBands];
+                next[i] = {
+                  ...band,
+                  max: e.target.value === "" ? undefined : Number(e.target.value) || 0,
+                };
+                patchFilters({ priceBands: next });
+              }}
+            />
+            <label className="flex items-center gap-2 self-center font-sans text-xs text-slate-600">
+              <input
+                type="checkbox"
+                checked={band.enabled}
+                onChange={(e) => {
+                  const next = [...filters.priceBands];
+                  next[i] = { ...band, enabled: e.target.checked };
+                  patchFilters({ priceBands: next });
+                }}
+              />
+              On
+            </label>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="rounded-full border border-slate-200 px-4 py-1.5 font-sans text-[11px] uppercase tracking-[0.18em] text-slate-700"
+          onClick={() =>
+            patchFilters({
+              priceBands: [
+                ...filters.priceBands,
+                {
+                  id: `band-${Date.now()}`,
+                  label: "New band",
+                  min: 0,
+                  max: 10000,
+                  enabled: true,
+                },
+              ],
+            })
+          }
+        >
+          Add price band
+        </button>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        <p className={fieldLabel}>Sort options</p>
+        {filters.sortOptions.map((opt, i) => (
+          <div key={opt.value} className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-100 p-3">
+            <span className="font-mono text-xs text-slate-400">{opt.value}</span>
+            <input
+              className="min-w-[10rem] flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              value={opt.label}
+              onChange={(e) => {
+                const next = [...filters.sortOptions];
+                next[i] = { ...opt, label: e.target.value };
+                patchFilters({ sortOptions: next });
+              }}
+            />
+            <label className="flex items-center gap-2 font-sans text-xs text-slate-600">
+              <input
+                type="checkbox"
+                checked={opt.enabled}
+                onChange={(e) => {
+                  const next = [...filters.sortOptions];
+                  next[i] = { ...opt, enabled: e.target.checked };
+                  patchFilters({ sortOptions: next });
+                }}
+              />
+              Enabled
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <CmsSectionHeading>Page messages</CmsSectionHeading>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <label className={fieldLabel}>
+          Loading message
+          <input
+            className={fieldInput}
+            value={messages.loading}
+            onChange={(e) => patchMessages({ loading: e.target.value })}
+          />
+        </label>
+        <label className={fieldLabel}>
+          Empty results message
+          <input
+            className={fieldInput}
+            value={messages.empty}
+            onChange={(e) => patchMessages({ empty: e.target.value })}
+          />
+        </label>
+        <label className={fieldLabel}>
+          Mobile filters button
+          <input
+            className={fieldInput}
+            value={messages.mobileFiltersLabel}
+            onChange={(e) => patchMessages({ mobileFiltersLabel: e.target.value })}
+          />
+        </label>
+        <label className={fieldLabel}>
+          Mobile drawer title
+          <input
+            className={fieldInput}
+            value={messages.mobileDrawerTitle}
+            onChange={(e) => patchMessages({ mobileDrawerTitle: e.target.value })}
+          />
+        </label>
+        <label className={fieldLabel}>
+          “All” filter label
+          <input
+            className={fieldInput}
+            value={messages.filterAll}
+            onChange={(e) => patchMessages({ filterAll: e.target.value })}
+          />
+        </label>
+        <label className={fieldLabel}>
+          In-stock label
+          <input
+            className={fieldInput}
+            value={messages.availabilityInStock}
+            onChange={(e) => patchMessages({ availabilityInStock: e.target.value })}
+          />
+        </label>
+      </div>
+
+      </CmsFieldGroup>
+
+      {token ? (
+        <div className="admin-cms-group">
+          <div className="admin-cms-group-header">
+            <CmsSectionHeading>Product grid</CmsSectionHeading>
+          </div>
+          <div className="admin-cms-group-body space-y-4">
+          <CmsVisibilityToggle
+            label='Pin products on the "All" tab (first page)'
+            checked={cp.usePinnedProducts === true}
+            onChange={(usePinnedProducts) => patchCollections({ usePinnedProducts })}
+          />
+          <ProductIdListField
+            token={token}
+            label="Pinned products (order = top of grid)"
+            hint="Only when the shopper opens Collections on the All tab, page 1. Remaining slots fill from the catalog."
+            maxItems={24}
+            value={cp.pinnedProductIds ?? []}
+            onChange={(pinnedProductIds) => patchCollections({ pinnedProductIds })}
+          />
+          </div>
+        </div>
+      ) : null}
+
+      <CmsFieldGroup title="Category tabs">
+      <div className="mt-4 space-y-5">
+        {cp.categories
+          .slice()
+          .sort((a, b) => a.order - b.order)
+          .map((cat) => (
+            <div key={cat.id} className="rounded-2xl border border-slate-100 p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <span className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
+                  Category tab
+                </span>
+                <label className="flex items-center gap-2 text-xs text-slate-600">
                   <input
                     type="checkbox"
-                    checked={hp.collectionsPage.usePinnedProducts === true}
+                    checked={cat.enabled}
                     onChange={(e) =>
-                      setHp({
-                        ...hp,
-                        collectionsPage: {
-                          ...hp.collectionsPage,
-                          usePinnedProducts: e.target.checked,
-                        },
-                      })
+                      updateCollectionsCategory(cat.id, { enabled: e.target.checked })
                     }
                   />
-                  Pin products on the “All” tab (first page)
+                  Enabled
                 </label>
-                <ProductIdListField
-                  token={token}
-                  label="Pinned products (order = top of grid)"
-                  hint="Only when the shopper opens Collections on the All tab, page 1. Remaining slots fill from the catalog."
-                  maxItems={24}
-                  value={hp.collectionsPage.pinnedProductIds ?? []}
-                  onChange={(pinnedProductIds) =>
-                    setHp({
-                      ...hp,
-                      collectionsPage: { ...hp.collectionsPage, pinnedProductIds },
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="Label"
+                  value={cat.label}
+                  onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
+                />
+                <select
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  value={cat.type}
+                  onChange={(e) =>
+                    updateCollectionsCategory(cat.id, {
+                      type: e.target.value as "all" | "bestselling" | "category",
                     })
+                  }
+                >
+                  <option value="all">All</option>
+                  <option value="bestselling">Bestselling</option>
+                  <option value="category">Category</option>
+                </select>
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="Category value (for type=category)"
+                  value={cat.value ?? ""}
+                  onChange={(e) => updateCollectionsCategory(cat.id, { value: e.target.value })}
+                />
+                <input
+                  type="number"
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  value={cat.order}
+                  onChange={(e) =>
+                    updateCollectionsCategory(cat.id, { order: Number(e.target.value) || 0 })
                   }
                 />
               </div>
-            ) : null}
-    
-            <div className="mt-8 space-y-5">
-              {hp.collectionsPage.categories
-                .slice()
-                .sort((a, b) => a.order - b.order)
-                .map((cat) => (
-                  <div key={cat.id} className="rounded-2xl border border-slate-100 p-4">
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                        Category tab
-                      </span>
-                      <label className="flex items-center gap-2 text-xs text-slate-600">
-                        <input
-                          type="checkbox"
-                          checked={cat.enabled}
-                          onChange={(e) =>
-                            updateCollectionsCategory(cat.id, { enabled: e.target.checked })
-                          }
-                        />
-                        Enabled
-                      </label>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <input
-                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                        placeholder="Label"
-                        value={cat.label}
-                        onChange={(e) =>
-                          updateCollectionsCategory(cat.id, { label: e.target.value })
-                        }
-                      />
-                      <select
-                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                        value={cat.type}
-                        onChange={(e) =>
-                          updateCollectionsCategory(cat.id, {
-                            type: e.target.value as "all" | "bestselling" | "category",
-                          })
-                        }
-                      >
-                        <option value="all">All</option>
-                        <option value="bestselling">Bestselling</option>
-                        <option value="category">Category</option>
-                      </select>
-                      <input
-                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                        placeholder="Category value (for type=category)"
-                        value={cat.value ?? ""}
-                        onChange={(e) =>
-                          updateCollectionsCategory(cat.id, { value: e.target.value })
-                        }
-                      />
-                      <input
-                        type="number"
-                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                        value={cat.order}
-                        onChange={(e) =>
-                          updateCollectionsCategory(cat.id, { order: Number(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div className="mt-3 flex justify-end">
-                      <button
-                        type="button"
-                        className="rounded-full border border-red-200 px-4 py-1.5 font-sans text-[11px] uppercase tracking-[0.18em] text-red-600"
-                        onClick={() =>
-                          setHp({
-                            ...hp,
-                            collectionsPage: {
-                              ...hp.collectionsPage,
-                              categories: hp.collectionsPage.categories.filter((x) => x.id !== cat.id),
-                            },
-                          })
-                        }
-                      >
-                        Remove tab
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  className="rounded-full border border-red-200 px-4 py-1.5 font-sans text-[11px] uppercase tracking-[0.18em] text-red-600"
+                  onClick={() =>
+                    patchCollections({
+                      categories: cp.categories.filter((x) => x.id !== cat.id),
+                    })
+                  }
+                >
+                  Remove tab
+                </button>
+              </div>
             </div>
-            <button
-              type="button"
-              className="mt-5 rounded-full border border-slate-200 px-5 py-2 font-sans text-xs uppercase tracking-[0.2em] text-slate-700"
-              onClick={() =>
-                setHp({
-                  ...hp,
-                  collectionsPage: {
-                    ...hp.collectionsPage,
-                    categories: [
-                      ...hp.collectionsPage.categories,
-                      {
-                        id: `tab-${Date.now()}`,
-                        label: "New Category",
-                        type: "category",
-                        value: "",
-                        enabled: true,
-                        order: hp.collectionsPage.categories.length,
-                      },
-                    ],
-                  },
-                })
-              }
-            >
-              Add category tab
-            </button>
-          </section>
+          ))}
+      </div>
+      <button
+        type="button"
+        className="mt-5 rounded-full border border-slate-200 px-5 py-2 font-sans text-xs uppercase tracking-[0.2em] text-slate-700"
+        onClick={() =>
+          patchCollections({
+            categories: [
+              ...cp.categories,
+              {
+                id: `tab-${Date.now()}`,
+                label: "New Category",
+                type: "category",
+                value: "",
+                enabled: true,
+                order: cp.categories.length,
+              },
+            ],
+          })
+        }
+      >
+        Add category tab
+      </button>
+      </CmsFieldGroup>
+    </CmsPageEditorShell>
   );
 }
 
-export function ContentEditorOurStoryPanel() {
+export function ContentEditorOurStoryPanel({ embedded = false }: { embedded?: boolean }) {
   const { hp, setHp } = useHomepageEditor();
   if (!hp) return null;
   return (
-    <section id="admin-section-our-story" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Our Story page</h2>
-            <p className="mt-2 font-sans text-sm text-slate-500">
-              Control hero content, cinematic sections, manifesto quote, CTA, and section order/visibility.
-            </p>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Hero title
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+    <section
+      id="admin-section-our-story"
+      className={embedded ? "space-y-8 p-6 sm:p-8" : "admin-surface-elevated space-y-8 p-6 sm:p-8"}
+    >
+            <header>
+              <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Our Story page</h2>
+              <p className="mt-2 font-sans text-sm text-[var(--admin-muted)]">
+                Control hero content, cinematic sections, manifesto quote, CTA, and section order/visibility.
+              </p>
+            </header>
+            <div className="grid gap-4 md:grid-cols-2">
+              <AdminField label="Hero title">
+                <AdminInput
                   value={hp.ourStoryPage.title}
                   onChange={(e) =>
                     setHp({
@@ -708,11 +906,9 @@ export function ContentEditorOurStoryPanel() {
                     })
                   }
                 />
-              </label>
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Hero image URL
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              </AdminField>
+              <AdminField label="Hero image URL">
+                <AdminInput
                   value={hp.ourStoryPage.heroImage}
                   onChange={(e) =>
                     setHp({
@@ -721,7 +917,7 @@ export function ContentEditorOurStoryPanel() {
                     })
                   }
                 />
-              </label>
+              </AdminField>
               <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400 md:col-span-2">
                 Hero subtitle
                 <textarea
@@ -1146,10 +1342,10 @@ export function ContentEditorFooterPanel() {
 export function ContentEditorNewsletterPanel() {
   const { hp, setHp } = useHomepageEditor();
   if (!hp) return null;
-  return (
-    <section id="admin-section-newsletter" className="admin-surface-elevated p-6 sm:p-8">
-            <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">Newsletter</h2>
-            <label className="mt-4 flex items-center gap-2 font-sans text-sm text-slate-600">
+
+  const contentTab = (
+    <>
+            <label className="flex items-center gap-2 font-sans text-sm text-slate-600">
               <input
                 type="checkbox"
                 checked={hp.newsletter.enabled !== false}
@@ -1205,7 +1401,35 @@ export function ContentEditorNewsletterPanel() {
                 />
               </label>
             </div>
-            <SectionTypographyFields section="newsletter" />
-          </section>
+    </>
+  );
+
+  return (
+    <CmsSectionEditorShell
+      sectionId="admin-section-newsletter"
+      title="Newsletter"
+      description="Email capture and secondary CTA on the homepage."
+      previewHref="/admin/content/preview/newsletter"
+      tabs={[
+        { id: "content", content: contentTab },
+        {
+          id: "design",
+          content: (
+            <div className="space-y-8">
+              <SectionDesignFields
+                value={hp.newsletter.styles}
+                onChange={(styles) => setHp({ ...hp, newsletter: { ...hp.newsletter, styles } })}
+                showTypography
+              />
+              <SectionTypographyFields section="newsletter" />
+            </div>
+          ),
+        },
+        { id: "layout", content: <CmsLayoutTabLink /> },
+        { id: "seo", disabled: true, content: null },
+        { id: "responsive", disabled: true, content: null },
+        { id: "advanced", disabled: true, content: null },
+      ]}
+    />
   );
 }

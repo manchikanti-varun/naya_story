@@ -3,8 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import type { CategoryCard, SectionTextColors } from "@/types/homepage";
+import type { CategoryCard, SectionDesign, SectionTextColors } from "@/types/homepage";
+import { SectionShell } from "@/components/cms/SectionShell";
 import { sectionTextStyles } from "@/lib/section-text-styles";
+import { cn } from "@/lib/cn";
 
 type Props = {
   title: string;
@@ -13,6 +15,7 @@ type Props = {
   cta?: { label: string; href: string };
   compactTop?: boolean;
   sectionText?: SectionTextColors | null;
+  design?: SectionDesign | null;
 };
 
 export function ShopByCategorySection({
@@ -22,6 +25,7 @@ export function ShopByCategorySection({
   cta,
   compactTop = false,
   sectionText,
+  design,
 }: Props) {
   const visible = [...items]
     .filter((c) => c.enabled)
@@ -31,24 +35,22 @@ export function ShopByCategorySection({
   const st = sectionTextStyles(sectionText);
 
   return (
-    <section
-      className={`bg-ivory-muted/60 px-6 ${compactTop ? "pt-10 pb-section md:pt-14" : "py-section"} md:px-10 lg:px-12`}
+    <SectionShell
+      design={design}
+      className={cn(
+        !design?.backgroundColor && "bg-ivory-muted/60",
+        compactTop ? "pt-10 pb-section md:pt-14" : "py-section",
+      )}
     >
-      <div className="mx-auto max-w-[1400px]">
+      <div className="lux-shell">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="font-sans text-[10px] font-light uppercase tracking-[0.36em] text-gold/90" style={st.kicker}>
+          <p className="lux-kicker text-gold/90" style={st.kicker}>
             Explore
           </p>
-          <h2
-            className="mt-3 font-display text-[clamp(1.85rem,3.5vw,2.75rem)] font-normal tracking-[-0.02em] text-ink"
-            style={st.heading}
-          >
+          <h2 className="lux-heading-rail mt-2" style={st.heading}>
             {title}
           </h2>
-          <p
-            className="mt-4 font-sans text-sm font-light leading-relaxed text-ink-muted md:text-[15px]"
-            style={st.subheading}
-          >
+          <p className="lux-copy mt-4" style={st.subheading}>
             {subtitle}
           </p>
         </div>
@@ -62,17 +64,14 @@ export function ShopByCategorySection({
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.95, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Link
-                href={cat.href || "/collections"}
-                className="group relative block aspect-[4/5] overflow-hidden rounded-[28px] bg-ivory-soft md:aspect-[3/4.2]"
-              >
+              <Link href={cat.href || "/collections"} className="group lux-category-tile">
                 {cat.image ? (
                   <Image
                     src={cat.image}
                     alt={cat.name}
                     fill
                     loading="lazy"
-                    className="object-cover object-center transition duration-[1.6s] ease-out group-hover:scale-[1.07]"
+                    className="object-cover object-center lux-image-zoom group-hover:scale-[1.07]"
                     sizes="(max-width:768px) 50vw, 33vw"
                     unoptimized={
                       !cat.image.includes("images.unsplash.com") &&
@@ -80,11 +79,9 @@ export function ShopByCategorySection({
                     }
                   />
                 ) : null}
-                <div className="absolute inset-0 bg-ink/20 transition duration-700 ease-out group-hover:bg-ink/48" />
+                <div className="lux-category-overlay" aria-hidden />
                 <div className="absolute inset-0 flex items-end justify-start p-7 pb-9 md:p-9 md:pb-11">
-                  <span className="font-display text-[clamp(1.75rem,3.5vw,2.75rem)] font-normal leading-tight tracking-[-0.02em] text-ivory opacity-0 translate-y-3 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100">
-                    {cat.name}
-                  </span>
+                  <span className="lux-category-label">{cat.name}</span>
                 </div>
               </Link>
             </motion.div>
@@ -92,16 +89,12 @@ export function ShopByCategorySection({
         </div>
         {cta ? (
           <div className="mt-12 flex justify-center">
-            <Link
-              href={cta.href}
-              className="rounded-full border border-ivory-deep/80 bg-transparent px-8 py-3 font-sans text-[11px] uppercase tracking-[0.24em] text-ink transition-all duration-500 hover:border-gold hover:text-gold"
-              style={st.link}
-            >
+            <Link href={cta.href} className="lux-btn-outline" style={st.link}>
               {cta.label}
             </Link>
           </div>
         ) : null}
       </div>
-    </section>
+    </SectionShell>
   );
 }

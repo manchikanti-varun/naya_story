@@ -7,11 +7,27 @@
   --foreground: #2c2825;
   --surface: #f7f3ee;
   --surface-soft: #f1ebe3;
-  --border-soft: rgba(44, 40, 37, 0.09);
-  /* Matches desktop navbar max height for main content offset */
-  --store-nav-pad: 6rem;
-  /* Top promo strip (set by client when bar visible) */
+  --border-soft: rgba(44, 40, 37, 0.08);
+  --store-nav-pad: 5rem;
+  --store-hero-min-h: min(82svh, 680px);
   --store-promo-bar-h: 0px;
+  --store-mobile-cta-h: 5.25rem;
+  --store-sticky-cart-h: 4.75rem;
+
+  /* Luxury design tokens */
+  --lux-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lux-duration: 700ms;
+  --lux-duration-slow: 1200ms;
+  --color-ink: #2c2825;
+  --color-ink-muted: #4a4540;
+  --color-ink-soft: #6b6560;
+  --color-gold: #c9a15b;
+  --color-taupe: #c4b8a8;
+  --color-sand: #e6ddd1;
+  --radius-lux: 2px;
+  --radius-lux-lg: 24px;
+  --shadow-lux: 0 24px 64px -28px rgba(44, 40, 37, 0.12);
+  --shadow-lux-hover: 0 32px 80px -24px rgba(44, 40, 37, 0.18);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -30,7 +46,11 @@ html {
 
 body {
   color: var(--foreground);
-  background: linear-gradient(180deg, #f7f3ee 0%, #f4efe9 55%, #f3eee7 100%);
+  background: var(--background);
+  font-size: 15px;
+  line-height: 1.55;
+  font-feature-settings: "kern" 1, "liga" 1;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
@@ -44,23 +64,213 @@ body {
   }
 
   .lux-shell {
-    @apply mx-auto w-full max-w-[1480px] px-5 md:px-10 lg:px-14;
+    @apply mx-auto w-full max-w-[1320px] px-4 md:px-8 lg:px-10;
+  }
+
+  .lux-shell-wide {
+    @apply mx-auto w-full max-w-[1440px] px-4 md:px-7 lg:px-10;
+  }
+
+  .lux-hero-kicker {
+    @apply font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ivory/80 sm:tracking-[0.48em];
+  }
+
+  .lux-hero-title {
+    @apply font-display text-[clamp(1.65rem,5vw,3.35rem)] font-normal leading-[1.06] tracking-[-0.02em] text-ivory;
+  }
+
+  .lux-hero-sub {
+    @apply font-sans text-[15px] font-light leading-relaxed text-ivory/90 md:text-base;
+  }
+
+  .lux-hero-cta {
+    @apply inline-flex min-h-[44px] items-center rounded-full border border-ivory/45 bg-transparent px-7 py-3 font-sans text-[10px] font-light uppercase tracking-[0.26em] text-ivory transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-9 sm:py-3.5 sm:text-[11px] sm:tracking-[0.3em] md:px-11 md:py-4;
+  }
+
+  .lux-hero-cta:hover {
+    border-color: rgb(201 161 91 / 0.8);
+    color: var(--color-gold, #c9a15b);
+  }
+
+  .lux-hero-nav {
+    @apply touch-target rounded-full border border-[rgb(245_241_236/0.25)] bg-[rgb(44_40_37/0.2)] text-[rgb(245_241_236/0.95)] backdrop-blur-sm transition-all duration-700 active:scale-95;
+  }
+
+  .lux-hero-dot {
+    @apply h-1 rounded-full transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)];
   }
 
   .lux-kicker {
-    @apply font-sans text-[10px] uppercase tracking-[0.32em] text-ink-soft;
+    @apply font-sans text-[10px] font-light uppercase tracking-[0.22em] text-ink-soft sm:tracking-[0.32em];
   }
 
   .lux-title {
-    @apply font-display text-[clamp(2.2rem,5vw,4rem)] leading-[0.96] tracking-[-0.02em] text-ink;
+    @apply font-display font-normal text-[clamp(1.75rem,3.6vw,3.15rem)] leading-[1.02] tracking-[-0.02em] text-ink;
+  }
+
+  .lux-title-section {
+    @apply font-display font-normal text-[clamp(1.6rem,3vw,2.5rem)] leading-[1.06] tracking-[-0.02em] text-ink;
+  }
+
+  /** Homepage rails & editorial section headings */
+  .lux-heading-rail {
+    @apply font-display font-normal text-[clamp(1.45rem,2.6vw,2.15rem)] leading-[1.08] tracking-[-0.02em] text-ink;
   }
 
   .lux-copy {
-    @apply font-sans text-sm leading-relaxed text-ink-muted md:text-[15px];
+    @apply font-sans text-[13px] font-light leading-[1.65] text-ink-muted md:text-sm;
+  }
+
+  /** Dark / ink sections (craftsmanship, hero overlays) */
+  .lux-kicker-on-dark {
+    @apply font-sans text-[10px] font-light uppercase tracking-[0.32em];
+    color: rgb(201 161 91 / 0.9);
+  }
+
+  .lux-heading-rail-on-dark {
+    @apply font-display font-normal text-[clamp(1.45rem,2.6vw,2.15rem)] leading-[1.08] tracking-[-0.02em] text-ivory;
+  }
+
+  .lux-copy-on-dark {
+    @apply font-sans text-[15px] font-light leading-[1.75];
+    color: rgb(245 241 236 / 0.75);
+  }
+
+  /** Shared CTAs */
+  .lux-btn-outline {
+    @apply inline-flex min-h-[44px] items-center justify-center rounded-full border border-ivory-deep/80 bg-transparent px-8 py-3 font-sans text-[11px] font-light uppercase tracking-[0.24em] text-ink transition-all duration-700;
+  }
+
+  .lux-btn-outline:hover {
+    border-color: var(--color-gold, #c9a15b);
+    color: var(--color-gold, #c9a15b);
+  }
+
+  .lux-btn-primary {
+    @apply inline-flex min-h-[44px] w-full items-center justify-center rounded-full bg-gold py-4 font-sans text-[11px] font-light uppercase tracking-[0.28em] text-white transition-all duration-700 hover:scale-[1.01];
+  }
+
+  .lux-btn-ink {
+    @apply inline-flex items-center justify-center rounded-full bg-ink px-5 py-3 font-sans text-[11px] font-light uppercase tracking-[0.2em] text-ivory transition-colors duration-700;
+  }
+
+  .lux-btn-ink:hover {
+    background-color: var(--color-gold, #c9a15b);
+  }
+
+  /** Filter / category tabs */
+  .lux-filter-chip {
+    @apply snap-start rounded-lux-lg border px-5 py-2.5 font-sans text-[11px] font-light uppercase tracking-[0.18em] transition-all duration-700;
+  }
+
+  .lux-filter-chip-idle {
+    @apply border-ivory-deep bg-ivory/70 text-ink-soft hover:bg-ivory hover:text-ink;
+  }
+
+  .lux-filter-chip-active {
+    border-color: rgb(201 161 91 / 0.6);
+    background-color: rgb(201 161 91 / 0.15);
+    color: var(--color-gold, #c9a15b);
+  }
+
+  /** Product grid card */
+  .lux-product-frame {
+    @apply relative aspect-[3/4] overflow-hidden rounded-lux bg-ivory-soft shadow-lux;
+  }
+
+  .lux-product-name {
+    @apply font-display text-lg text-ink transition-colors duration-700 group-hover:text-gold;
+  }
+
+  .lux-product-meta {
+    @apply font-sans text-[11px] uppercase tracking-[0.22em] text-ink-soft;
+  }
+
+  .lux-product-price {
+    @apply font-sans text-sm tracking-wide text-ink;
+  }
+
+  .lux-card-action {
+    @apply touch-target rounded-full text-white shadow-sm backdrop-blur transition duration-500 active:scale-95;
+    background-color: rgb(44 40 37 / 0.7);
+  }
+
+  .lux-card-action:hover {
+    background-color: rgb(44 40 37 / 0.85);
+  }
+
+  /** Category editorial tiles */
+  .lux-category-tile {
+    @apply relative block aspect-[3/4] overflow-hidden rounded-lux-lg bg-ivory-soft md:aspect-[3/4.2];
+  }
+
+  .lux-category-overlay {
+    @apply absolute inset-0 transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)];
+    background-color: rgb(44 40 37 / 0.2);
+  }
+
+  .lux-category-tile:hover .lux-category-overlay {
+    background-color: rgb(44 40 37 / 0.48);
+  }
+
+  .lux-category-label {
+    @apply font-display text-[clamp(1.35rem,2.5vw,2rem)] font-normal leading-tight tracking-[-0.02em] text-ivory opacity-0 translate-y-3 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100;
+  }
+
+  /** Product & PDP imagery — shorter than full portrait */
+  .lux-product-media {
+    @apply relative aspect-[3/4] w-full max-h-[min(58vh,480px)] overflow-hidden rounded-lux bg-ivory-soft;
+  }
+
+  .lux-product-media--pdp {
+    @apply max-h-[min(68vh,520px)] sm:max-h-[min(72vh,560px)] lg:max-h-[min(78vh,620px)];
+  }
+
+  .pdp-purchase-panel {
+    @apply rounded-lux border border-ivory-deep/80 bg-ivory/40 p-4 sm:p-5;
+  }
+
+  .pdp-option-label {
+    @apply font-sans text-[10px] font-medium uppercase tracking-[0.24em] text-ink-soft;
+  }
+
+  .pdp-chip {
+    @apply min-h-[40px] min-w-[48px] rounded-md border px-3.5 py-2 font-sans text-[11px] uppercase tracking-[0.16em] transition-all duration-300;
+  }
+
+  .pdp-chip-active {
+    @apply border-ink bg-ink text-ivory shadow-sm;
+  }
+
+  .pdp-chip-idle {
+    @apply border-ivory-deep bg-ivory text-ink-muted hover:border-ink-muted hover:text-ink;
+  }
+
+  .pdp-chip-disabled {
+    @apply border-ivory-deep/60 text-ink-soft line-through opacity-50 hover:border-ivory-deep/60 hover:text-ink-soft;
+  }
+
+  .pdp-details-card {
+    @apply rounded-lux border border-ivory-deep/70 bg-ivory/30;
   }
 
   .lux-chip {
-    @apply rounded-full border border-ivory-deep/80 bg-ivory/70 px-4 py-2 font-sans text-[10px] uppercase tracking-[0.18em] text-ink-soft transition hover:border-gold/40 hover:text-ink;
+    @apply rounded-full border border-ivory-deep/70 bg-ivory/60 px-4 py-2 font-sans text-[10px] font-light uppercase tracking-[0.18em] text-ink-soft transition duration-700 hover:border-gold/40 hover:text-ink;
+  }
+
+  .lux-link-underline {
+    @apply relative inline-block;
+  }
+
+  .lux-link-underline::after {
+    content: "";
+    @apply absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-gold transition-transform duration-700;
+    opacity: 0.7;
+    transition-timing-function: var(--lux-ease);
+  }
+
+  .lux-link-underline:hover::after {
+    @apply scale-x-100;
   }
 
   .lux-grain {
@@ -72,10 +282,18 @@ body {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.05;
-    background-image: radial-gradient(rgba(44, 40, 37, 0.4) 0.4px, transparent 0.4px);
+    opacity: 0.04;
+    background-image: radial-gradient(rgba(44, 40, 37, 0.35) 0.4px, transparent 0.4px);
     background-size: 3px 3px;
     mix-blend-mode: multiply;
+  }
+
+  .lux-image-zoom {
+    @apply transition duration-[1.35s] ease-[cubic-bezier(0.22,1,0.36,1)];
+  }
+
+  .lux-image-zoom:hover {
+    @apply scale-[1.04];
   }
 
   .no-scrollbar {
@@ -84,5 +302,40 @@ body {
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  .pb-mobile-cta {
+    padding-bottom: calc(
+      var(--store-mobile-cta-h) + env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  html.pdp-sticky-cart-active .pb-pdp-sticky {
+    padding-bottom: calc(
+      var(--store-sticky-cart-h) + env(safe-area-inset-bottom, 0px) + 0.5rem
+    );
+  }
+
+  .safe-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .safe-top {
+    padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  }
+
+  .touch-target {
+    @apply inline-flex min-h-11 min-w-11 items-center justify-center;
+  }
+
+  .lux-scroll-x {
+    @apply flex gap-2 overflow-x-auto overscroll-x-contain no-scrollbar;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+
+  .lux-scroll-x > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
   }
 }

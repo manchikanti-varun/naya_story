@@ -9,7 +9,7 @@ export default function PreviewLayout({ children }: { children: ReactNode }) {
   const { hp, msg } = useHomepageEditor();
 
   if (!hp) {
-    return <p className="text-sm text-slate-500">Loading…</p>;
+    return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading…</p>;
   }
 
   return (

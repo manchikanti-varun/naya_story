@@ -4,40 +4,12 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
+import { STORE_PRIMARY_NAV, type StoreNavRow } from "@/lib/store-nav";
 
-export type NavItem = {
-  label: string;
-  href: string;
-  match: (ctx: {
-    pathname: string;
-    collection: string | null;
-    hash: string;
-  }) => boolean;
-};
+export type NavItem = StoreNavRow;
 
-export const STORE_NAV_ITEMS: NavItem[] = [
-  {
-    label: "Home",
-    href: "/",
-    match: ({ pathname, hash }) => pathname === "/" && hash !== "story",
-  },
-  {
-    label: "New In",
-    href: "/new-in",
-    match: ({ pathname }) => pathname.startsWith("/new-in"),
-  },
-  {
-    label: "Collections",
-    href: "/collections",
-    match: ({ pathname, collection }) =>
-      pathname.startsWith("/collections") && collection !== "new-arrivals",
-  },
-  {
-    label: "Our Story",
-    href: "/our-story",
-    match: ({ pathname }) => pathname.startsWith("/our-story"),
-  },
-];
+/** @deprecated Use `STORE_PRIMARY_NAV` from `@/lib/store-nav`. */
+export const STORE_NAV_ITEMS: NavItem[] = STORE_PRIMARY_NAV;
 
 export function StoreNavLinks({ className }: { className?: string }) {
   const pathname = usePathname();
@@ -60,7 +32,7 @@ export function StoreNavLinks({ className }: { className?: string }) {
       )}
       aria-label="Primary"
     >
-      {STORE_NAV_ITEMS.map((item) => {
+      {STORE_PRIMARY_NAV.map((item) => {
         const active = item.match({ pathname, collection, hash });
         return (
           <Link
@@ -68,8 +40,8 @@ export function StoreNavLinks({ className }: { className?: string }) {
             href={item.href}
             className={cn(
               "group relative font-sans text-[12px] font-normal uppercase tracking-[0.22em] antialiased transition-colors duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
-              "text-black hover:text-gold",
-              active && "text-black",
+              "text-ink hover:text-gold",
+              active && "text-ink",
             )}
           >
             <span className="relative inline-block pb-1.5">

@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
+import { AdminBadge } from "@/components/admin/ui/AdminBadge";
+import { AdminButton } from "@/components/admin/ui/AdminButton";
+import { AdminCard } from "@/components/admin/ui/AdminCard";
+import { AdminField, AdminInput, AdminSelect } from "@/components/admin/ui/AdminField";
+import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
+import { AdminTable } from "@/components/admin/ui/AdminTable";
 
 type Coupon = {
   _id: string;
@@ -37,101 +43,120 @@ export default function AdminCouponsPage() {
   }, [token]);
 
   return (
-    <div className="space-y-10">
-      <header>
-        <p className="font-sans text-xs uppercase tracking-[0.3em] text-slate-400">Pricing</p>
-        <h1 className="mt-3 font-display text-4xl text-slate-900">Coupons</h1>
-      </header>
-
-      <form
-        className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-4"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (!token) return;
-          await apiFetch("/coupons", {
-            method: "POST",
-            token,
-            body: JSON.stringify(draft),
-          });
-          publishStorefrontSettingsChanged();
-          setDraft({ code: "", type: "percent", value: 10, usageLimit: 500 });
-          await refresh();
-        }}
-      >
-        <input
-          placeholder="CODE"
-          value={draft.code}
-          onChange={(e) => setDraft({ ...draft, code: e.target.value })}
-          className="rounded-xl border border-slate-200 px-3 py-2 text-sm uppercase"
-          required
-        />
-        <select
-          value={draft.type}
-          onChange={(e) =>
-            setDraft({ ...draft, type: e.target.value as "percent" | "fixed" })
-          }
-          className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+    <AdminPageLayout
+      eyebrow="Marketing"
+      title="Coupons"
+      description="Discount codes apply at checkout. Toggling activation updates the storefront after save."
+    >
+      <AdminCard padding="md">
+        <h2 className="font-sans text-sm font-semibold text-[var(--admin-ink)]">Create coupon</h2>
+        <form
+          className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4 lg:items-end"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!token) return;
+            await apiFetch("/coupons", {
+              method: "POST",
+              token,
+              body: JSON.stringify(draft),
+            });
+            publishStorefrontSettingsChanged();
+            setDraft({ code: "", type: "percent", value: 10, usageLimit: 500 });
+            await refresh();
+          }}
         >
-          <option value="percent">Percent</option>
-          <option value="fixed">Fixed ₹</option>
-        </select>
-        <input
-          type="number"
-          value={draft.value}
-          onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
-          className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-        />
-        <button
-          type="submit"
-          className="rounded-full bg-slate-900 px-4 py-2 font-sans text-xs uppercase tracking-[0.22em] text-white"
-        >
-          Create
-        </button>
-      </form>
+          <AdminField label="Code">
+            <AdminInput
+              placeholder="SUMMER20"
+              value={draft.code}
+              onChange={(e) => setDraft({ ...draft, code: e.target.value.toUpperCase() })}
+              className="uppercase"
+              required
+            />
+          </AdminField>
+          <AdminField label="Type">
+            <AdminSelect
+              value={draft.type}
+              onChange={(e) => setDraft({ ...draft, type: e.target.value as "percent" | "fixed" })}
+            >
+              <option value="percent">Percent off</option>
+              <option value="fixed">Fixed ₹ off</option>
+            </AdminSelect>
+          </AdminField>
+          <AdminField label="Value">
+            <AdminInput
+              type="number"
+              min={0}
+              value={draft.value}
+              onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
+            />
+          </AdminField>
+          <AdminButton type="submit" variant="primary" className="w-full lg:w-auto">
+            Create
+          </AdminButton>
+        </form>
+      </AdminCard>
 
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-[0.16em] text-slate-400">
-            <tr>
-              <th className="px-6 py-4">Code</th>
-              <th className="px-6 py-4">Type</th>
-              <th className="px-6 py-4">Value</th>
-              <th className="px-6 py-4">Usage</th>
-              <th className="px-6 py-4 text-right">Active</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {coupons.map((c) => (
-              <tr key={c._id}>
-                <td className="px-6 py-4 font-medium text-slate-900">{c.code}</td>
-                <td className="px-6 py-4 text-slate-600">{c.type}</td>
-                <td className="px-6 py-4 text-slate-600">{c.value}</td>
-                <td className="px-6 py-4 text-slate-600">
-                  {c.usedCount}/{c.usageLimit ?? "∞"}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    type="button"
-                    className="text-xs uppercase tracking-[0.18em] text-slate-500"
-                    onClick={async () => {
-                      if (!token) return;
-                      await apiFetch(`/coupons/${c._id}`, {
-                        method: "PATCH",
-                        token,
-                        body: JSON.stringify({ active: !c.active }),
-                      });
-                      publishStorefrontSettingsChanged();
-                      await refresh();
-                    }}
-                  >
-                    {c.active ? "Deactivate" : "Activate"}
-                  </button>
-                </td>
+      <AdminCard padding="none" elevated>
+        <AdminTable>
+          <table className="admin-table text-sm">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Value</th>
+                <th>Usage</th>
+                <th className="text-right">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+            </thead>
+            <tbody>
+              {coupons.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-[var(--admin-muted)]">
+                    No coupons yet.
+                  </td>
+                </tr>
+              ) : (
+                coupons.map((c) => (
+                  <tr key={c._id}>
+                    <td className="font-medium">{c.code}</td>
+                    <td className="capitalize text-[var(--admin-muted)]">{c.type}</td>
+                    <td className="tabular-nums text-[var(--admin-muted)]">
+                      {c.type === "percent" ? `${c.value}%` : `₹${c.value}`}
+                    </td>
+                    <td className="tabular-nums text-[var(--admin-muted)]">
+                      {c.usedCount}/{c.usageLimit ?? "∞"}
+                    </td>
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        <AdminBadge tone={c.active ? "success" : "neutral"}>
+                          {c.active ? "Active" : "Inactive"}
+                        </AdminBadge>
+                        <AdminButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            if (!token) return;
+                            await apiFetch(`/coupons/${c._id}`, {
+                              method: "PATCH",
+                              token,
+                              body: JSON.stringify({ active: !c.active }),
+                            });
+                            publishStorefrontSettingsChanged();
+                            await refresh();
+                          }}
+                        >
+                          {c.active ? "Deactivate" : "Activate"}
+                        </AdminButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </AdminTable>
+      </AdminCard>
+    </AdminPageLayout>
   );
 }

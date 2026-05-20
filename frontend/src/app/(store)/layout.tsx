@@ -28,7 +28,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         }
         topPromoTextColors={data.settings.homepage.sectionTextColors?.promoBar}
       />
-      <main className="min-h-screen pt-[calc(var(--store-nav-pad)+var(--store-promo-bar-h))] lux-grain">
+      <main className="min-h-screen overflow-x-hidden bg-ivory pt-[calc(var(--store-nav-pad)+var(--store-promo-bar-h))] lux-grain">
         {children}
       </main>
       <StoreFooter footer={data.settings.homepage.footer} />

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import type { Product } from "@/types";
@@ -132,10 +132,10 @@ export function SearchPalette({ open, onClose }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full p-3 font-sans text-[11px] font-light uppercase tracking-[0.28em] text-ink-muted transition-colors duration-500 hover:text-gold"
+                className="rounded-full p-2.5 text-ink-muted transition-colors duration-500 hover:bg-ivory-deep/40 hover:text-ink"
                 aria-label="Close search"
               >
-                Close
+                <X className="h-5 w-5" strokeWidth={1.25} />
               </button>
             </div>
 

@@ -43,7 +43,7 @@ export function WishlistPop({ open, onClose }: Props) {
           exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
-            "absolute right-0 top-[calc(100%+0.75rem)] z-[60] w-[min(92vw,260px)] rounded-2xl border border-ivory-deep/60 bg-ivory/98 p-5 shadow-[0_12px_40px_-8px_rgba(44,40,37,0.12)] backdrop-blur-md",
+            "absolute right-0 top-[calc(100%+0.75rem)] z-[60] w-[min(92vw,260px)] rounded-2xl border border-ivory-deep bg-ivory p-5 shadow-[0_16px_48px_-12px_rgba(44,40,37,0.18)] ring-1 ring-ink/5",
           )}
         >
           <p className="font-display text-lg text-ink">Saved pieces</p>

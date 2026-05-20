@@ -1,5 +1,6 @@
-import { ContentEditorNewsletterPanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
+import { websitePagesUrl } from "@/lib/admin/website-pages";
 
-export default function AdminContentNewsletterPage() {
-  return <ContentEditorNewsletterPanel />;
+export default function LegacyNewsletterRedirect() {
+  redirect(websitePagesUrl("homepage", { edit: "newsletter" }));
 }

@@ -4,3 +4,5 @@ dist/
 backend/dist/
 .env
 .env.*
+
+docs/

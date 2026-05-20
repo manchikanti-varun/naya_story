@@ -1,5 +1,5 @@
-import { ContentEditorNewInPagePanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
 
-export default function AdminContentNewInPagePage() {
-  return <ContentEditorNewInPagePanel />;
+export default function LegacyNewInPageRedirect() {
+  redirect("/admin/website/pages?tab=new-in");
 }

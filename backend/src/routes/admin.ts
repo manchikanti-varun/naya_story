@@ -51,8 +51,12 @@ export function createAdminRouter(secret: string) {
     const recentOrders = await Order.find()
       .sort({ createdAt: -1 })
       .limit(8)
-      .select("orderNumber status total createdAt")
+      .select("orderNumber status total createdAt guestEmail")
       .lean();
+
+    const pendingOrdersCount = await Order.countDocuments({
+      status: { $in: ["pending", "confirmed", "packed"] },
+    });
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const salesTrend = await Order.aggregate<{ _id: string; revenue: number }>([
@@ -70,6 +74,7 @@ export function createAdminRouter(secret: string) {
       revenue: revenueAgg?.revenue ?? 0,
       ordersCount,
       customersCount,
+      pendingOrdersCount,
       topProducts,
       lowStock,
       outOfStockCount: outOfStock,
@@ -81,10 +86,94 @@ export function createAdminRouter(secret: string) {
   r.get("/customers", async (_req, res) => {
     const customers = await User.find({ role: "customer" })
       .sort({ createdAt: -1 })
-      .limit(200)
+      .limit(500)
       .select("name email createdAt")
       .lean();
-    res.json({ customers });
+
+    const userIds = customers.map((c) => c._id);
+
+    const [byUser, byGuestEmail] = await Promise.all([
+      Order.aggregate<{
+        _id: mongoose.Types.ObjectId;
+        orderCount: number;
+        totalSpent: number;
+        lastOrderAt: Date;
+      }>([
+        { $match: { user: { $in: userIds }, status: { $ne: "cancelled" } } },
+        {
+          $group: {
+            _id: "$user",
+            orderCount: { $sum: 1 },
+            totalSpent: { $sum: "$total" },
+            lastOrderAt: { $max: "$createdAt" },
+          },
+        },
+      ]),
+      Order.aggregate<{
+        _id: string;
+        orderCount: number;
+        totalSpent: number;
+        lastOrderAt: Date;
+      }>([
+        {
+          $match: {
+            guestEmail: { $exists: true, $nin: [null, ""] },
+            status: { $ne: "cancelled" },
+          },
+        },
+        {
+          $group: {
+            _id: { $toLower: "$guestEmail" },
+            orderCount: { $sum: 1 },
+            totalSpent: { $sum: "$total" },
+            lastOrderAt: { $max: "$createdAt" },
+          },
+        },
+      ]),
+    ]);
+
+    const userMap = new Map(byUser.map((s) => [String(s._id), s]));
+    const emailMap = new Map(byGuestEmail.map((s) => [s._id, s]));
+    const registeredEmails = new Set(customers.map((c) => c.email.toLowerCase()));
+
+    const enriched = customers.map((c) => {
+      const u = userMap.get(String(c._id));
+      const e = emailMap.get(c.email.toLowerCase());
+      const orderCount = (u?.orderCount ?? 0) + (e?.orderCount ?? 0);
+      const totalSpent = (u?.totalSpent ?? 0) + (e?.totalSpent ?? 0);
+      const lastOrderAt = [u?.lastOrderAt, e?.lastOrderAt]
+        .filter(Boolean)
+        .sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime())[0];
+      return {
+        ...c,
+        orderCount,
+        totalSpent,
+        lastOrderAt: lastOrderAt ?? null,
+      };
+    });
+
+    const guestBuyers = byGuestEmail
+      .filter((g) => !registeredEmails.has(g._id))
+      .map((g) => ({
+        email: g._id,
+        orderCount: g.orderCount,
+        totalSpent: g.totalSpent,
+        lastOrderAt: g.lastOrderAt,
+      }))
+      .sort((a, b) => new Date(b.lastOrderAt).getTime() - new Date(a.lastOrderAt).getTime())
+      .slice(0, 100);
+
+    const withOrders = enriched.filter((c) => c.orderCount > 0).length;
+
+    res.json({
+      customers: enriched,
+      guestBuyers,
+      summary: {
+        registered: customers.length,
+        withOrders,
+        guestOnly: guestBuyers.length,
+      },
+    });
   });
 
   /** Full product + related for admin storefront preview (includes hidden). */
@@ -92,12 +181,17 @@ export function createAdminRouter(secret: string) {
     const raw = await Product.findOne({ slug: req.params.slug }).lean();
     if (!raw) return res.status(404).json({ message: "Not found" });
     const product = raw;
+    const category = (product as { category?: string }).category;
+    const collection = (product as { collection?: string }).collection?.trim();
+    const relatedOr: Record<string, unknown>[] = [{ category }];
+    if (collection) relatedOr.push({ collection });
     const related = await Product.find({
-      category: (product as { category?: string }).category,
+      $or: relatedOr,
       _id: { $ne: (product as { _id: mongoose.Types.ObjectId })._id },
       storefrontVisible: { $ne: false },
     })
-      .limit(4)
+      .sort({ createdAt: -1 })
+      .limit(16)
       .lean();
     res.json({ product, related });
   });

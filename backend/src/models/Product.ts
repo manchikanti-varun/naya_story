@@ -31,6 +31,14 @@ const ProductSchema = new mongoose.Schema(
     fitType: String,
     fabricDetails: String,
     stylingSuggestions: String,
+    /** Center PDP line under story (replaces default print disclaimer when set). */
+    pdpPrintDisclaimer: String,
+    /** Second line under “Estimated delivery” (default: computed range). */
+    pdpDeliveryRange: String,
+    /** Second line under “Free shipping” (default: threshold from store rules). */
+    pdpFreeShippingNote: String,
+    /** “Delivery & care” accordion body (default: generic shipping + care copy). */
+    pdpDeliveryAndCare: String,
     featured: { type: Boolean, default: false },
     bestseller: { type: Boolean, default: false },
     trending: { type: Boolean, default: false },
@@ -45,6 +53,9 @@ const ProductSchema = new mongoose.Schema(
 );
 
 ProductSchema.index({ name: "text", description: "text", shortDescription: "text", tags: "text", collection: "text" });
+ProductSchema.index({ storefrontVisible: 1, category: 1, createdAt: -1 });
+ProductSchema.index({ storefrontVisible: 1, bestseller: -1, featured: -1 });
+ProductSchema.index({ storefrontVisible: 1, newIn: -1, newInOrder: 1 });
 
 export const Product =
   mongoose.models.Product || mongoose.model("Product", ProductSchema);

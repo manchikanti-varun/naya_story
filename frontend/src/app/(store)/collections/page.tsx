@@ -11,8 +11,16 @@ export default function CollectionsPage() {
 
 function CollectionsFallback() {
   return (
-    <div className="mx-auto max-w-[1400px] px-6 py-24 md:px-10">
-      <p className="font-sans text-sm text-ink-muted">Opening the rails…</p>
+    <div className="min-h-screen bg-[#f1ece5]">
+      <div className="lux-shell py-24">
+        <p className="lux-kicker">Collections</p>
+        <div className="mt-10 grid grid-cols-2 gap-6 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-[3/4] animate-pulse rounded-lux bg-ivory-soft" />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+

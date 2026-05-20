@@ -1,4 +1,9 @@
-export const SITE_NAME = "Naya Studio";
+/** Public storefront + metadata brand name */
+export const SITE_NAME = "Naya Story";
+
+/** Default meta / OG-style description (storefront) */
+export const SITE_DESCRIPTION =
+  "Naya Story — luxury women’s fashion. Timeless silhouettes, editorial calm, and pieces made to live in.";
 
 /**
  * Logo file lives in `public/` (e.g. `public/naya_logo.png`). If you replace the file but keep the same path,

@@ -1,5 +1,6 @@
-import { ContentEditorBestsellersPanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
+import { websitePagesUrl } from "@/lib/admin/website-pages";
 
-export default function AdminContentBestsellersPage() {
-  return <ContentEditorBestsellersPanel />;
+export default function LegacyBestsellersRedirect() {
+  redirect(websitePagesUrl("homepage", { edit: "bestsellers" }));
 }

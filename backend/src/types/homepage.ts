@@ -4,10 +4,14 @@ export type HeroSlide = {
   order: number;
   desktopImage: string;
   mobileImage?: string;
+  kicker?: string;
   heading: string;
   subheading?: string;
   ctaLabel?: string;
   ctaHref: string;
+  metaLabel?: string;
+  styles?: SectionDesign;
+  textColors?: SectionTextColors;
 };
 
 export type SectionOrderEntry = {
@@ -47,7 +51,96 @@ export type HomepageSectionTextKey =
   | "newIn"
   | "categories"
   | "newsletter"
-  | "promoBar";
+  | "promoBar"
+  | "brandStory"
+  | "lookbook"
+  | "craftsmanship"
+  | "asSeenIn"
+  | "editorialJournal"
+  | "luxuryPromise"
+  | "instagramGallery";
+
+export type SectionDesign = {
+  backgroundColor?: string;
+  textColor?: string;
+  buttonColor?: string;
+  buttonHoverColor?: string;
+  buttonTextColor?: string;
+  overlayColor?: string;
+  overlayOpacity?: number;
+  paddingTop?: string;
+  paddingBottom?: string;
+  maxWidth?: string;
+  align?: "left" | "center" | "right";
+  mode?: "light" | "dark";
+  borderRadius?: string;
+  opacity?: number;
+  headingFont?: "display" | "sans";
+  headingFontSize?: string;
+  subheadingFontSize?: string;
+  kickerFontSize?: string;
+  ctaFontSize?: string;
+  fontWeight?: string;
+  letterSpacing?: string;
+  lineHeight?: string;
+};
+
+export type CmsSectionBase = {
+  enabled?: boolean;
+  styles?: SectionDesign;
+};
+
+export type HomepageEditorialConfig = {
+  brandStory: CmsSectionBase & {
+    kicker: string;
+    title: string;
+    body: string[];
+    image: string;
+    imageAlt: string;
+  };
+  lookbook: CmsSectionBase & {
+    kicker: string;
+    title: string;
+    subtitle: string;
+    shots: Array<{ src: string; span: string; aspect: string }>;
+  };
+  craftsmanship: CmsSectionBase & {
+    kicker: string;
+    title: string;
+    body: string;
+    ctaLabel: string;
+    ctaHref: string;
+    image: string;
+    imageAlt: string;
+  };
+  asSeenIn: CmsSectionBase & {
+    kicker: string;
+    names: string[];
+  };
+  editorialJournal: CmsSectionBase & {
+    kicker: string;
+    title: string;
+    linkLabel: string;
+    linkHref: string;
+    stories: Array<{
+      title: string;
+      excerpt: string;
+      image: string;
+      href: string;
+    }>;
+  };
+  luxuryPromise: CmsSectionBase & {
+    kicker: string;
+    title: string;
+    items: Array<{ title: string; copy: string }>;
+  };
+  instagramGallery: CmsSectionBase & {
+    kicker: string;
+    title: string;
+    images: string[];
+    linkHref: string;
+  };
+};
 
 /** Optional hex overrides (#rgb, #rrggbb, #rrggbbaa) for storefront typography — applied as CSS variables. */
 export type StorefrontTheme = {
@@ -63,9 +156,16 @@ export type HomepageLayoutBlockType =
   | "promoBar"
   | "theme"
   | "hero"
+  | "brandStory"
   | "bestsellers"
+  | "lookbook"
   | "newIn"
+  | "craftsmanship"
   | "categories"
+  | "asSeenIn"
+  | "editorialJournal"
+  | "luxuryPromise"
+  | "instagramGallery"
   | "newsletter"
   | "footer";
 
@@ -86,14 +186,19 @@ export type HomepageConfig = {
   topPromoBar: TopPromoBarConfig;
   carousel: {
     autoplayMs: number;
+    styles?: SectionDesign;
     slides: HeroSlide[];
   };
   sectionsOrder: SectionOrderEntry[];
+  editorial?: HomepageEditorialConfig;
   bestsellers: {
     enabled?: boolean;
     title: string;
     subtitle: string;
     productIds: string[];
+    ctaLabel?: string;
+    ctaHref?: string;
+    styles?: SectionDesign;
   };
   newIn: {
     enabled?: boolean;
@@ -102,6 +207,7 @@ export type HomepageConfig = {
     productIds: string[];
     ctaLabel: string;
     ctaHref: string;
+    styles?: SectionDesign;
   };
   newInPage: {
     useCuratedOrder: boolean;
@@ -114,6 +220,9 @@ export type HomepageConfig = {
     title: string;
     subtitle: string;
     items: CategoryCard[];
+    ctaLabel?: string;
+    ctaHref?: string;
+    styles?: SectionDesign;
   };
   newsletter: {
     enabled?: boolean;
@@ -121,8 +230,12 @@ export type HomepageConfig = {
     description: string;
     placeholder: string;
     buttonLabel: string;
+    secondaryCtaLabel?: string;
+    secondaryCtaHref?: string;
+    styles?: SectionDesign;
   };
   collectionsPage: {
+    kicker: string;
     title: string;
     subtitle: string;
     paginationLimit: number;
@@ -136,6 +249,37 @@ export type HomepageConfig = {
       enabled: boolean;
       order: number;
     }>;
+    filters?: {
+      showSize: boolean;
+      showColor: boolean;
+      showPrice: boolean;
+      showAvailability: boolean;
+      showSort: boolean;
+      sizeOptions: string[];
+      colorOptions: string[];
+      priceBands: Array<{
+        id: string;
+        label: string;
+        min: number;
+        max?: number;
+        enabled: boolean;
+      }>;
+      sortOptions: Array<{
+        value: "newest" | "popular" | "price_asc" | "price_desc";
+        label: string;
+        enabled: boolean;
+      }>;
+      defaultSort: "newest" | "popular" | "price_asc" | "price_desc";
+    };
+    messages?: {
+      loading: string;
+      empty: string;
+      mobileFiltersLabel: string;
+      mobileDrawerTitle: string;
+      availabilityInStock: string;
+      availabilityAll: string;
+      filterAll: string;
+    };
   };
   ourStoryPage: {
     title: string;

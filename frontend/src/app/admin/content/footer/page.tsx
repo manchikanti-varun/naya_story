@@ -1,5 +1,5 @@
-import { ContentEditorFooterPanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
 
-export default function AdminContentFooterPage() {
-  return <ContentEditorFooterPanel />;
+export default function LegacyFooterRedirect() {
+  redirect("/admin/website/footer");
 }

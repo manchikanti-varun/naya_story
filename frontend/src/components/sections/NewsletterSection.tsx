@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { SectionTextColors } from "@/types/homepage";
+import type { SectionDesign, SectionTextColors } from "@/types/homepage";
+import { SectionShell } from "@/components/cms/SectionShell";
 import { sectionTextStyles } from "@/lib/section-text-styles";
 import { NewsletterInline } from "@/components/sections/NewsletterInline";
 
@@ -11,6 +12,7 @@ type Props = {
   cta?: { label: string; href: string };
   compactTop?: boolean;
   textColors?: SectionTextColors | null;
+  design?: SectionDesign | null;
 };
 
 export function NewsletterSection({
@@ -21,13 +23,15 @@ export function NewsletterSection({
   cta,
   compactTop = false,
   textColors,
+  design,
 }: Props) {
   const st = sectionTextStyles(textColors);
   return (
-    <section
-      className={`border-y border-ivory-deep/20 bg-[#E4DDD4] px-6 ${compactTop ? "pt-10 pb-20 md:pt-14 md:pb-28" : "py-20 md:py-28"} md:px-10`}
+    <SectionShell
+      design={design}
+      className={`border-y border-ivory-deep/20 ${!design?.backgroundColor ? "bg-ivory-muted" : ""} ${compactTop ? "pt-10 pb-16 sm:pb-20 md:pt-14 md:pb-28" : "py-14 sm:py-20 md:py-28"}`}
     >
-      <div className="mx-auto max-w-[720px]">
+      <div className="lux-shell mx-auto max-w-[720px]">
         <NewsletterInline
           dense
           layout="centered"
@@ -41,7 +45,7 @@ export function NewsletterSection({
           <div className="mt-8 flex justify-center">
             <Link
               href={cta.href}
-              className="rounded-full border border-ivory-deep/80 bg-transparent px-7 py-3 font-sans text-[11px] uppercase tracking-[0.22em] text-ink transition-all duration-500 hover:border-gold hover:text-gold"
+              className="lux-btn-outline px-7 py-3 tracking-[0.22em]"
               style={st.link}
             >
               {cta.label}
@@ -49,6 +53,6 @@ export function NewsletterSection({
           </div>
         ) : null}
       </div>
-    </section>
+    </SectionShell>
   );
 }

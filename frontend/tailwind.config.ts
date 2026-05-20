@@ -15,6 +15,14 @@ export default {
           soft: "#EFE9E1",
           deep: "#E8E0D6",
         },
+        sand: {
+          DEFAULT: "var(--color-sand, #E6DDD1)",
+          muted: "#E0D5C8",
+        },
+        taupe: {
+          DEFAULT: "var(--color-taupe, #C4B8A8)",
+          muted: "#B5A898",
+        },
         gold: {
           DEFAULT: "var(--color-gold, #C9A15B)",
           muted: "#C8A46A",
@@ -29,28 +37,53 @@ export default {
         foreground: "var(--foreground)",
       },
       fontFamily: {
-        display: ["var(--font-display)", "serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       spacing: {
-        section: "clamp(4rem, 10vw, 8rem)",
+        section: "clamp(2.75rem, 6vw, 5.5rem)",
+        "section-sm": "clamp(2rem, 4vw, 3.5rem)",
+      },
+      borderRadius: {
+        lux: "var(--radius-lux)",
+        "lux-lg": "var(--radius-lux-lg)",
+      },
+      boxShadow: {
+        lux: "var(--shadow-lux)",
+        "lux-hover": "var(--shadow-lux-hover)",
       },
       transitionDuration: {
         luxury: "700ms",
+        cinematic: "1200ms",
+      },
+      transitionTimingFunction: {
+        luxury: "cubic-bezier(0.22, 1, 0.36, 1)",
       },
       keyframes: {
         "fade-up": {
-          "0%": { opacity: "0", transform: "translateY(24px)" },
+          "0%": { opacity: "0", transform: "translateY(28px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "slow-zoom": {
-          "0%": { transform: "scale(1.06)" },
+          "0%": { transform: "scale(1.08)" },
           "100%": { transform: "scale(1)" },
+        },
+        "scroll-line": {
+          "0%": { transform: "scaleY(0)", transformOrigin: "top" },
+          "50%": { transform: "scaleY(1)", transformOrigin: "top" },
+          "50.1%": { transformOrigin: "bottom" },
+          "100%": { transform: "scaleY(0)", transformOrigin: "bottom" },
+        },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(200%)" },
         },
       },
       animation: {
-        "fade-up": "fade-up 1s ease-out forwards",
-        "slow-zoom": "slow-zoom 18s ease-out forwards",
+        "fade-up": "fade-up 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "slow-zoom": "slow-zoom 22s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "scroll-line": "scroll-line 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite",
+        shimmer: "shimmer 2.4s linear infinite",
       },
     },
   },

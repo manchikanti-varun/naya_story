@@ -1,17 +1,112 @@
-import type { HomepageConfig, HomepageLayoutBlock, SectionOrderEntry } from "../types/homepage.js";
+import type {
+  HomepageConfig,
+  HomepageLayoutBlock,
+  HomepageLayoutBlockType,
+  SectionOrderEntry,
+} from "../types/homepage.js";
+import { defaultHomepageEditorial } from "./editorial-defaults.js";
 
 const SECTION_IDS: SectionOrderEntry["id"][] = ["bestsellers", "newIn", "categories", "newsletter"];
+
+const STOREFRONT_BLOCK_ORDER: HomepageLayoutBlockType[] = [
+  "hero",
+  "brandStory",
+  "bestsellers",
+  "lookbook",
+  "newIn",
+  "craftsmanship",
+  "categories",
+  "asSeenIn",
+  "editorialJournal",
+  "luxuryPromise",
+  "instagramGallery",
+  "newsletter",
+];
 
 const BLOCK_TYPES = new Set<string>([
   "promoBar",
   "theme",
-  "hero",
-  "bestsellers",
-  "newIn",
-  "categories",
-  "newsletter",
+  ...STOREFRONT_BLOCK_ORDER,
   "footer",
 ]);
+
+function blockEnabled(hp: HomepageConfig, type: HomepageLayoutBlockType): boolean {
+  const ed = hp.editorial ?? defaultHomepageEditorial();
+  switch (type) {
+    case "hero":
+      return hp.carousel.slides.some((s) => s.enabled);
+    case "brandStory":
+      return ed.brandStory.enabled !== false;
+    case "bestsellers":
+      return (
+        hp.sectionsOrder.find((s) => s.id === "bestsellers")?.enabled !== false &&
+        hp.bestsellers.enabled !== false
+      );
+    case "lookbook":
+      return ed.lookbook.enabled !== false;
+    case "newIn":
+      return (
+        hp.sectionsOrder.find((s) => s.id === "newIn")?.enabled !== false &&
+        hp.newIn.enabled !== false
+      );
+    case "craftsmanship":
+      return ed.craftsmanship.enabled !== false;
+    case "categories":
+      return (
+        hp.sectionsOrder.find((s) => s.id === "categories")?.enabled !== false &&
+        hp.categories.enabled !== false
+      );
+    case "asSeenIn":
+      return ed.asSeenIn.enabled !== false;
+    case "editorialJournal":
+      return ed.editorialJournal.enabled !== false;
+    case "luxuryPromise":
+      return ed.luxuryPromise.enabled !== false;
+    case "instagramGallery":
+      return ed.instagramGallery.enabled !== false;
+    case "newsletter":
+      return (
+        hp.sectionsOrder.find((s) => s.id === "newsletter")?.enabled !== false &&
+        hp.newsletter.enabled !== false
+      );
+    default:
+      return true;
+  }
+}
+
+function applyEditorialEnabled(
+  hp: HomepageConfig,
+  type: HomepageLayoutBlockType,
+  enabled: boolean,
+): HomepageConfig {
+  const ed = { ...(hp.editorial ?? defaultHomepageEditorial()) };
+  switch (type) {
+    case "brandStory":
+      ed.brandStory = { ...ed.brandStory, enabled };
+      break;
+    case "lookbook":
+      ed.lookbook = { ...ed.lookbook, enabled };
+      break;
+    case "craftsmanship":
+      ed.craftsmanship = { ...ed.craftsmanship, enabled };
+      break;
+    case "asSeenIn":
+      ed.asSeenIn = { ...ed.asSeenIn, enabled };
+      break;
+    case "editorialJournal":
+      ed.editorialJournal = { ...ed.editorialJournal, enabled };
+      break;
+    case "luxuryPromise":
+      ed.luxuryPromise = { ...ed.luxuryPromise, enabled };
+      break;
+    case "instagramGallery":
+      ed.instagramGallery = { ...ed.instagramGallery, enabled };
+      break;
+    default:
+      break;
+  }
+  return { ...hp, editorial: ed };
+}
 
 export function buildLayoutBlocksFromHomepage(hp: HomepageConfig): HomepageLayoutBlock[] {
   const blocks: HomepageLayoutBlock[] = [
@@ -27,21 +122,14 @@ export function buildLayoutBlocksFromHomepage(hp: HomepageConfig): HomepageLayou
       enabled: true,
       order: -15,
     },
-    {
-      id: "hero-carousel",
-      type: "hero",
-      enabled: hp.carousel.slides.some((s) => s.enabled),
-      order: -10,
-    },
   ];
 
-  const sorted = [...hp.sectionsOrder].sort((a, b) => a.order - b.order);
-  for (const s of sorted) {
+  for (const type of STOREFRONT_BLOCK_ORDER) {
     blocks.push({
-      id: `section-${s.id}`,
-      type: s.id,
-      enabled: s.enabled !== false,
-      order: s.order,
+      id: `block-${type}`,
+      type,
+      enabled: blockEnabled(hp, type),
+      order: STOREFRONT_BLOCK_ORDER.indexOf(type) * 10,
     });
   }
 
@@ -75,7 +163,7 @@ export function sanitizeLayoutBlocksPatch(raw: unknown): HomepageLayoutBlock[] |
     const order = typeof o.order === "number" && Number.isFinite(o.order) ? o.order : out.length;
     out.push({
       id,
-      type: type as HomepageLayoutBlock["type"],
+      type: type as HomepageLayoutBlockType,
       enabled,
       order,
     });
@@ -104,6 +192,30 @@ export function mergeLayoutBlocksIntoHomepage(
         },
       };
     }
+    for (const block of patch) {
+      if (SECTION_IDS.includes(block.type as SectionOrderEntry["id"])) {
+        const id = block.type as SectionOrderEntry["id"];
+        next = {
+          ...next,
+          sectionsOrder: next.sectionsOrder.map((s) =>
+            s.id === id ? { ...s, enabled: block.enabled } : s,
+          ),
+        };
+      }
+      if (
+        [
+          "brandStory",
+          "lookbook",
+          "craftsmanship",
+          "asSeenIn",
+          "editorialJournal",
+          "luxuryPromise",
+          "instagramGallery",
+        ].includes(block.type)
+      ) {
+        next = applyEditorialEnabled(next, block.type, block.enabled);
+      }
+    }
     const picks = SECTION_IDS.map((id) => patch.find((b) => b.type === id)).filter(
       (b): b is HomepageLayoutBlock => Boolean(b),
     );
@@ -123,6 +235,8 @@ export function mergeLayoutBlocksIntoHomepage(
         })),
       };
     }
+    next = { ...next, layoutBlocks: [...patch].sort((a, b) => a.order - b.order) };
+    return next;
   }
   return attachLayoutBlocks(next);
 }

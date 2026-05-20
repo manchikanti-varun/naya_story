@@ -20,11 +20,11 @@ export default function AdminContentPreviewSectionPage() {
   }, [section, router]);
 
   if (!section || !isPreviewSectionSlug(section)) {
-    return <p className="text-sm text-slate-500">Loading…</p>;
+    return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading…</p>;
   }
 
   if (!hp) {
-    return <p className="text-sm text-slate-500">Loading…</p>;
+    return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading…</p>;
   }
 
   return <div className="min-h-[40vh]">{renderPreviewSection(section, hp)}</div>;

@@ -1,5 +1,5 @@
-import { ContentEditorOurStoryPanel } from "@/components/admin/homepage-editor/panels";
+import { redirect } from "next/navigation";
 
-export default function AdminContentOurStoryPage() {
-  return <ContentEditorOurStoryPanel />;
+export default function LegacyOurStoryRedirect() {
+  redirect("/admin/website/pages?tab=our-story");
 }

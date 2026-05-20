@@ -1,0 +1,192 @@
+"use client";
+
+import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { cn } from "@/lib/cn";
+import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
+
+type Props = {
+  images: string[];
+  productName: string;
+  activeIdx: number;
+  onActiveChange: (index: number) => void;
+  onOpenZoom: () => void;
+  /** Larger hero sizing on product detail page */
+  variant?: "default" | "pdp";
+};
+
+export function ProductGallery({
+  images,
+  productName,
+  activeIdx,
+  onActiveChange,
+  onOpenZoom,
+  variant = "default",
+}: Props) {
+  const mediaClass =
+    variant === "pdp" ? "lux-product-media lux-product-media--pdp" : "lux-product-media";
+  const gallery = useMemo(() => images.map((s) => s.trim()).filter(Boolean), [images]);
+  const safeIdx = gallery.length ? Math.min(activeIdx, gallery.length - 1) : 0;
+  const mainSrc = gallery[safeIdx];
+  const thumbStripRef = useRef<HTMLDivElement>(null);
+
+  const go = useCallback(
+    (dir: -1 | 1) => {
+      if (gallery.length <= 1) return;
+      const next = (safeIdx + dir + gallery.length) % gallery.length;
+      onActiveChange(next);
+    },
+    [gallery.length, onActiveChange, safeIdx],
+  );
+
+  useEffect(() => {
+    const el = thumbStripRef.current;
+    if (!el) return;
+    const thumb = el.querySelector<HTMLElement>(`[data-thumb-index="${safeIdx}"]`);
+    thumb?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [safeIdx]);
+
+  if (!gallery.length) {
+    return (
+      <div
+        className={cn(mediaClass, "rounded-lux", storefrontImageShellClass)}
+      />
+    );
+  }
+
+  const thumbMaxH =
+    variant === "pdp"
+      ? "max-h-[min(68vh,520px)] sm:max-h-[min(72vh,560px)] lg:max-h-[min(78vh,620px)]"
+      : "max-h-[min(58vh,480px)]";
+
+  return (
+    <div className="lg:flex lg:gap-3 xl:gap-4">
+      {gallery.length > 1 ? (
+        <div className={cn("hidden shrink-0 lg:block lg:w-[4rem] xl:w-[4.5rem]", thumbMaxH)}>
+          <div
+            className={cn(
+              "flex flex-col gap-2 overflow-y-auto overscroll-contain pr-0.5 no-scrollbar",
+              thumbMaxH,
+            )}
+          >
+            {gallery.map((src, i) => (
+              <ThumbButton
+                key={`${src}-${i}`}
+                src={src}
+                index={i}
+                active={safeIdx === i}
+                layout="vertical"
+                onSelect={() => onActiveChange(i)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="min-w-0 flex-1">
+        <div className="group relative">
+          <button
+            type="button"
+            onClick={onOpenZoom}
+            className={cn(mediaClass, "rounded-lux", storefrontImageShellClass)}
+          >
+            {mainSrc ? (
+              <Image
+                key={mainSrc}
+                src={mainSrc}
+                alt={productName}
+                fill
+                priority={safeIdx === 0}
+                className="object-cover transition duration-[1.4s] ease-luxury group-hover:scale-[1.02]"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                {...storefrontImageProps}
+              />
+            ) : null}
+          </button>
+
+          {gallery.length > 1 ? (
+            <>
+              <p className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-ivory/90 px-3 py-1 font-sans text-[10px] uppercase tracking-[0.2em] text-ink-muted backdrop-blur-sm">
+                {safeIdx + 1} / {gallery.length}
+              </p>
+              <button
+                type="button"
+                aria-label="Previous image"
+                onClick={() => go(-1)}
+                className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-ivory-deep/60 bg-ivory/90 text-ink shadow-sm transition hover:border-gold/50 hover:text-gold lg:hidden"
+              >
+                <ChevronLeft className="h-5 w-5" strokeWidth={1.25} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next image"
+                onClick={() => go(1)}
+                className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-ivory-deep/60 bg-ivory/90 text-ink shadow-sm transition hover:border-gold/50 hover:text-gold lg:hidden"
+              >
+                <ChevronRight className="h-5 w-5" strokeWidth={1.25} />
+              </button>
+            </>
+          ) : null}
+        </div>
+
+        {/* Mobile + tablet horizontal thumbnails */}
+        {gallery.length > 1 ? (
+          <div ref={thumbStripRef} className="mt-3 md:mt-4 lg:hidden">
+            <div className="lux-scroll-x gap-2.5 md:gap-3">
+              {gallery.map((src, i) => (
+                <ThumbButton
+                  key={`${src}-${i}`}
+                  src={src}
+                  index={i}
+                  active={safeIdx === i}
+                  layout="horizontal"
+                  onSelect={() => onActiveChange(i)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ThumbButton({
+  src,
+  index,
+  active,
+  layout,
+  onSelect,
+}: {
+  src: string;
+  index: number;
+  active: boolean;
+  layout: "horizontal" | "vertical";
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-thumb-index={index}
+      onClick={onSelect}
+      className={cn(
+        "relative overflow-hidden rounded-lux transition-all duration-500",
+        storefrontImageShellClass,
+        layout === "horizontal"
+          ? "aspect-[3/4] w-[3.75rem] shrink-0 sm:w-[4.5rem]"
+          : "aspect-[3/4] w-full",
+        active ? "ring-1 ring-gold ring-offset-2 ring-offset-ivory" : "opacity-65 hover:opacity-100",
+      )}
+    >
+      <Image
+        src={src}
+        alt=""
+        fill
+        className="object-cover"
+        sizes={layout === "horizontal" ? "80px" : "72px"}
+        {...storefrontImageProps}
+      />
+    </button>
+  );
+}

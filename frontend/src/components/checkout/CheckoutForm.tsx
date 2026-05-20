@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { lineKey, useCart } from "@/context/cart-context";
+import { FREE_SHIPPING_THRESHOLD_INR } from "@/lib/store-shipping";
 
 type PaymentPreview = {
   provider: string;
@@ -33,7 +34,7 @@ export function CheckoutForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const shippingFee = subtotal >= 15000 ? 0 : 299;
+  const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD_INR ? 0 : 299;
 
   const discount = useMemo(() => {
     if (!coupon) return 0;

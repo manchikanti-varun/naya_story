@@ -24,16 +24,16 @@ async function seed() {
     SiteSettings.deleteMany({}),
   ]);
 
-  const passwordHash = await bcrypt.hash("Admin123!", 10);
+  const passwordHash = await bcrypt.hash("Nandhu_Yash@2026!", 10);
   await User.create({
-    email: "admin@nayastudio.com",
+    email: "admin.nayastory@gmail.com",
     passwordHash,
     name: "Studio Admin",
     role: "admin",
   });
 
   await User.create({
-    email: "client@nayastudio.com",
+    email: "client@nayastory.com",
     passwordHash: await bcrypt.hash("Client123!", 10),
     name: "Amelia Laurent",
     role: "customer",

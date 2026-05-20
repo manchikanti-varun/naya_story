@@ -1,5 +1,5 @@
-import { ContentEditorThemePanel } from "@/components/admin/homepage-editor/ThemePanel";
+import { redirect } from "next/navigation";
 
-export default function AdminContentThemePage() {
-  return <ContentEditorThemePanel />;
+export default function LegacyThemeRedirect() {
+  redirect("/admin/website/theme");
 }

@@ -15,12 +15,12 @@ const tiles = [
 
 export function SocialSection() {
   return (
-    <section className="bg-ivory px-6 py-section md:px-10">
-      <div className="mx-auto max-w-[1400px]">
+    <section className="bg-ivory py-section">
+      <div className="lux-shell-wide">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">
-              @nayastudio
+              @nayastory
             </p>
             <h2 className="mt-4 font-display text-4xl text-ink md:text-5xl">
               In the wild

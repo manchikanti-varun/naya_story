@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { apiFetch } from "@/lib/api";
+import { clearAdminGateCookie, setAdminGateCookie } from "@/lib/admin-gate";
 import type { Address, User } from "@/types";
 
 type AuthResponse = {
@@ -22,6 +23,7 @@ type AuthContextValue = {
   loading: boolean;
   wishlistIds: string[];
   login: (email: string, password: string) => Promise<User>;
+  adminLogin: (email: string, password: string) => Promise<User>;
   register: (payload: {
     name: string;
     email: string;
@@ -52,8 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const t = localStorage.getItem(TOKEN_KEY);
       const u = localStorage.getItem(USER_KEY);
       if (t && u) {
+        const parsed = JSON.parse(u) as User;
         setToken(t);
-        setUser(JSON.parse(u) as User);
+        setUser(parsed);
+        if (parsed.role === "admin") setAdminGateCookie();
       }
       const gw = localStorage.getItem(GUEST_WISHLIST_KEY);
       if (gw) {
@@ -71,11 +75,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(USER_KEY, JSON.stringify(u));
     setToken(t);
     setUser(u);
+    if (u.role === "admin") setAdminGateCookie();
+    else clearAdminGateCookie();
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    clearAdminGateCookie();
     setToken(null);
     setUser(null);
     setAddresses([]);
@@ -84,6 +91,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
     async (email: string, password: string) => {
       const res = await apiFetch<AuthResponse>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      persist(res.token, res.user);
+      return res.user;
+    },
+    [persist],
+  );
+
+  const adminLogin = useCallback(
+    async (email: string, password: string) => {
+      const res = await apiFetch<AuthResponse>("/auth/admin/login", {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
@@ -158,6 +177,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(me.user);
         localStorage.setItem(USER_KEY, JSON.stringify(me.user));
         setAddresses(me.user.addresses ?? []);
+        if (me.user.role === "admin") setAdminGateCookie();
+        else clearAdminGateCookie();
       } catch {
         if (!cancelled) logout();
       }
@@ -174,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       wishlistIds,
       login,
+      adminLogin,
       register,
       logout,
       refreshProfile,
@@ -187,6 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       wishlistIds,
       login,
+      adminLogin,
       register,
       logout,
       refreshProfile,

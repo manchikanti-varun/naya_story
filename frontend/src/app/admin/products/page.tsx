@@ -7,7 +7,20 @@ import { CopyPlus, Eye, Pencil, Search, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import type { Product } from "@/types";
-import { cn } from "@/lib/cn";
+import { AdminBadge } from "@/components/admin/ui/AdminBadge";
+import { AdminCard } from "@/components/admin/ui/AdminCard";
+import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
+import { AdminInput } from "@/components/admin/ui/AdminField";
+import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
+import { AdminTable } from "@/components/admin/ui/AdminTable";
+import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
+
+function statusTone(status: string): "success" | "warning" | "danger" | "neutral" {
+  if (status === "Active") return "success";
+  if (status === "Low stock") return "warning";
+  if (status === "Out of stock") return "danger";
+  return "neutral";
+}
 
 function totalStock(p: Product) {
   return p.variants.reduce((s, v) => s + (v.stock ?? 0), 0);
@@ -19,6 +32,9 @@ function statusLabel(p: Product) {
   if (totalStock(p) <= 5) return "Low stock";
   return "Active";
 }
+
+const rowActionClass =
+  "rounded-lg p-2 text-[var(--admin-muted)] transition hover:bg-black/[0.04] hover:text-[var(--admin-ink)]";
 
 export default function AdminProductsPage() {
   const { token } = useAuth();
@@ -91,70 +107,73 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div className="space-y-8 pb-10">
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="font-sans text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Catalog</p>
-          <h1 className="mt-2 font-display text-3xl text-slate-900 md:text-4xl">Products</h1>
-          <p className="mt-2 max-w-2xl font-sans text-sm text-slate-600">
-            Single global catalog — search, edit, duplicate, or preview. Homepage rails use the{" "}
-            <Link href="/admin/content" className="font-medium text-slate-900 underline-offset-2 hover:underline">
-              Content editor
-            </Link>{" "}
-            to pick products (no duplicate IDs).
-          </p>
-        </div>
+    <AdminPageLayout
+      eyebrow="Catalog"
+      title="Products"
+      description={
+        <>
+          Search, edit, duplicate, or preview. Homepage rails pick products from{" "}
+          <Link href="/admin/content" className="font-medium text-[var(--admin-accent)] underline-offset-2">
+            section editors
+          </Link>
+          .
+        </>
+      }
+      actions={
         <Link
           href="/admin/products/new"
-          className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 font-sans text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-sm hover:bg-slate-800"
+          className="inline-flex items-center justify-center rounded-full bg-gradient-to-b from-[#292524] to-[#1c1917] px-5 py-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-white shadow-md ring-1 ring-white/10 transition hover:from-[#44403c] hover:to-[#292524]"
         >
           New product
         </Link>
-      </header>
-
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            className="w-full rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-sm text-slate-900"
-            placeholder="Search name, description, tags…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </div>
-        <select
-          className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 lg:w-56"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value="">All categories</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Desktop table */}
-      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
-        <table className="min-w-full divide-y divide-slate-100 text-sm">
-          <thead className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+      }
+      toolbar={
+        <AdminToolbar className="w-full border-0 bg-transparent p-0 shadow-none sm:flex-nowrap">
+          <div className="relative min-w-0 flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-faint)]"
+              strokeWidth={1.75}
+            />
+            <AdminInput
+              className="!mt-0 pl-9"
+              placeholder="Search name, description, tags…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+          <select
+            className="admin-input w-full shrink-0 sm:w-52"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="">All categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </AdminToolbar>
+      }
+    >
+      <AdminTable>
+        <table className="admin-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3">Product</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Collection</th>
-              <th className="px-4 py-3 text-right">Price</th>
-              <th className="px-4 py-3 text-right">Stock</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Storefront</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Collection</th>
+              <th className="text-right">Price</th>
+              <th className="text-right">Stock</th>
+              <th>Status</th>
+              <th>Storefront</th>
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
+                <td colSpan={8} className="py-10 text-center text-[var(--admin-muted)]">
                   Loading catalog…
                 </td>
               </tr>
@@ -164,69 +183,44 @@ export default function AdminProductsPage() {
                 const thumb = p.images[0];
                 const status = statusLabel(p);
                 return (
-                  <tr key={p._id} className="text-slate-700">
-                    <td className="px-4 py-3">
+                  <tr key={p._id}>
+                    <td>
                       <div className="flex items-center gap-3">
-                        <div className="relative h-12 w-10 overflow-hidden rounded-lg bg-slate-100">
+                        <div className="relative h-12 w-10 overflow-hidden rounded-lg bg-stone-100">
                           {thumb ? (
                             <Image src={thumb} alt="" fill className="object-cover" sizes="40px" unoptimized />
                           ) : null}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{p.name}</p>
-                          <p className="text-xs text-slate-400">{p.slug}</p>
+                          <p className="font-medium">{p.name}</p>
+                          <p className="font-mono text-[11px] text-[var(--admin-faint)]">{p.slug}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 capitalize">{p.category}</td>
-                    <td className="px-4 py-3 text-slate-600">{p.collection || "—"}</td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">
-                      ₹{p.price.toLocaleString("en-IN")}
+                    <td className="capitalize">{p.category}</td>
+                    <td className="text-[var(--admin-muted)]">{p.collection || "—"}</td>
+                    <td className="text-right font-medium tabular-nums">₹{p.price.toLocaleString("en-IN")}</td>
+                    <td className="text-right tabular-nums">{totalStock(p)}</td>
+                    <td>
+                      <AdminBadge tone={statusTone(status)}>{status}</AdminBadge>
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{totalStock(p)}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                          status === "Active" && "bg-emerald-50 text-emerald-800",
-                          status === "Low stock" && "bg-amber-50 text-amber-900",
-                          status === "Out of stock" && "bg-red-50 text-red-800",
-                          status === "Hidden" && "bg-slate-100 text-slate-600",
-                        )}
-                      >
-                        {status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-600">
+                    <td className="text-[var(--admin-muted)]">
                       {p.storefrontVisible === false ? "Hidden" : "Live"}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-1">
-                        <Link
-                          href={`/admin/preview/product/${p.slug}`}
-                          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                          title="Preview storefront"
-                        >
+                    <td className="text-right">
+                      <div className="flex justify-end gap-0.5">
+                        <Link href={`/admin/preview/product/${p.slug}`} className={rowActionClass} title="Preview">
                           <Eye className="h-4 w-4" strokeWidth={1.5} />
                         </Link>
-                        <Link
-                          href={`/admin/products/${p._id}`}
-                          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                          title="Edit"
-                        >
+                        <Link href={`/admin/products/${p._id}`} className={rowActionClass} title="Edit">
                           <Pencil className="h-4 w-4" strokeWidth={1.5} />
                         </Link>
-                        <button
-                          type="button"
-                          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                          title="Duplicate"
-                          onClick={() => void duplicate(p)}
-                        >
+                        <button type="button" className={rowActionClass} title="Duplicate" onClick={() => void duplicate(p)}>
                           <CopyPlus className="h-4 w-4" strokeWidth={1.5} />
                         </button>
                         <button
                           type="button"
-                          className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                          className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
                           title="Delete"
                           onClick={() => void remove(p._id)}
                         >
@@ -239,84 +233,75 @@ export default function AdminProductsPage() {
               })}
           </tbody>
         </table>
-      </div>
+      </AdminTable>
 
-      {/* Mobile cards */}
       <div className="space-y-3 md:hidden">
-        {loading ? <p className="text-sm text-slate-500">Loading…</p> : null}
+        {loading ? <p className="text-sm text-[var(--admin-muted)]">Loading…</p> : null}
         {!loading &&
           products.map((p) => {
             const thumb = p.images[0];
             const status = statusLabel(p);
             return (
-              <div key={p._id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <AdminCard key={p._id} padding="md">
                 <div className="flex gap-3">
-                  <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                  <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-stone-100">
                     {thumb ? (
                       <Image src={thumb} alt="" fill className="object-cover" sizes="64px" unoptimized />
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-slate-900">{p.name}</p>
-                    <p className="text-xs text-slate-400">{p.slug}</p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600">
+                    <p className="truncate font-medium">{p.name}</p>
+                    <p className="font-mono text-[11px] text-[var(--admin-faint)]">{p.slug}</p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-[var(--admin-muted)]">
                       <span className="capitalize">{p.category}</span>
                       <span>·</span>
                       <span>₹{p.price.toLocaleString("en-IN")}</span>
                       <span>·</span>
                       <span>{totalStock(p)} in stock</span>
                     </div>
-                    <span
-                      className={cn(
-                        "mt-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]",
-                        status === "Active" && "bg-emerald-50 text-emerald-800",
-                        status === "Low stock" && "bg-amber-50 text-amber-900",
-                        status === "Out of stock" && "bg-red-50 text-red-800",
-                        status === "Hidden" && "bg-slate-100 text-slate-600",
-                      )}
-                    >
+                    <AdminBadge tone={statusTone(status)} className="mt-2">
                       {status}
-                    </span>
+                    </AdminBadge>
                   </div>
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--admin-border)] pt-3">
                   <Link
                     href={`/admin/preview/product/${p.slug}`}
-                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-800"
+                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-full border border-[var(--admin-border-strong)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em]"
                   >
                     <Eye className="h-3.5 w-3.5" />
                     Preview
                   </Link>
                   <Link
                     href={`/admin/products/${p._id}`}
-                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white"
+                    className="inline-flex flex-1 items-center justify-center gap-1 rounded-full bg-[#1c1917] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                     Edit
                   </Link>
                   <button
                     type="button"
-                    className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700"
+                    className="inline-flex flex-1 items-center justify-center rounded-full border border-[var(--admin-border-strong)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em]"
                     onClick={() => void duplicate(p)}
                   >
                     Duplicate
                   </button>
                   <button
                     type="button"
-                    className="inline-flex flex-1 items-center justify-center rounded-full border border-red-100 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-red-600"
+                    className="inline-flex flex-1 items-center justify-center rounded-full border border-red-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-red-700"
                     onClick={() => void remove(p._id)}
                   >
                     Delete
                   </button>
                 </div>
-              </div>
+              </AdminCard>
             );
           })}
       </div>
 
       {!loading && products.length === 0 ? (
-        <p className="text-center font-sans text-sm text-slate-500">No products match your filters.</p>
+        <AdminEmptyState title="No products found" description="Try a different search or category filter." />
       ) : null}
-    </div>
+    </AdminPageLayout>
   );
 }
