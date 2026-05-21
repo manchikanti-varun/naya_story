@@ -99,7 +99,7 @@ export function StoreHeader({
   const headerSurface = cn(
     "fixed inset-x-0 top-[var(--store-promo-bar-h,0px)] z-50 border-b transition-[border-color,background-color,box-shadow,backdrop-filter] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
     scrolled
-      ? "border-ivory-deep/35 bg-ivory/94 shadow-[0_1px_0_rgba(232,224,214,0.45)] backdrop-blur-xl"
+      ? "store-header--scrolled border-ivory-deep/35 bg-ivory/94 backdrop-blur-xl"
       : overDarkBanner
         ? "border-transparent bg-ivory/90 backdrop-blur-md"
         : "border-transparent bg-ivory/92 backdrop-blur-md",

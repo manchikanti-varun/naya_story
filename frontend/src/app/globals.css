@@ -48,9 +48,10 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 1.58;
   font-feature-settings: "kern" 1, "liga" 1;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
@@ -175,7 +176,12 @@ body {
 
   /** Product grid card */
   .lux-product-frame {
-    @apply relative aspect-[3/4] overflow-hidden rounded-lux bg-ivory-soft shadow-lux;
+    @apply relative aspect-[3/4] overflow-hidden rounded-lux bg-ivory-soft shadow-lux ring-1 ring-ivory-deep/30 transition-[box-shadow,ring-color] duration-700;
+  }
+
+  .group:hover .lux-product-frame {
+    box-shadow: var(--shadow-lux-hover);
+    --tw-ring-color: rgb(201 161 91 / 0.28);
   }
 
   .lux-product-name {

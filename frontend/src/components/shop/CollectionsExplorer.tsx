@@ -11,9 +11,16 @@ import {
   normalizeCollectionsPage,
 } from "@/lib/cms/collections-page-config";
 import { cn } from "@/lib/cn";
+import { CollectionsFilterField } from "@/components/shop/CollectionsFilterField";
 import { ProductCard } from "@/components/shop/ProductCard";
+import {
+  StoreBrowseEmpty,
+  StoreBrowseHeader,
+  StoreBrowseMetaPill,
+  StoreBrowseShell,
+} from "@/components/shop/StoreBrowseUI";
 import { StoreInlineLoading } from "@/components/ui/StoreLoadingUI";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 
 type CollectionsConfig = HomepageConfig["collectionsPage"];
 
@@ -145,110 +152,162 @@ export function CollectionsExplorer() {
   const activePriceBand =
     enabledPriceBands.find((b) => priceBandValue(b) === (params.get("priceBand") ?? ""))?.id ?? "";
 
-  return (
-    <div className="min-h-screen bg-ivory-muted/60">
-      <div className="lux-shell pb-16 pt-6 md:pb-24 md:pt-8">
-        <header className="border-b border-ivory-deep pb-10">
-          <p className="lux-kicker">{collectionsConfig.kicker}</p>
-          <h1 className="lux-title mt-4">{collectionsConfig.title}</h1>
-          <p className="lux-copy mt-5 max-w-xl">{collectionsConfig.subtitle}</p>
-        </header>
+  const defaultSort = filters.defaultSort;
+  const hasActiveRefinements =
+    Boolean(params.get("size")) ||
+    Boolean(params.get("color")) ||
+    Boolean(params.get("minPrice")) ||
+    Boolean(params.get("maxPrice")) ||
+    Boolean(params.get("priceBand")) ||
+    params.get("inStock") === "true" ||
+    (params.get("sort") && params.get("sort") !== defaultSort);
 
-        <section className="mt-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="no-scrollbar flex snap-x items-center gap-2 overflow-x-auto pb-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => patchParams({ tab: cat.id, page: "1" })}
-                className={cn(
-                  "lux-filter-chip",
-                  activeCategoryId === cat.id ? "lux-filter-chip-active" : "lux-filter-chip-idle",
-                )}
-              >
-                {cat.label}
-              </button>
-            ))}
+  const clearRefinements = () =>
+    patchParams({
+      size: null,
+      color: null,
+      minPrice: null,
+      maxPrice: null,
+      priceBand: null,
+      inStock: null,
+      sort: defaultSort,
+    });
+
+  const filterFields = (
+    <>
+      {filters.showSize && filters.sizeOptions.length > 0 ? (
+        <CollectionsFilterField
+          label="Size"
+          value={params.get("size") ?? ""}
+          options={["", ...filters.sizeOptions]}
+          allLabel={messages.filterAll}
+          onChange={(v) => patchParams({ size: v || null })}
+        />
+      ) : null}
+      {filters.showColor && filters.colorOptions.length > 0 ? (
+        <CollectionsFilterField
+          label="Color"
+          value={params.get("color") ?? ""}
+          options={["", ...filters.colorOptions]}
+          allLabel={messages.filterAll}
+          onChange={(v) => patchParams({ color: v || null })}
+        />
+      ) : null}
+      {filters.showPrice && enabledPriceBands.length > 0 ? (
+        <CollectionsFilterField
+          label="Price"
+          value={activePriceBand}
+          options={["", ...enabledPriceBands.map((b) => b.id)]}
+          allLabel={messages.filterAll}
+          onChange={(v) => {
+            const band = enabledPriceBands.find((b) => b.id === v);
+            if (!band) {
+              patchParams({ priceBand: null, minPrice: null, maxPrice: null });
+              return;
+            }
+            patchParams({
+              priceBand: priceBandValue(band),
+              minPrice: String(band.min),
+              maxPrice: band.max != null ? String(band.max) : null,
+            });
+          }}
+          renderOption={(opt) =>
+            opt === "" ? messages.filterAll : (enabledPriceBands.find((b) => b.id === opt)?.label ?? opt)
+          }
+        />
+      ) : null}
+      {filters.showAvailability ? (
+        <CollectionsFilterField
+          label="Availability"
+          value={params.get("inStock") === "true" ? "in" : ""}
+          options={["", "in"]}
+          allLabel={messages.availabilityAll}
+          onChange={(v) => patchParams({ inStock: v ? "true" : null })}
+          renderOption={(opt) => (opt === "in" ? messages.availabilityInStock : messages.availabilityAll)}
+        />
+      ) : null}
+      {filters.showSort && enabledSortOptions.length > 0 ? (
+        <CollectionsFilterField
+          label="Sort"
+          className="max-w-[12rem]"
+          value={params.get("sort") ?? defaultSort}
+          options={enabledSortOptions.map((o) => o.value)}
+          onChange={(v) => patchParams({ sort: v })}
+          renderOption={(opt) => enabledSortOptions.find((o) => o.value === opt)?.label ?? opt}
+        />
+      ) : null}
+    </>
+  );
+
+  return (
+    <StoreBrowseShell>
+        <StoreBrowseHeader
+          kicker={collectionsConfig.kicker}
+          title={collectionsConfig.title}
+          subtitle={collectionsConfig.subtitle}
+          meta={
+            !loading && products.length > 0 ? (
+              <StoreBrowseMetaPill>
+                {total} piece{total === 1 ? "" : "s"}
+              </StoreBrowseMetaPill>
+            ) : null
+          }
+        />
+
+        <section className="mt-10 space-y-5">
+          <div className="lux-collection-categories">
+            <div className="lux-scroll-x gap-2 pb-1">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => patchParams({ tab: cat.id, page: "1" })}
+                  className={cn(
+                    "lux-filter-chip",
+                    activeCategoryId === cat.id ? "lux-filter-chip-active" : "lux-filter-chip-idle",
+                  )}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {hasDesktopFilters ? (
-            <div className="hidden items-center gap-3 md:flex">
-              {filters.showSize && filters.sizeOptions.length > 0 ? (
-                <CollectionSelect
-                  label="Size"
-                  value={params.get("size") ?? ""}
-                  options={["", ...filters.sizeOptions]}
-                  allLabel={messages.filterAll}
-                  onChange={(v) => patchParams({ size: v || null })}
-                />
-              ) : null}
-              {filters.showColor && filters.colorOptions.length > 0 ? (
-                <CollectionSelect
-                  label="Color"
-                  value={params.get("color") ?? ""}
-                  options={["", ...filters.colorOptions]}
-                  allLabel={messages.filterAll}
-                  onChange={(v) => patchParams({ color: v || null })}
-                />
-              ) : null}
-              {filters.showPrice && enabledPriceBands.length > 0 ? (
-                <CollectionSelect
-                  label="Price"
-                  value={activePriceBand}
-                  options={["", ...enabledPriceBands.map((b) => b.id)]}
-                  allLabel={messages.filterAll}
-                  onChange={(v) => {
-                    const band = enabledPriceBands.find((b) => b.id === v);
-                    if (!band) {
-                      patchParams({ priceBand: null, minPrice: null, maxPrice: null });
-                      return;
-                    }
-                    patchParams({
-                      priceBand: priceBandValue(band),
-                      minPrice: String(band.min),
-                      maxPrice: band.max != null ? String(band.max) : null,
-                    });
-                  }}
-                  renderOption={(opt) =>
-                    opt === "" ? messages.filterAll : (enabledPriceBands.find((b) => b.id === opt)?.label ?? opt)
-                  }
-                />
-              ) : null}
-              {filters.showAvailability ? (
-                <CollectionSelect
-                  label="Availability"
-                  value={params.get("inStock") === "true" ? "in" : ""}
-                  options={["", "in"]}
-                  allLabel={messages.availabilityAll}
-                  onChange={(v) => patchParams({ inStock: v ? "true" : null })}
-                  renderOption={(opt) => (opt === "in" ? messages.availabilityInStock : messages.availabilityAll)}
-                />
-              ) : null}
-              {filters.showSort && enabledSortOptions.length > 0 ? (
-                <CollectionSelect
-                  label="Sort"
-                  value={params.get("sort") ?? filters.defaultSort}
-                  options={enabledSortOptions.map((o) => o.value)}
-                  onChange={(v) => patchParams({ sort: v })}
-                  renderOption={(opt) =>
-                    enabledSortOptions.find((o) => o.value === opt)?.label ?? opt
-                  }
-                />
-              ) : null}
+            <div className="lux-collection-filter-bar hidden md:block">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <p className="font-sans text-[10px] font-medium uppercase tracking-[0.24em] text-ink-soft">
+                  Refine
+                </p>
+                {hasActiveRefinements ? (
+                  <button
+                    type="button"
+                    onClick={clearRefinements}
+                    className="inline-flex items-center gap-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-gold transition hover:text-ink"
+                  >
+                    <X className="h-3 w-3" strokeWidth={1.5} aria-hidden />
+                    Clear filters
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-4">{filterFields}</div>
             </div>
           ) : null}
-        </section>
 
-        {hasDesktopFilters ? (
-          <button
-            type="button"
-            className="lux-btn-outline mt-3 gap-2 px-4 py-2 md:hidden"
-            onClick={() => setShowMobileFilters(true)}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            {messages.mobileFiltersLabel}
-          </button>
-        ) : null}
+          {hasDesktopFilters ? (
+            <button
+              type="button"
+              className="lux-btn-outline inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 md:hidden"
+              onClick={() => setShowMobileFilters(true)}
+            >
+              <SlidersHorizontal className="h-4 w-4" strokeWidth={1.5} />
+              {messages.mobileFiltersLabel}
+              {hasActiveRefinements ? (
+                <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] text-gold">Active</span>
+              ) : null}
+            </button>
+          ) : null}
+        </section>
 
         {loading ? (
           <StoreInlineLoading
@@ -258,11 +317,20 @@ export function CollectionsExplorer() {
             variant="grid"
           />
         ) : products.length === 0 ? (
-          <p className="mt-16 font-sans text-sm text-ink-muted">{messages.empty}</p>
+          <StoreBrowseEmpty
+            title="Nothing matched"
+            description={messages.empty}
+            primaryAction={{ label: "Shop all collections", href: "/collections?tab=all" }}
+            secondaryAction={
+              hasActiveRefinements
+                ? { label: "Clear all filters", onClick: clearRefinements }
+                : undefined
+            }
+          />
         ) : (
           <motion.div
             key={queryString}
-            initial={{ opacity: 0, y: 8 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 md:gap-x-5 lg:grid-cols-4 lg:gap-x-6"
@@ -334,52 +402,12 @@ export function CollectionsExplorer() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h3 className="lux-title-section">{messages.mobileDrawerTitle}</h3>
-                <div className="mt-4 space-y-3">
-                  {filters.showSize && filters.sizeOptions.length > 0 ? (
-                    <CollectionSelect
-                      label="Size"
-                      value={params.get("size") ?? ""}
-                      options={["", ...filters.sizeOptions]}
-                      allLabel={messages.filterAll}
-                      onChange={(v) => patchParams({ size: v || null })}
-                    />
-                  ) : null}
-                  {filters.showColor && filters.colorOptions.length > 0 ? (
-                    <CollectionSelect
-                      label="Color"
-                      value={params.get("color") ?? ""}
-                      options={["", ...filters.colorOptions]}
-                      allLabel={messages.filterAll}
-                      onChange={(v) => patchParams({ color: v || null })}
-                    />
-                  ) : null}
-                  {filters.showSort && enabledSortOptions.length > 0 ? (
-                    <CollectionSelect
-                      label="Sort"
-                      value={params.get("sort") ?? filters.defaultSort}
-                      options={enabledSortOptions.map((o) => o.value)}
-                      onChange={(v) => patchParams({ sort: v })}
-                      renderOption={(opt) =>
-                        enabledSortOptions.find((o) => o.value === opt)?.label ?? opt
-                      }
-                    />
-                  ) : null}
-                </div>
+                <div className="mt-5 grid grid-cols-2 gap-4">{filterFields}</div>
                 <div className="mt-6 flex gap-2">
                   <button
                     type="button"
                     className="lux-btn-outline w-full py-2 text-xs tracking-[0.18em]"
-                    onClick={() =>
-                      patchParams({
-                        size: null,
-                        color: null,
-                        minPrice: null,
-                        maxPrice: null,
-                        priceBand: null,
-                        inStock: null,
-                        sort: filters.defaultSort,
-                      })
-                    }
+                    onClick={clearRefinements}
                   >
                     Reset
                   </button>
@@ -395,41 +423,7 @@ export function CollectionsExplorer() {
             </motion.div>
           ) : null}
         </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-function CollectionSelect({
-  label,
-  value,
-  options,
-  onChange,
-  renderOption,
-  allLabel = "All",
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (value: string) => void;
-  renderOption?: (value: string) => string;
-  allLabel?: string;
-}) {
-  return (
-    <label className="flex items-center gap-2 rounded-full border border-ivory-deep bg-ivory/70 px-3 py-2 font-sans text-[10px] uppercase tracking-[0.16em] text-ink-soft">
-      <span>{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent text-[11px] uppercase tracking-[0.16em] text-ink outline-none"
-      >
-        {options.map((opt) => (
-          <option key={opt || "all"} value={opt}>
-            {renderOption ? renderOption(opt) : opt || allLabel}
-          </option>
-        ))}
-      </select>
-    </label>
+    </StoreBrowseShell>
   );
 }
 

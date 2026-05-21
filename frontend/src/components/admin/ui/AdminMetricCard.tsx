@@ -17,7 +17,7 @@ export function AdminMetricCard({ label, value, hint, icon: Icon, href, accent }
     <AdminCard
       padding="md"
       className={cn(
-        "h-full transition hover:border-[var(--admin-border-strong)]",
+        "admin-metric-card h-full",
         accent && "border-amber-200/70 bg-amber-50/30",
       )}
     >
@@ -26,10 +26,10 @@ export function AdminMetricCard({ label, value, hint, icon: Icon, href, accent }
           {label}
         </p>
         {Icon ? (
-          <Icon className="h-4 w-4 shrink-0 text-[var(--admin-accent)]" strokeWidth={1.5} aria-hidden />
+          <Icon className="h-4 w-4 shrink-0 text-[var(--admin-accent-bright)]" strokeWidth={1.5} aria-hidden />
         ) : null}
       </div>
-      <p className="mt-3 font-sans text-2xl font-semibold tabular-nums tracking-tight text-[var(--admin-ink)] md:text-3xl">
+      <p className="admin-metric-value mt-3 text-2xl tabular-nums text-[var(--admin-ink)] md:text-3xl">
         {value}
       </p>
       {hint ? <p className="mt-2 font-sans text-[11px] leading-relaxed text-[var(--admin-muted)]">{hint}</p> : null}

@@ -71,7 +71,7 @@ export function AdminDrawer({
             <p className="admin-kicker">Edit section</p>
             <h2
               id="admin-drawer-title"
-              className="mt-1 font-sans text-lg font-semibold tracking-tight text-[var(--admin-ink)]"
+              className="admin-page-title mt-1 text-lg text-[var(--admin-ink)] md:text-xl"
             >
               {title}
             </h2>

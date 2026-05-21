@@ -3,6 +3,7 @@
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
 import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
 import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
+import { CmsImageUrlField } from "@/components/admin/cms/CmsImageUrlField";
 import { AdminField, AdminInput, AdminTextarea } from "@/components/admin/ui/AdminField";
 import { defaultHomepageEditorial } from "@/lib/cms/editorial-defaults";
 import type {
@@ -41,7 +42,7 @@ type Props = {
 };
 
 export function ContentEditorEditorialPanel({ focusType }: Props) {
-  const { hp, setHp } = useHomepageEditor();
+  const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
 
   const ed = hp.editorial ?? defaultHomepageEditorial();
@@ -96,7 +97,12 @@ export function ContentEditorEditorialPanel({ focusType }: Props) {
             onChange={(v) => patch("brandStory", { body: [ed.brandStory.body[0] ?? "", v] })}
             multiline
           />
-          <Field label="Image URL" value={ed.brandStory.image} onChange={(v) => patch("brandStory", { image: v })} />
+          <CmsImageUrlField
+            label="Image URL"
+            token={token}
+            value={ed.brandStory.image}
+            onChange={(image) => patch("brandStory", { image })}
+          />
           {designBlock("brandStory", "brandStory", ed.brandStory.styles)}
         </section>
       ) : null}
@@ -145,10 +151,11 @@ export function ContentEditorEditorialPanel({ focusType }: Props) {
             value={ed.craftsmanship.ctaHref}
             onChange={(v) => patch("craftsmanship", { ctaHref: v })}
           />
-          <Field
+          <CmsImageUrlField
             label="Image URL"
+            token={token}
             value={ed.craftsmanship.image}
-            onChange={(v) => patch("craftsmanship", { image: v })}
+            onChange={(image) => patch("craftsmanship", { image })}
           />
           {designBlock("craftsmanship", "craftsmanship", ed.craftsmanship.styles)}
         </section>

@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
           <Link
             key={href}
             href={href}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3.5 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-muted)] transition hover:border-[var(--admin-border-strong)] hover:text-[var(--admin-ink)]"
+            className="admin-quick-link"
           >
             <Icon className="h-3.5 w-3.5" strokeWidth={1.65} aria-hidden />
             {label}

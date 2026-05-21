@@ -10,3 +10,4 @@ export {
   CmsVisibilityToggle,
   CmsStorePagePublishToggle,
 } from "./CmsFormHelpers";
+export { CmsImageUrlField } from "./CmsImageUrlField";

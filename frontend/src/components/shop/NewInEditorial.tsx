@@ -11,6 +11,12 @@ import type { HomepageConfig } from "@/types/homepage";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/cn";
 import { QuickViewModal } from "@/components/shop/QuickViewModal";
+import {
+  StoreBrowseEmpty,
+  StoreBrowseHeader,
+  StoreBrowseMetaPill,
+  StoreBrowseShell,
+} from "@/components/shop/StoreBrowseUI";
 import { StoreInlineLoading, StoreLoadingMore } from "@/components/ui/StoreLoadingUI";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
 
@@ -184,37 +190,47 @@ export function NewInEditorial() {
   const heading = pageCfg?.heading?.trim() || "New In";
   const sub = pageCfg?.subheading?.trim();
 
+  const metaLabel = loading
+    ? null
+    : curated
+      ? "Curated edit"
+      : fallbackMode
+        ? "Latest from catalog"
+        : "New arrivals";
+
   return (
-    <div className="bg-[#f1ece5] text-[#f7f2ea]">
-      <header className="lux-shell pb-8 pt-8 md:pb-10 md:pt-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <p className="lux-kicker text-gold/90">Latest arrivals</p>
-          <h1 className="mt-3 font-display text-[clamp(2rem,5vw,3.25rem)] font-normal leading-[1.04] tracking-[-0.02em] text-ink md:text-4xl">
-            {heading}
-          </h1>
-          {sub ? (
-            <p className="mt-4 max-w-2xl font-sans text-sm leading-relaxed text-ink-muted md:text-base">{sub}</p>
-          ) : null}
-        </motion.div>
-      </header>
+    <StoreBrowseShell>
+      <StoreBrowseHeader
+        kicker="Latest arrivals"
+        title={heading}
+        subtitle={sub}
+        meta={
+          !loading && products.length > 0 && metaLabel ? (
+            <StoreBrowseMetaPill>
+              {products.length}
+              {pages > 1 ? "+" : ""} pieces · {metaLabel}
+            </StoreBrowseMetaPill>
+          ) : null
+        }
+      />
 
       {loading ? (
         <StoreInlineLoading
+          className="mt-6 px-0"
           label="Building the editorial wall"
           sublabel="Latest arrivals, composed for you"
           variant="masonry"
         />
       ) : products.length === 0 ? (
-        <p className="lux-shell py-20 font-sans text-sm text-ink-muted">
-          No pieces match this curatorial cut.
-        </p>
+        <StoreBrowseEmpty
+          title="The rail is being composed"
+          description="No pieces match this curatorial cut yet. Add products in admin, mark them as New In, or pin items under Website → New In."
+          primaryAction={{ label: "Explore collections", href: "/collections" }}
+          secondaryAction={undefined}
+        />
       ) : (
-        <section className="lux-shell px-0 pb-14 pt-4 md:pb-24">
-          <div className="columns-1 [column-gap:0] md:columns-2 xl:columns-3">
+        <section className="mt-8 pb-14 md:pb-20">
+          <div className="lux-newin-masonry">
             {products.map((product, index) => (
               <NewInTile
                 key={product._id}
@@ -238,7 +254,7 @@ export function NewInEditorial() {
           {loadingMore ? <StoreLoadingMore label="Loading more pieces" /> : null}
         </section>
       )}
-    </div>
+    </StoreBrowseShell>
   );
 }
 

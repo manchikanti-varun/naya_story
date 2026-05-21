@@ -1,20 +1,13 @@
 import { Suspense } from "react";
 import { NewInEditorial } from "@/components/shop/NewInEditorial";
+import { StoreBrowseSkeleton } from "@/components/shop/StoreBrowseUI";
 import { ensureStorePageEnabled } from "@/lib/ensure-store-page";
 
 export default async function NewInPage() {
   await ensureStorePageEnabled("newIn");
   return (
-    <Suspense fallback={<NewInFallback />}>
+    <Suspense fallback={<StoreBrowseSkeleton kicker="Latest arrivals" showFilterRow={false} />}>
       <NewInEditorial />
     </Suspense>
-  );
-}
-
-function NewInFallback() {
-  return (
-    <div className="px-6 py-24 md:px-10">
-      <p className="font-sans text-sm text-ink-muted">Opening the latest editorial...</p>
-    </div>
   );
 }

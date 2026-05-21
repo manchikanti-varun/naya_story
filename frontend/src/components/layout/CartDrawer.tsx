@@ -40,7 +40,7 @@ export function CartDrawer() {
           <motion.button
             type="button"
             aria-label="Close overlay"
-            className="fixed inset-0 z-[60] bg-ink/20 backdrop-blur-[3px]"
+            className="store-overlay fixed inset-0 z-[60]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -49,18 +49,16 @@ export function CartDrawer() {
           <motion.aside
             role="dialog"
             aria-modal
-            className={cn(
-              "fixed bottom-0 right-0 top-0 z-[70] flex w-full max-w-md flex-col border-l border-ivory-deep/40 bg-ivory shadow-[0_24px_64px_-16px_rgba(44,40,37,0.14)]",
-            )}
+            className="store-cart-drawer fixed bottom-0 right-0 top-0 z-[70] flex w-full max-w-md flex-col"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 260 }}
           >
-            <div className="flex items-center justify-between border-b border-ivory-deep px-6 py-5">
+            <div className="store-cart-header flex items-center justify-between px-6 py-5">
               <div>
                 <p className="lux-kicker">Shopping</p>
-                <h2 className="lux-title-section mt-1">Your bag</h2>
+                <h2 className="store-cart-title mt-1">Your bag</h2>
                 <p className="mt-1 font-sans text-xs uppercase tracking-[0.22em] text-ink-soft">
                   {lines.length} item{lines.length === 1 ? "" : "s"}
                 </p>

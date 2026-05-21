@@ -34,7 +34,8 @@ export function AdminPageLayout({
     <div className={cn("admin-page-shell mx-auto space-y-6", maxWidthClass, className)}>
       <header
         className={cn(
-          !bareHeader && "admin-surface-elevated rounded-[var(--admin-radius)] p-6 sm:p-8",
+          !bareHeader &&
+            "admin-page-header-card admin-surface-elevated rounded-[var(--admin-radius)] p-6 sm:p-8",
         )}
       >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -42,7 +43,7 @@ export function AdminPageLayout({
             {eyebrow ? <p className="admin-kicker">{eyebrow}</p> : null}
             <h1
               className={cn(
-                "font-sans font-semibold tracking-tight text-[var(--admin-ink)]",
+                "admin-page-title text-[var(--admin-ink)]",
                 eyebrow ? "mt-2 text-2xl md:text-3xl" : "text-2xl md:text-3xl",
               )}
             >

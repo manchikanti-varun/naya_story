@@ -24,8 +24,8 @@ export default function AdminLoginPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center font-sans text-sm text-[var(--admin-muted)]">
-        Loading…
+      <div className="admin-loading-state min-h-screen justify-center">
+        Loading
       </div>
     );
   }
@@ -33,8 +33,8 @@ export default function AdminLoginPage() {
   if (user?.role === "admin") return null;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--admin-canvas)] px-4 py-12">
-      <div className="w-full max-w-[400px] rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-8 shadow-[0_24px_64px_-32px_rgba(28,25,23,0.22)]">
+    <div className="admin-login-shell flex min-h-screen flex-col items-center justify-center px-4 py-12">
+      <div className="admin-login-card w-full max-w-[420px] p-8 sm:p-10">
         <AdminBrand href="/admin/login" showSubtitle className="mb-8" />
 
         <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--admin-faint)]">

@@ -9,6 +9,7 @@ import { bustLogoPath, getLogoCacheRev } from "@/lib/logo-cache";
 import { NAYA_STORE_THEME_STYLE_ID, storefrontThemeCssString } from "@/lib/storefront-theme";
 import { STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
 import { storePageFlagsFromHomepage } from "@/lib/store-page-flags";
+import "../store-theme.css";
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const [data, legalPages] = await Promise.all([getSiteSettings(), getPublishedLegalPages()]);
@@ -23,7 +24,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const themeCss = storefrontThemeCssString(data.settings.homepage.theme);
   const storePageFlags = storePageFlagsFromHomepage(data.settings.homepage);
   return (
-    <>
+    <div className="store-app">
       <StorefrontLiveSync />
       <style
         id={NAYA_STORE_THEME_STYLE_ID}
@@ -50,6 +51,6 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       <StoreFooter footer={footer} legalPages={legalPages} logoRev={logoRev} />
       <CartDrawer />
       <ScrollToTopButton />
-    </>
+    </div>
   );
 }

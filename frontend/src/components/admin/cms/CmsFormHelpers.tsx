@@ -19,7 +19,7 @@ export function CmsPageEditorShell({ title, description, children, embedded, id 
       className={cn(embedded ? "space-y-8 p-6 sm:p-8" : "admin-surface-elevated space-y-8 p-6 sm:p-8")}
     >
       <header>
-        <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">
+        <h2 className="admin-page-title text-xl text-[var(--admin-ink)] sm:text-2xl">
           {title}
         </h2>
         {description ? (

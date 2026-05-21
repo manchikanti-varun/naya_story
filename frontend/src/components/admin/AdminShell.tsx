@@ -57,12 +57,8 @@ function NavLink({
     <Link
       href={item.href}
       onClick={onNavigate}
-      className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2 font-sans text-[13px] transition-colors duration-150",
-        active
-          ? "border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] font-medium text-[var(--admin-nav-active)] shadow-sm"
-          : "text-[var(--admin-sidebar-text)] hover:bg-black/[0.04]",
-      )}
+      data-active={active ? "true" : undefined}
+      className="admin-nav-link"
     >
       {Icon ? (
         <Icon
@@ -109,8 +105,8 @@ export function AdminShell({
 
   if (loading || !user || user.role !== "admin") {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center font-sans text-sm text-[var(--admin-muted)]">
-        Verifying administrator access…
+      <div className="admin-loading-state min-h-[60vh] justify-center">
+        Verifying administrator access
       </div>
     );
   }
@@ -158,7 +154,7 @@ export function AdminShell({
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        <div className="relative shrink-0 border-b border-[var(--admin-border)] px-2 pb-4 pt-0.5">
+        <div className="admin-sidebar-brand relative shrink-0 px-2 pt-0.5">
           <button
             type="button"
             className="absolute right-0 top-0 z-10 rounded-lg p-2 text-[var(--admin-muted)] hover:bg-black/[0.05] lg:hidden"
@@ -178,16 +174,12 @@ export function AdminShell({
         </nav>
 
         <div className="shrink-0 space-y-0.5 border-t border-[var(--admin-border)] pt-4">
-          <Link
-            href="/"
-            target="_blank"
-            className="block rounded-xl px-3 py-2.5 font-sans text-sm text-[var(--admin-sidebar-text)] transition hover:bg-black/[0.04] hover:text-[var(--admin-ink)]"
-          >
+          <Link href="/" target="_blank" className="admin-sidebar-footer-link">
             View live store
           </Link>
           <button
             type="button"
-            className="w-full rounded-xl px-3 py-2.5 text-left font-sans text-sm text-[var(--admin-sidebar-text)] transition hover:bg-black/[0.04] hover:text-[var(--admin-ink)]"
+            className="admin-sidebar-footer-link w-full text-left"
             onClick={() => {
               logout();
               router.push("/admin/login");
@@ -199,7 +191,7 @@ export function AdminShell({
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:overflow-hidden">
-        <header className="sticky top-0 z-30 shrink-0 border-b border-[var(--admin-border)] bg-[var(--admin-canvas)]/92 backdrop-blur-md">
+        <header className="admin-topbar sticky top-0 z-30 shrink-0">
           <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
             <button
               type="button"

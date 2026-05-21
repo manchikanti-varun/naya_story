@@ -16,7 +16,7 @@ export function AdminEmptyState({ title, description, action, className }: Props
         className,
       )}
     >
-      <p className="font-sans text-base font-semibold text-[var(--admin-ink)]">{title}</p>
+      <p className="admin-page-title text-lg text-[var(--admin-ink)]">{title}</p>
       {description ? (
         <p className="mt-2 max-w-sm font-sans text-sm text-[var(--admin-muted)]">{description}</p>
       ) : null}

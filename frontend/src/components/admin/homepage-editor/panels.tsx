@@ -12,6 +12,7 @@ import {
   CmsVisibilityToggle,
   CmsStorePagePublishToggle,
 } from "@/components/admin/cms/CmsFormHelpers";
+import { CmsImageUrlField } from "@/components/admin/cms/CmsImageUrlField";
 import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
 import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
 import { AdminField, AdminInput, AdminSelect, AdminTextarea } from "@/components/admin/ui/AdminField";
@@ -20,7 +21,7 @@ import { sortSlides, useHomepageEditor } from "@/components/admin/homepage-edito
 import { DEFAULT_COLLECTIONS_PAGE } from "@/lib/cms/collections-page-config";
 
 export function ContentEditorHeroPanel() {
-  const { hp, setHp, moveSlide, updateSlide } = useHomepageEditor();
+  const { hp, setHp, moveSlide, updateSlide, token } = useHomepageEditor();
   if (!hp) return null;
   const slides = sortSlides(hp.carousel.slides);
 
@@ -48,6 +49,7 @@ export function ContentEditorHeroPanel() {
             slide={slide}
             index={i}
             total={slides.length}
+            token={token}
             onUpdate={(patch) => updateSlide(slide.id, patch)}
             onMove={(dir) => moveSlide(i, dir)}
           />
@@ -392,7 +394,7 @@ export function ContentEditorNewInPagePanel({ embedded = false }: { embedded?: b
 }
 
 export function ContentEditorCategoriesPanel() {
-  const { hp, setHp, updateCategory } = useHomepageEditor();
+  const { hp, setHp, updateCategory, token } = useHomepageEditor();
   if (!hp) return null;
 
   const contentTab = (
@@ -454,13 +456,13 @@ export function ContentEditorCategoriesPanel() {
                       onChange={(e) => updateCategory(cat.id, { href: e.target.value })}
                     />
                   </AdminField>
-                  <AdminField label="Image URL" className="md:col-span-2">
-                    <AdminInput
-                      placeholder="https://…"
-                      value={cat.image}
-                      onChange={(e) => updateCategory(cat.id, { image: e.target.value })}
-                    />
-                  </AdminField>
+                  <CmsImageUrlField
+                    label="Image URL"
+                    className="md:col-span-2"
+                    token={token}
+                    value={cat.image}
+                    onChange={(image) => updateCategory(cat.id, { image })}
+                  />
                 </CmsFormGrid>
               </div>
             </div>
@@ -911,7 +913,7 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
 }
 
 export function ContentEditorOurStoryPanel({ embedded = false }: { embedded?: boolean }) {
-  const { hp, setHp } = useHomepageEditor();
+  const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
   return (
     <section
@@ -946,17 +948,17 @@ export function ContentEditorOurStoryPanel({ embedded = false }: { embedded?: bo
                   }
                 />
               </AdminField>
-              <AdminField label="Hero image URL">
-                <AdminInput
-                  value={hp.ourStoryPage.heroImage}
-                  onChange={(e) =>
-                    setHp({
-                      ...hp,
-                      ourStoryPage: { ...hp.ourStoryPage, heroImage: e.target.value },
-                    })
-                  }
-                />
-              </AdminField>
+              <CmsImageUrlField
+                label="Hero image URL"
+                token={token}
+                value={hp.ourStoryPage.heroImage}
+                onChange={(heroImage) =>
+                  setHp({
+                    ...hp,
+                    ourStoryPage: { ...hp.ourStoryPage, heroImage },
+                  })
+                }
+              />
               <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400 md:col-span-2">
                 Hero subtitle
                 <textarea
@@ -1096,17 +1098,17 @@ export function ContentEditorOurStoryPanel({ embedded = false }: { embedded?: bo
                           })
                         }
                       />
-                      <input
-                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                        placeholder="Image URL"
+                      <CmsImageUrlField
+                        label="Section image URL"
+                        token={token}
                         value={section.image ?? ""}
-                        onChange={(e) =>
+                        onChange={(image) =>
                           setHp({
                             ...hp,
                             ourStoryPage: {
                               ...hp.ourStoryPage,
                               sections: hp.ourStoryPage.sections.map((s) =>
-                                s.id === section.id ? { ...s, image: e.target.value } : s,
+                                s.id === section.id ? { ...s, image } : s,
                               ),
                             },
                           })
@@ -1178,7 +1180,7 @@ export function ContentEditorOurStoryPanel({ embedded = false }: { embedded?: bo
 }
 
 export function ContentEditorFooterPanel() {
-  const { hp, setHp } = useHomepageEditor();
+  const { hp, setHp, token } = useHomepageEditor();
   if (!hp) return null;
   return (
     <section id="admin-section-footer" className="admin-surface-elevated p-6 sm:p-8">
@@ -1187,14 +1189,12 @@ export function ContentEditorFooterPanel() {
               Manage luxury footer content: brand text, legal links, contact, socials, and CTA links.
             </p>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                Logo URL
-                <input
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  value={hp.footer.logoUrl}
-                  onChange={(e) => setHp({ ...hp, footer: { ...hp.footer, logoUrl: e.target.value } })}
-                />
-              </label>
+              <CmsImageUrlField
+                label="Logo URL"
+                token={token}
+                value={hp.footer.logoUrl ?? ""}
+                onChange={(logoUrl) => setHp({ ...hp, footer: { ...hp.footer, logoUrl } })}
+              />
               <label className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
                 Logo alt
                 <input

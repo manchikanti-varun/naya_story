@@ -79,7 +79,7 @@ export default function AdminMediaPage() {
     <AdminPageLayout
       eyebrow="Website"
       title="Media library"
-      description="Upload to Cloudinary or paste HTTPS URLs. Reuse assets across homepage CMS and products."
+      description="Upload to Cloudinary or paste HTTPS URLs. In page editors, use Library next to any image field to pick from here."
     >
       <AdminCard padding="md">
         <h2 className="font-sans text-sm font-semibold text-[var(--admin-ink)]">Upload to Cloudinary</h2>
