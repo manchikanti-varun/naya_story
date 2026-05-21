@@ -5,7 +5,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import { connectDb } from "./config/db.js";
-import { mergeHomepageConfig } from "./lib/homepage-defaults.js";
+import { blankStorefrontHomepage } from "./lib/empty-storefront-config.js";
 import { Coupon } from "./models/Coupon.js";
 import { HomepageRevision } from "./models/HomepageRevision.js";
 import { MediaAsset } from "./models/MediaAsset.js";
@@ -30,30 +30,26 @@ async function clearData() {
     MediaAsset.deleteMany({}),
   ]);
 
-  const doc = await SiteSettings.findOne();
-  if (doc) {
-    const hp = mergeHomepageConfig(
-      (doc.homepageDraft ?? doc.homepage) as Parameters<typeof mergeHomepageConfig>[0],
-    );
-    hp.bestsellers.productIds = [];
-    hp.newIn.productIds = [];
-    await SiteSettings.updateOne(
-      { _id: doc._id },
-      {
-        $set: {
-          homepage: hp,
-          homepageDraft: hp,
-          banners: [],
-        },
+  const blankHome = blankStorefrontHomepage();
+  const settingsResult = await SiteSettings.updateOne(
+    {},
+    {
+      $set: {
+        homepage: blankHome,
+        homepageDraft: blankHome,
+        banners: [],
       },
-    );
-  }
+    },
+    { upsert: true },
+  );
 
   console.log("Cleared dev data:");
   console.log(`  products: ${products.deletedCount}`);
   console.log(`  orders: ${orders.deletedCount}`);
   console.log(`  coupons: ${coupons.deletedCount}`);
-  console.log("  CMS product rails emptied (bestsellers / new-in).");
+  console.log(
+    `  storefront CMS reset (no hero, lookbook, categories, or product rails): ${settingsResult.modifiedCount || settingsResult.upsertedCount ? "ok" : "no settings doc"}`,
+  );
   console.log("Admin users and legal pages were not removed.");
   await mongoose.disconnect();
 }

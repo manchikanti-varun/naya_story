@@ -2,7 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { connectDb } from "./config/db.js";
-import { defaultHomepageConfig } from "./lib/homepage-defaults.js";
+import { blankStorefrontHomepage } from "./lib/empty-storefront-config.js";
 import { defaultLegalPages } from "./lib/legal-page-defaults.js";
 import { Coupon } from "./models/Coupon.js";
 import { LegalPage } from "./models/LegalPage.js";
@@ -50,10 +50,7 @@ async function seed() {
     role: "admin",
   });
 
-  const hp = defaultHomepageConfig();
-  hp.bestsellers.productIds = [];
-  hp.newIn.productIds = [];
-  await SiteSettings.create({ homepage: hp, banners: [] });
+  await SiteSettings.create({ homepage: blankStorefrontHomepage(), banners: [] });
 
   await LegalPage.insertMany(
     defaultLegalPages.map((p) => ({
