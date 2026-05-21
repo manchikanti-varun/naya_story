@@ -7,6 +7,16 @@ import { isAdminRequest, requireAdmin } from "../middleware/auth.js";
 import { asyncHandler } from "../middleware/httpError.js";
 import { HttpError } from "../middleware/httpError.js";
 
+type LeanLegalPage = {
+  _id: unknown;
+  title: string;
+  slug: string;
+  body?: string;
+  published: boolean;
+  order: number;
+  updatedAt?: Date;
+};
+
 async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
   let slug = slugify(base) || "page";
   let n = 0;
@@ -20,15 +30,7 @@ async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
   }
 }
 
-function serializeList(page: {
-  _id: unknown;
-  title: string;
-  slug: string;
-  body?: string;
-  published: boolean;
-  order: number;
-  updatedAt?: Date;
-}) {
+function serializeList(page: LeanLegalPage) {
   return {
     id: String(page._id),
     title: page.title,
@@ -48,7 +50,7 @@ export function createLegalPagesRouter(secret: string) {
     asyncHandler(async (req, res) => {
       const admin = await isAdminRequest(req, secret);
       const filter = admin ? {} : { published: true };
-      const pages = await LegalPage.find(filter).sort({ order: 1, title: 1 }).lean();
+      const pages = (await LegalPage.find(filter).sort({ order: 1, title: 1 }).lean()) as unknown as LeanLegalPage[];
       res.json({ pages: pages.map(serializeList) });
     }),
   );
@@ -58,7 +60,7 @@ export function createLegalPagesRouter(secret: string) {
     asyncHandler(async (req, res) => {
       const admin = await isAdminRequest(req, secret);
       const slug = String(req.params.slug).trim().toLowerCase();
-      const page = await LegalPage.findOne({ slug }).lean();
+      const page = (await LegalPage.findOne({ slug }).lean()) as unknown as LeanLegalPage | null;
       if (!page) throw new HttpError(404, "Page not found");
       if (!page.published && !admin) throw new HttpError(404, "Page not found");
       res.json({ page: serializeList(page) });
@@ -86,7 +88,9 @@ export function createLegalPagesRouter(secret: string) {
         order?: number;
       };
       const nextSlug = await uniqueSlug(slug?.trim() || title);
-      const maxOrder = await LegalPage.findOne().sort({ order: -1 }).select("order").lean();
+      const maxOrder = (await LegalPage.findOne().sort({ order: -1 }).select("order").lean()) as unknown as {
+        order: number;
+      } | null;
       const doc = await LegalPage.create({
         title: title.trim(),
         slug: nextSlug,
@@ -132,7 +136,9 @@ export function createLegalPagesRouter(secret: string) {
         }
       }
 
-      const doc = await LegalPage.findByIdAndUpdate(req.params.id, { $set: patch }, { new: true }).lean();
+      const doc = (await LegalPage.findByIdAndUpdate(req.params.id, { $set: patch }, { new: true }).lean()) as unknown as
+        | LeanLegalPage
+        | null;
       if (!doc) throw new HttpError(404, "Page not found");
       res.json({ page: serializeList(doc) });
     }),
