@@ -5,10 +5,9 @@ import { StoreHeader } from "@/components/layout/StoreHeader";
 import { StorefrontLiveSync } from "@/components/store/StorefrontLiveSync";
 import { getSiteSettings } from "@/lib/server-content";
 import { getPublishedLegalPages } from "@/lib/server-legal-pages";
-import { getLogoCacheRev } from "@/lib/logo-cache";
+import { bustLogoPath, getLogoCacheRev } from "@/lib/logo-cache";
 import { NAYA_STORE_THEME_STYLE_ID, storefrontThemeCssString } from "@/lib/storefront-theme";
 import { STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
-import { getLogoCacheRev, bustLogoPath } from "@/lib/logo-cache";
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const [data, legalPages] = await Promise.all([getSiteSettings(), getPublishedLegalPages()]);
