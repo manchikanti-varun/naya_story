@@ -3,7 +3,10 @@ import { Router } from "express";
 import { body, validationResult } from "express-validator";
 import { MediaAsset } from "../models/MediaAsset.js";
 import { requireAdmin } from "../middleware/auth.js";
+import { asyncHandler } from "../middleware/httpError.js";
 import { HttpError } from "../middleware/httpError.js";
+import { isCloudinaryConfigured, uploadImageBuffer } from "../lib/cloudinary.js";
+import { mediaUploadMulter, multerErrorMessage } from "../lib/media-upload-multer.js";
 
 function assertSecureMediaUrl(url: string): void {
   let u: URL;
@@ -24,6 +27,86 @@ function assertSecureMediaUrl(url: string): void {
 export function createMediaRouter(secret: string) {
   const r = Router();
   r.use(...(requireAdmin(secret) as RequestHandler[]));
+
+  r.get("/upload-config", (_req, res) => {
+    res.json({
+      configured: isCloudinaryConfigured(),
+      maxBytes: 10 * 1024 * 1024,
+      allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"],
+    });
+  });
+
+  const runUpload: RequestHandler = (req, res, next) => {
+    mediaUploadMulter.single("file")(req, res, (err) => {
+      if (err) {
+        res.status(400).json({ message: multerErrorMessage(err) });
+        return;
+      }
+      next();
+    });
+  };
+
+  r.post(
+    "/upload",
+    runUpload,
+    asyncHandler(async (req, res) => {
+      if (!req.file?.buffer?.length) {
+        throw new HttpError(400, "Missing image file (field name: file)");
+      }
+
+      const category =
+        typeof req.body?.category === "string" && req.body.category.trim()
+          ? req.body.category.trim()
+          : "general";
+      const nameFromBody =
+        typeof req.body?.name === "string" ? req.body.name.trim() : "";
+      const name =
+        nameFromBody ||
+        req.file.originalname?.replace(/\.[^.]+$/, "") ||
+        "Uploaded image";
+      const tagsRaw = req.body?.tags;
+      const tags = Array.isArray(tagsRaw)
+        ? tagsRaw.map(String)
+        : typeof tagsRaw === "string"
+          ? tagsRaw
+              .split(",")
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+          : [];
+      const saveToLibrary = req.body?.saveToLibrary !== "false" && req.body?.saveToLibrary !== false;
+
+      let uploaded;
+      try {
+        uploaded = await uploadImageBuffer(req.file.buffer, {
+          folder: category,
+          mimetype: req.file.mimetype,
+        });
+      } catch (e) {
+        if (e instanceof HttpError) throw e;
+        throw new HttpError(502, multerErrorMessage(e));
+      }
+
+      assertSecureMediaUrl(uploaded.url);
+
+      let item = null;
+      if (saveToLibrary) {
+        item = await MediaAsset.create({
+          url: uploaded.url,
+          name,
+          tags,
+          category,
+        });
+      }
+
+      res.status(201).json({
+        url: uploaded.url,
+        publicId: uploaded.publicId,
+        width: uploaded.width,
+        height: uploaded.height,
+        item,
+      });
+    }),
+  );
 
   r.get("/", async (req, res) => {
     const { q, category, limit } = req.query as Record<string, string | undefined>;

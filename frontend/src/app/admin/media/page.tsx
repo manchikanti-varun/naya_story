@@ -13,6 +13,7 @@ import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
 import { AdminField, AdminInput, AdminSelect } from "@/components/admin/ui/AdminField";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
+import { CloudinaryImageUpload } from "@/components/admin/CloudinaryImageUpload";
 
 const categories = ["general", "banner", "homepage", "collection", "campaign", "lookbook", "product"];
 
@@ -78,10 +79,35 @@ export default function AdminMediaPage() {
     <AdminPageLayout
       eyebrow="Website"
       title="Media library"
-      description="Central place for banners and campaign art. Paste HTTPS URLs, tag usage, then reuse across homepage CMS and products."
+      description="Upload to Cloudinary or paste HTTPS URLs. Reuse assets across homepage CMS and products."
     >
       <AdminCard padding="md">
-        <h2 className="font-sans text-sm font-semibold text-[var(--admin-ink)]">Add asset</h2>
+        <h2 className="font-sans text-sm font-semibold text-[var(--admin-ink)]">Upload to Cloudinary</h2>
+        <p className="mt-1 font-sans text-xs text-[var(--admin-muted)]">
+          Files are sent to your API, stored in Cloudinary under <code className="text-[11px]">naya/</code>
+          , then added to this library.
+        </p>
+        <div className="mt-4 flex flex-wrap items-end gap-4">
+          <CloudinaryImageUpload
+            token={token}
+            category={form.category}
+            name={form.name || undefined}
+            tags={form.tags
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)}
+            label="Choose image file"
+            onUploaded={(url) => {
+              setForm((f) => ({ ...f, url }));
+              void load();
+            }}
+            onLibraryItem={() => void load()}
+          />
+        </div>
+      </AdminCard>
+
+      <AdminCard padding="md">
+        <h2 className="font-sans text-sm font-semibold text-[var(--admin-ink)]">Add by URL</h2>
         <form onSubmit={addAsset} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <AdminField label="Image URL" className="sm:col-span-2">
             <AdminInput

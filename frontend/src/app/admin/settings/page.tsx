@@ -66,11 +66,12 @@ export default function AdminEnvironmentPage() {
 
       <InfoBlock icon={ImageIcon} title="Images & media">
         <p>
-          Product and CMS fields expect HTTPS image URLs (for example from your CDN or Unsplash). Use{" "}
+          Upload images from{" "}
           <Link href="/admin/media" className="admin-link font-medium">
             Media
           </Link>{" "}
-          to keep a reusable list of URLs for faster paste into the content editor.
+          (stored in Cloudinary when API keys are set) or paste HTTPS URLs into products and CMS
+          fields.
         </p>
       </InfoBlock>
     </AdminPageLayout>

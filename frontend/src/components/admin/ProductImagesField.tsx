@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { CloudinaryImageUpload } from "@/components/admin/CloudinaryImageUpload";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminField, AdminInput } from "@/components/admin/ui/AdminField";
 const MAX_IMAGES = 12;
@@ -10,13 +11,14 @@ const MAX_IMAGES = 12;
 type Props = {
   value: string[];
   onChange: (urls: string[]) => void;
+  token?: string | null;
 };
 
 function normalize(urls: string[]) {
   return urls.map((u) => u.trim()).filter(Boolean);
 }
 
-export function ProductImagesField({ value, onChange }: Props) {
+export function ProductImagesField({ value, onChange, token }: Props) {
   const [draft, setDraft] = useState("");
   const images = normalize(value.length ? value : []);
 
@@ -38,11 +40,24 @@ export function ProductImagesField({ value, onChange }: Props) {
     setImages(next);
   };
 
+  const addUploaded = (url: string) => {
+    if (images.length >= MAX_IMAGES) return;
+    setImages([...images, url]);
+  };
+
   return (
     <div className="space-y-4">
+      <CloudinaryImageUpload
+        token={token}
+        category="product"
+        label="Upload to Cloudinary"
+        hint={`Adds to gallery (max ${MAX_IMAGES}). Also saved in Media library.`}
+        disabled={images.length >= MAX_IMAGES}
+        onUploaded={addUploaded}
+      />
       <AdminField
         label="Gallery images"
-        hint={`First image is the main product photo. Up to ${MAX_IMAGES} HTTPS URLs — one per line or use Add.`}
+        hint={`First image is the main product photo. Up to ${MAX_IMAGES} — upload above or paste a URL.`}
       >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <AdminInput

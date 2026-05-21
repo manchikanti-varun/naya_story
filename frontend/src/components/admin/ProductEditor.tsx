@@ -573,6 +573,7 @@ export function ProductEditor({
 
         <Collapsible title="Product media" id="media" open={openSections.media} onToggle={toggle}>
           <ProductImagesField
+            token={token}
             value={form.images}
             onChange={(images) => setForm((f) => ({ ...f, images: images.length ? images : [""] }))}
           />
