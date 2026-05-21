@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
+import { googleAuthUrl } from "@/lib/api";
 
 export default function RegisterPage() {
   const { register, user, loading } = useAuth();
@@ -75,6 +76,14 @@ export default function RegisterPage() {
           Create account
         </motion.button>
       </form>
+
+      <a
+        href={googleAuthUrl}
+        className="mt-6 flex w-full items-center justify-center rounded-full border border-ivory-deep py-4 font-sans text-[11px] uppercase tracking-[0.26em] text-ink hover:border-gold hover:text-gold"
+      >
+        Continue with Google
+      </a>
+
       <p className="mt-10 text-center font-sans text-sm text-ink-muted">
         Already with us?{" "}
         <Link href="/login" className="text-gold underline-offset-4 hover:underline">

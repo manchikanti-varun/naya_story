@@ -95,7 +95,7 @@ export function AdminShell({
     if (isLoginRoute) return;
     if (!loading && (!user || user.role !== "admin")) {
       clearAdminGateCookie();
-      router.replace("/");
+      router.replace("/admin/login");
     }
   }, [loading, user, router, isLoginRoute]);
 

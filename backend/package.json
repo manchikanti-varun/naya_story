@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "seed": "tsx src/seed.ts",
     "clear-data": "tsx src/clear-data.ts",
+    "set-admin": "tsx src/set-admin.ts",
     "test": "vitest run"
   },
   "dependencies": {

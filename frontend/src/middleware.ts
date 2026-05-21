@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
 
   const gate = request.cookies.get(ADMIN_GATE_COOKIE)?.value;
   if (gate !== "1") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   return NextResponse.next();
