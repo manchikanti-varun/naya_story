@@ -103,10 +103,16 @@ export function createAuthRouter(env: {
         return res.status(400).json({ message: "Validation failed", errors: errors.array() });
       const { email, password } = req.body as { email: string; password: string };
       const user = await User.findOne({ email });
-      if (!user?.passwordHash)
-        return res.status(401).json({ message: "Invalid credentials" });
+      if (!user) return res.status(401).json({ message: "Invalid email or password." });
+      if (!user.passwordHash) {
+        return res.status(401).json({
+          message: user.googleId
+            ? "This email uses Google sign-in. Continue with Google below."
+            : "Invalid email or password.",
+        });
+      }
       const ok = await bcrypt.compare(password, user.passwordHash);
-      if (!ok) return res.status(401).json({ message: "Invalid credentials" });
+      if (!ok) return res.status(401).json({ message: "Invalid email or password." });
       if (user.role === "admin") {
         return res
           .status(403)

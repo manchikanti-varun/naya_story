@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AdminBrand } from "@/components/admin/AdminBrand";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminField, AdminInput } from "@/components/admin/ui/AdminField";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/context/auth-context";
 import { ApiError } from "@/lib/api";
 
@@ -74,12 +75,13 @@ export default function AdminLoginPage() {
             />
           </AdminField>
           <AdminField label="Password">
-            <AdminInput
-              type="password"
+            <PasswordInput
+              variant="admin"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={setPassword}
               autoComplete="current-password"
               required
+              className="mt-1.5"
             />
           </AdminField>
           {error ? <p className="font-sans text-sm text-red-700">{error}</p> : null}

@@ -31,6 +31,8 @@ type AuthContextValue = {
   }) => Promise<void>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
+  /** After Google OAuth redirect (`?token=`), load profile and persist session. */
+  finishOAuthLogin: (accessToken: string) => Promise<User>;
   updateWishlistLocal: (productId: string, add: boolean) => void;
   addresses: Address[];
   setAddresses: (a: Address[]) => void;
@@ -53,11 +55,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const t = localStorage.getItem(TOKEN_KEY);
       const u = localStorage.getItem(USER_KEY);
-      if (t && u) {
-        const parsed = JSON.parse(u) as User;
+      if (t) {
         setToken(t);
-        setUser(parsed);
-        if (parsed.role === "admin") setAdminGateCookie();
+        if (u) {
+          const parsed = JSON.parse(u) as User;
+          setUser(parsed);
+          if (parsed.role === "admin") setAdminGateCookie();
+        }
       }
       const gw = localStorage.getItem(GUEST_WISHLIST_KEY);
       if (gw) {
@@ -136,6 +140,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token]);
 
+  const finishOAuthLogin = useCallback(
+    async (accessToken: string) => {
+      const me = await apiFetch<{ user: User & { addresses?: Address[] } }>(
+        "/auth/me",
+        { token: accessToken },
+      );
+      persist(accessToken, me.user);
+      if (me.user.addresses) setAddresses(me.user.addresses as Address[]);
+      return me.user;
+    },
+    [persist],
+  );
+
   const updateWishlistLocal = useCallback((productId: string, add: boolean) => {
     if (token) {
       setUser((prev) => {
@@ -199,6 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refreshProfile,
+      finishOAuthLogin,
       updateWishlistLocal,
       addresses,
       setAddresses,
@@ -213,6 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refreshProfile,
+      finishOAuthLogin,
       updateWishlistLocal,
       addresses,
     ],

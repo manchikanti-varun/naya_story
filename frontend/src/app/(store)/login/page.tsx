@@ -2,19 +2,33 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
 import { Suspense, useEffect, useState } from "react";
+import { AuthDivider } from "@/components/auth/AuthDivider";
+import { AuthField, authInputClass } from "@/components/auth/AuthField";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/context/auth-context";
-import { apiFetch, googleAuthUrl, ApiError } from "@/lib/api";
-import type { User } from "@/types";
+import {
+  formatAuthError,
+  normalizeEmail,
+  validateLoginInput,
+} from "@/lib/auth-form";
+import { useGoogleOAuthCallback } from "@/lib/use-google-oauth-callback";
 
 export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-6 py-24">
-          <p className="font-sans text-sm text-ink-muted">Opening sign-in…</p>
-        </div>
+        <AuthShell
+          kicker=""
+          title=""
+          subtitle=""
+          oauthLoading
+          footer={null}
+        >
+          {null}
+        </AuthShell>
       }
     >
       <LoginInner />
@@ -26,105 +40,143 @@ function LoginInner() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
+  const { oauthLoading } = useGoogleOAuthCallback("/account");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const err = params.get("error");
     if (err === "admin_portal") {
       setError("Administrator accounts must sign in at /admin/login.");
     } else if (err === "google") {
-      setError("Google sign-in failed. Please try again.");
+      setError("Google sign-in was cancelled or failed. Please try again.");
+    }
+    if (params.get("registered") === "1") {
+      setError(null);
     }
   }, [params]);
 
   useEffect(() => {
-    const token = params.get("token");
-    if (!token) return;
-    localStorage.removeItem("naya_user");
-    localStorage.setItem("naya_token", token);
-    void (async () => {
-      try {
-        const me = await apiFetch<{ user: User }>("/auth/me", { token });
-        window.location.href = "/account";
-      } catch {
-        window.location.href = "/account";
-      }
-    })();
-  }, [params]);
+    if (!loading && user && !params.get("token")) router.replace("/account");
+  }, [loading, user, router, params]);
 
-  useEffect(() => {
-    if (!loading && user) router.replace("/account");
-  }, [loading, user, router]);
+  const registered = params.get("registered") === "1";
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-6 py-24">
-      <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">Welcome back</p>
-      <h1 className="mt-4 font-display text-4xl text-ink">Sign in</h1>
-      <p className="mt-3 font-sans text-sm text-ink-muted">
-        Access wishlists, orders, and saved addresses.
-      </p>
+    <AuthShell
+      kicker="Welcome back"
+      title="Sign in"
+      subtitle="Access your wishlist, orders, and saved addresses with one secure account."
+      oauthLoading={oauthLoading}
+      footer={
+        <p className="text-center font-sans text-sm text-ink-muted">
+          New to the studio?{" "}
+          <Link href="/register" className="font-medium text-gold underline-offset-4 hover:underline">
+            Create an account
+          </Link>
+        </p>
+      }
+    >
+      {registered ? (
+        <p
+          role="status"
+          className="mb-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/80 px-4 py-3 font-sans text-sm text-emerald-900"
+        >
+          Account created. Sign in with your email and password below.
+        </p>
+      ) : null}
 
       <form
-        className="mt-10 space-y-5"
+        className="space-y-5"
+        noValidate
         onSubmit={async (e) => {
           e.preventDefault();
           setError(null);
+          setFieldError(null);
+          const validation = validateLoginInput(email, password);
+          if (validation) {
+            setFieldError(validation);
+            return;
+          }
+          setSubmitting(true);
           try {
-            await login(email, password);
-            router.push("/account");
+            await login(normalizeEmail(email), password);
+            router.replace("/account");
           } catch (err) {
             setError(
-              err instanceof ApiError
-                ? err.message
-                : "Unable to sign in — check your credentials.",
+              formatAuthError(err, "Unable to sign in. Check your email and password."),
             );
+          } finally {
+            setSubmitting(false);
           }
         }}
       >
-        <label className="block font-sans text-[11px] uppercase tracking-[0.18em] text-ink-soft">
-          Email
+        <AuthField label="Email" htmlFor="login-email">
           <input
+            id="login-email"
             type="email"
+            autoComplete="email"
+            inputMode="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-2 w-full rounded-2xl border border-ivory-deep px-4 py-3 font-sans text-sm outline-none focus:ring-2 focus:ring-gold/40"
+            disabled={submitting}
+            required
+            className={authInputClass}
           />
-        </label>
-        <label className="block font-sans text-[11px] uppercase tracking-[0.18em] text-ink-soft">
-          Password
-          <input
-            type="password"
+        </AuthField>
+
+        <AuthField label="Password" htmlFor="login-password">
+          <PasswordInput
+            id="login-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-2 w-full rounded-2xl border border-ivory-deep px-4 py-3 font-sans text-sm outline-none focus:ring-2 focus:ring-gold/40"
+            onChange={setPassword}
+            autoComplete="current-password"
+            required
+            disabled={submitting}
           />
-        </label>
-        {error ? <p className="font-sans text-sm text-red-700">{error}</p> : null}
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+        </AuthField>
+
+        {fieldError ? (
+          <p role="alert" className="rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-3 font-sans text-sm text-red-800">
+            {fieldError}
+          </p>
+        ) : null}
+
+        {error ? (
+          <p role="alert" className="rounded-2xl border border-red-200/80 bg-red-50/90 px-4 py-3 font-sans text-sm text-red-800">
+            {error}
+          </p>
+        ) : null}
+
+        <button
           type="submit"
-          className="w-full rounded-full bg-ink py-4 font-sans text-[11px] uppercase tracking-[0.3em] text-ivory hover:bg-gold"
+          disabled={submitting}
+          className="w-full rounded-full bg-ink py-4 font-sans text-[11px] uppercase tracking-[0.3em] text-ivory transition hover:bg-gold disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Continue
-        </motion.button>
+          {submitting ? "Signing in…" : "Sign in"}
+        </button>
       </form>
 
-      <a
-        href={googleAuthUrl}
-        className="mt-6 flex w-full items-center justify-center rounded-full border border-ivory-deep py-4 font-sans text-[11px] uppercase tracking-[0.26em] text-ink hover:border-gold hover:text-gold"
-      >
-        Continue with Google
-      </a>
-
-      <p className="mt-10 text-center font-sans text-sm text-ink-muted">
-        New to the studio?{" "}
-        <Link href="/register" className="text-gold underline-offset-4 hover:underline">
-          Create an account
-        </Link>
-      </p>
-    </div>
+      <div className="mt-6">
+        <AuthDivider />
+        <div className="mt-6">
+          <GoogleSignInButton disabled={submitting} />
+        </div>
+        <p className="mt-4 text-center font-sans text-xs leading-relaxed text-ink-soft">
+          By continuing, you agree to our{" "}
+          <Link href="/policies/terms" className="text-ink-muted underline-offset-2 hover:text-gold hover:underline">
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/policies/privacy" className="text-ink-muted underline-offset-2 hover:text-gold hover:underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      </div>
+    </AuthShell>
   );
 }
