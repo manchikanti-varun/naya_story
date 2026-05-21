@@ -7,6 +7,7 @@ import { Product } from "../models/Product.js";
 import { User } from "../models/User.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { verifyAccessToken } from "../lib/accessJwt.js";
+import { removeProductFromHomepagePins } from "../lib/homepage-product-pins.js";
 
 async function requestIsAdmin(req: Request, secret: string): Promise<boolean> {
   const header = req.headers.authorization;
@@ -190,7 +191,9 @@ export function createProductsRouter(secret: string) {
   });
 
   r.delete("/:id", ...(requireAdmin(secret) as RequestHandler[]), async (req, res) => {
-    await Product.findByIdAndDelete(req.params.id);
+    const id = String(req.params.id);
+    await Product.findByIdAndDelete(id);
+    await removeProductFromHomepagePins(id);
     res.json({ ok: true });
   });
 

@@ -35,6 +35,8 @@ export function HomeProductRail({
   sectionText,
   design,
 }: Props) {
+  if (products.length === 0) return null;
+
   const st = sectionTextStyles(sectionText);
   return (
     <SectionShell
