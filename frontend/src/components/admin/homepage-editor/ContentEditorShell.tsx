@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { HomepageEditorProvider, useHomepageEditor } from "@/components/admin/homepage-editor/context";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminStickySaveBar } from "@/components/admin/ui/AdminStickySaveBar";
+import { AdminInlineLoading } from "@/components/admin/ui/AdminLoader";
 import { cn } from "@/lib/cn";
 
 function ContentEditorChrome({ children }: { children: ReactNode }) {
@@ -17,11 +18,7 @@ function ContentEditorChrome({ children }: { children: ReactNode }) {
     pathname === "/admin/website" || pathname === "/admin/website/navigation";
 
   if (!hp && !bypassHomepageWait) {
-    return (
-      <p className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-4 py-3 font-sans text-sm text-[var(--admin-muted)]">
-        Loading homepage…
-      </p>
-    );
+    return <AdminInlineLoading label="Loading homepage…" />;
   }
 
   const saveBar =

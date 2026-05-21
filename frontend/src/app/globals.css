@@ -339,3 +339,34 @@ body {
     flex-shrink: 0;
   }
 }
+
+@keyframes naya-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes naya-loader-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.naya-shimmer {
+  background: linear-gradient(
+    110deg,
+    rgb(235 229 220 / 0.55) 0%,
+    rgb(235 229 220 / 0.2) 45%,
+    rgb(235 229 220 / 0.65) 55%,
+    rgb(235 229 220 / 0.55) 100%
+  );
+  background-size: 200% 100%;
+  animation: naya-shimmer 2s ease-in-out infinite;
+}
+
+.naya-loader-orbit {
+  animation: naya-loader-orbit 1.35s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}

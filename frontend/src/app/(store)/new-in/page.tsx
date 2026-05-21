@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { NewInEditorial } from "@/components/shop/NewInEditorial";
+import { ensureStorePageEnabled } from "@/lib/ensure-store-page";
 
-export default function NewInPage() {
+export default async function NewInPage() {
+  await ensureStorePageEnabled("newIn");
   return (
     <Suspense fallback={<NewInFallback />}>
       <NewInEditorial />

@@ -8,4 +8,5 @@ export {
   CmsPageEditorShell,
   CmsSectionHeading,
   CmsVisibilityToggle,
+  CmsStorePagePublishToggle,
 } from "./CmsFormHelpers";

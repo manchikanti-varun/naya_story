@@ -10,6 +10,7 @@ import {
   CmsPageEditorShell,
   CmsSectionHeading,
   CmsVisibilityToggle,
+  CmsStorePagePublishToggle,
 } from "@/components/admin/cms/CmsFormHelpers";
 import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
 import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
@@ -294,14 +295,16 @@ export function ContentEditorNewInPagePanel({ embedded = false }: { embedded?: b
       title="New In page (/new-in)"
       description="Turn on curated mode to control exactly which products appear and in which order on the public New In page. When off, the page lists every catalog item flagged as New In."
     >
-      <CmsVisibilityToggle
-        label="Curated grid (fixed products & order)"
-        checked={hp.newInPage?.useCuratedOrder === true}
-        onChange={(useCuratedOrder) =>
+      <CmsStorePagePublishToggle
+        route="/new-in"
+        checked={hp.newInPage?.enabled !== false}
+        onChange={(enabled) =>
           setHp({
             ...hp,
             newInPage: {
-              useCuratedOrder,
+              ...hp.newInPage,
+              enabled,
+              useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
               heading: hp.newInPage?.heading ?? "New In",
               subheading: hp.newInPage?.subheading ?? "",
               productIds: hp.newInPage?.productIds ?? [],
@@ -309,6 +312,24 @@ export function ContentEditorNewInPagePanel({ embedded = false }: { embedded?: b
           })
         }
       />
+      <div className="mt-4">
+        <CmsVisibilityToggle
+          label="Curated grid (fixed products & order)"
+          checked={hp.newInPage?.useCuratedOrder === true}
+          onChange={(useCuratedOrder) =>
+            setHp({
+              ...hp,
+              newInPage: {
+                ...hp.newInPage,
+                useCuratedOrder,
+                heading: hp.newInPage?.heading ?? "New In",
+                subheading: hp.newInPage?.subheading ?? "",
+                productIds: hp.newInPage?.productIds ?? [],
+              },
+            })
+          }
+        />
+      </div>
       <CmsFormGrid className="mt-6">
         <AdminField label="Page heading">
           <AdminInput
@@ -317,6 +338,7 @@ export function ContentEditorNewInPagePanel({ embedded = false }: { embedded?: b
               setHp({
                 ...hp,
                 newInPage: {
+                  ...hp.newInPage,
                   useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
                   heading: e.target.value,
                   subheading: hp.newInPage?.subheading ?? "",
@@ -333,6 +355,7 @@ export function ContentEditorNewInPagePanel({ embedded = false }: { embedded?: b
               setHp({
                 ...hp,
                 newInPage: {
+                  ...hp.newInPage,
                   useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
                   heading: hp.newInPage?.heading ?? "New In",
                   subheading: e.target.value,
@@ -354,6 +377,7 @@ export function ContentEditorNewInPagePanel({ embedded = false }: { embedded?: b
             setHp({
               ...hp,
               newInPage: {
+                ...hp.newInPage,
                 useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
                 heading: hp.newInPage?.heading ?? "New In",
                 subheading: hp.newInPage?.subheading ?? "",
@@ -503,7 +527,12 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
       title="Collections browse (/collections)"
       description="Full control of the public collections page — header, category tabs, filters, sort options, copy, and pinned products."
     >
-      <CmsFieldGroup title="Page header">
+      <CmsStorePagePublishToggle
+        route="/collections"
+        checked={cp.enabled !== false}
+        onChange={(enabled) => patchCollections({ enabled })}
+      />
+      <CmsFieldGroup title="Page header" className="mt-6">
         <CmsFormGrid>
           <AdminField label="Kicker" hint="Small line above title.">
             <AdminInput value={kicker} onChange={(e) => patchCollections({ kicker: e.target.value })} />
@@ -895,7 +924,17 @@ export function ContentEditorOurStoryPanel({ embedded = false }: { embedded?: bo
                 Control hero content, cinematic sections, manifesto quote, CTA, and section order/visibility.
               </p>
             </header>
-            <div className="grid gap-4 md:grid-cols-2">
+            <CmsStorePagePublishToggle
+              route="/our-story"
+              checked={hp.ourStoryPage.enabled !== false}
+              onChange={(enabled) =>
+                setHp({
+                  ...hp,
+                  ourStoryPage: { ...hp.ourStoryPage, enabled },
+                })
+              }
+            />
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
               <AdminField label="Hero title">
                 <AdminInput
                   value={hp.ourStoryPage.title}

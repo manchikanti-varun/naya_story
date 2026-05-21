@@ -6,7 +6,8 @@ import { X } from "lucide-react";
 import { useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { SITE_NAME } from "@/lib/constants";
-import { STORE_NAV_ITEMS } from "./nav-links";
+import { buildStorePrimaryNav } from "@/lib/store-nav";
+import type { StorePageFlags } from "@/lib/store-page-flags";
 
 const MOBILE_EXTRA = [
   { label: "Wishlist", href: "/account/wishlist" },
@@ -18,9 +19,11 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onOpenCart: () => void;
+  storePageFlags?: StorePageFlags;
 };
 
-export function MobileMenu({ open, onClose, onOpenCart }: Props) {
+export function MobileMenu({ open, onClose, onOpenCart, storePageFlags }: Props) {
+  const navItems = buildStorePrimaryNav(storePageFlags);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -71,7 +74,7 @@ export function MobileMenu({ open, onClose, onOpenCart }: Props) {
             </div>
 
             <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-8 pb-16 pt-10">
-              {STORE_NAV_ITEMS.map((item, i) => (
+              {navItems.map((item, i) => (
                 <motion.div
                   key={item.label}
                   initial={{ opacity: 0, x: 16 }}
@@ -97,7 +100,7 @@ export function MobileMenu({ open, onClose, onOpenCart }: Props) {
                   initial={{ opacity: 0, x: 16 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{
-                    delay: 0.05 + (STORE_NAV_ITEMS.length + i) * 0.04,
+                    delay: 0.05 + (navItems.length + i) * 0.04,
                     duration: 0.5,
                     ease: [0.22, 1, 0.36, 1],
                   }}

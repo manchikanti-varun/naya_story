@@ -227,6 +227,7 @@ export function defaultHomepageConfig(): HomepageConfig {
       ctaHref: "/collections?collection=new-arrivals",
     },
     newInPage: {
+      enabled: true,
       useCuratedOrder: false,
       heading: "New In",
       subheading: "",
@@ -247,6 +248,7 @@ export function defaultHomepageConfig(): HomepageConfig {
       buttonLabel: "Subscribe",
     },
     collectionsPage: {
+      enabled: true,
       kicker: "Naya Story",
       title: "Collections",
       subtitle: "Explore curated silhouettes from Naya Story.",
@@ -318,6 +320,7 @@ export function defaultHomepageConfig(): HomepageConfig {
       },
     },
     ourStoryPage: {
+      enabled: true,
       title: "Our Story",
       subtitle: "Designed for modern femininity, rooted in timeless elegance.",
       heroImage: IMG("photo-1529139574466-a303027c1d8b"),
@@ -507,6 +510,7 @@ function mergeNewInPage(raw: unknown, fallback: HomepageConfig["newInPage"]): Ho
   if (!raw || typeof raw !== "object") return { ...fallback };
   const r = raw as Record<string, unknown>;
   return {
+    enabled: r.enabled !== false,
     useCuratedOrder: r.useCuratedOrder === true,
     heading: typeof r.heading === "string" ? r.heading : fallback.heading,
     subheading: typeof r.subheading === "string" ? r.subheading : fallback.subheading ?? "",
@@ -583,6 +587,7 @@ export function mergeCollectionsPage(
     : dFilters.defaultSort;
 
   return {
+    enabled: r.enabled !== false,
     kicker: typeof r.kicker === "string" ? r.kicker : defaults.kicker,
     title: typeof r.title === "string" ? r.title : defaults.title,
     subtitle: typeof r.subtitle === "string" ? r.subtitle : defaults.subtitle,
@@ -726,6 +731,7 @@ export function mergeHomepageConfig(
     newsletter,
     collectionsPage: mergeCollectionsPage(r.collectionsPage, d.collectionsPage),
     ourStoryPage: {
+      enabled: ourStoryPage.enabled !== false,
       title:
         typeof ourStoryPage.title === "string" ? ourStoryPage.title : d.ourStoryPage.title,
       subtitle:

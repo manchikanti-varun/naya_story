@@ -4,14 +4,22 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
-import { STORE_PRIMARY_NAV, type StoreNavRow } from "@/lib/store-nav";
+import { buildStorePrimaryNav, type StoreNavRow } from "@/lib/store-nav";
+import type { StorePageFlags } from "@/lib/store-page-flags";
 
 export type NavItem = StoreNavRow;
 
-/** @deprecated Use `STORE_PRIMARY_NAV` from `@/lib/store-nav`. */
-export const STORE_NAV_ITEMS: NavItem[] = STORE_PRIMARY_NAV;
+/** @deprecated Use `buildStorePrimaryNav` from `@/lib/store-nav`. */
+export const STORE_NAV_ITEMS: NavItem[] = buildStorePrimaryNav();
 
-export function StoreNavLinks({ className }: { className?: string }) {
+export function StoreNavLinks({
+  className,
+  storePageFlags,
+}: {
+  className?: string;
+  storePageFlags?: StorePageFlags;
+}) {
+  const navItems = buildStorePrimaryNav(storePageFlags);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const collection = searchParams.get("collection");
@@ -32,7 +40,7 @@ export function StoreNavLinks({ className }: { className?: string }) {
       )}
       aria-label="Primary"
     >
-      {STORE_PRIMARY_NAV.map((item) => {
+      {navItems.map((item) => {
         const active = item.match({ pathname, collection, hash });
         return (
           <Link

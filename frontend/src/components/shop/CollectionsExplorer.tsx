@@ -12,6 +12,7 @@ import {
 } from "@/lib/cms/collections-page-config";
 import { cn } from "@/lib/cn";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { StoreInlineLoading } from "@/components/ui/StoreLoadingUI";
 import { SlidersHorizontal } from "lucide-react";
 
 type CollectionsConfig = HomepageConfig["collectionsPage"];
@@ -250,7 +251,12 @@ export function CollectionsExplorer() {
         ) : null}
 
         {loading ? (
-          <p className="mt-16 font-sans text-sm text-ink-muted">{messages.loading}</p>
+          <StoreInlineLoading
+            className="mt-6 px-0"
+            label={messages.loading}
+            sublabel="Refining your selection"
+            variant="grid"
+          />
         ) : products.length === 0 ? (
           <p className="mt-16 font-sans text-sm text-ink-muted">{messages.empty}</p>
         ) : (

@@ -54,6 +54,25 @@ export function CmsVisibilityToggle({
   );
 }
 
+/** Enable/disable a full storefront route (Collections, New In, Our Story). */
+export function CmsStorePagePublishToggle({
+  route,
+  checked,
+  onChange,
+}: {
+  route: string;
+  checked: boolean;
+  onChange: (enabled: boolean) => void;
+}) {
+  return (
+    <CmsVisibilityToggle
+      label={`Publish ${route} on storefront`}
+      checked={checked}
+      onChange={onChange}
+    />
+  );
+}
+
 export function CmsFormGrid({
   children,
   cols = 2,

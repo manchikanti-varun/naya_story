@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { CollectionsExplorer } from "@/components/shop/CollectionsExplorer";
+import { ensureStorePageEnabled } from "@/lib/ensure-store-page";
 
-export default function CollectionsPage() {
+export default async function CollectionsPage() {
+  await ensureStorePageEnabled("collections");
   return (
     <Suspense fallback={<CollectionsFallback />}>
       <CollectionsExplorer />

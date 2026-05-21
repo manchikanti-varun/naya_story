@@ -228,6 +228,8 @@ export type HomepageConfig = {
   };
   /** Full `/new-in` page: copy + optional fixed product order (curated). */
   newInPage: {
+    /** When false, `/new-in` is hidden and returns shoppers to home. */
+    enabled?: boolean;
     useCuratedOrder: boolean;
     heading: string;
     subheading?: string;
@@ -253,6 +255,8 @@ export type HomepageConfig = {
     styles?: SectionDesign;
   };
   collectionsPage: {
+    /** When false, `/collections` is hidden and returns shoppers to home. */
+    enabled?: boolean;
     kicker: string;
     title: string;
     subtitle: string;
@@ -301,6 +305,8 @@ export type HomepageConfig = {
     };
   };
   ourStoryPage: {
+    /** When false, `/our-story` is hidden and returns shoppers to home. */
+    enabled?: boolean;
     title: string;
     subtitle: string;
     heroImage: string;

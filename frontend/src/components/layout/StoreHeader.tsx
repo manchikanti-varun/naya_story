@@ -22,6 +22,7 @@ import { useAuth } from "@/context/auth-context";
 import { useCart } from "@/context/cart-context";
 import { SITE_NAME, STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import type { StorePageFlags } from "@/lib/store-page-flags";
 import type { TopPromoBarConfig, SectionTextColors } from "@/types/homepage";
 
 const iconClassBase =
@@ -44,12 +45,14 @@ export function StoreHeader({
   topPromoTextColors,
   logoSrc,
   logoAlt,
+  storePageFlags,
 }: {
   topPromoBar?: TopPromoBarConfig | null;
   topPromoTextColors?: SectionTextColors | null;
   /** Pre-built logo URL (with cache-bust query when local). Set by store layout. */
   logoSrc?: string;
   logoAlt?: string | null;
+  storePageFlags?: StorePageFlags;
 }) {
   const pathname = usePathname();
   const { openCart, lines } = useCart();
@@ -216,7 +219,7 @@ export function StoreHeader({
                     />
                   }
                 >
-                  <StoreNavLinks />
+                  <StoreNavLinks storePageFlags={storePageFlags} />
                 </Suspense>
               </div>
             </div>
@@ -310,6 +313,7 @@ export function StoreHeader({
           setMobileOpen(false);
           openCart();
         }}
+        storePageFlags={storePageFlags}
       />
     </>
   );

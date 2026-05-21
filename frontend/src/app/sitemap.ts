@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { fetchApi } from "@/lib/server-fetch";
+import { getSiteSettings } from "@/lib/server-content";
 import { getSiteUrl } from "@/lib/site-url";
+import { storePageFlagsFromHomepage } from "@/lib/store-page-flags";
 import type { LegalPage } from "@/types/legal-page";
 import { legalPageHref } from "@/types/legal-page";
 
@@ -67,7 +69,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteUrl();
   const lastModified = new Date();
 
-  const staticEntries: MetadataRoute.Sitemap = STATIC_PATHS.map(
+  let storeFlags = { collections: true, newIn: true, ourStory: true };
+  try {
+    const { settings } = await getSiteSettings();
+    storeFlags = storePageFlagsFromHomepage(settings.homepage);
+  } catch {
+    /* API unavailable — include all store routes */
+  }
+
+  const staticPaths = STATIC_PATHS.filter(({ path }) => {
+    if (path === "/collections") return storeFlags.collections;
+    if (path === "/new-in") return storeFlags.newIn;
+    if (path === "/our-story") return storeFlags.ourStory;
+    return true;
+  });
+
+  const staticEntries: MetadataRoute.Sitemap = staticPaths.map(
     ({ path, changeFrequency, priority }) => ({
       url: path === "" ? base : `${base}${path}`,
       lastModified,

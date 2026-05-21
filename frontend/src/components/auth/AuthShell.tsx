@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { NayaLoader } from "@/components/ui/NayaLoader";
 import { STORE_LOGO_PUBLIC_PATH, SITE_NAME } from "@/lib/constants";
 
 type Props = {
@@ -16,12 +17,11 @@ export function AuthShell({ kicker, title, subtitle, children, footer, oauthLoad
     return (
       <div className="mx-auto flex min-h-[75vh] max-w-md flex-col items-center justify-center px-6 py-24">
         <div className="w-full rounded-[32px] border border-ivory-deep bg-white/80 p-10 text-center shadow-[0_24px_80px_-40px_rgba(44,40,36,0.35)] backdrop-blur-sm">
-          <div
-            className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-gold/30 border-t-gold"
-            aria-hidden
+          <NayaLoader
+            label="Completing sign-in"
+            sublabel="Securing your session with Google"
+            size="lg"
           />
-          <p className="mt-6 font-sans text-sm text-ink-muted">Completing Google sign-in…</p>
-          <p className="mt-2 font-sans text-xs text-ink-soft">Securing your session</p>
         </div>
       </div>
     );

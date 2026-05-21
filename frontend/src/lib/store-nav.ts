@@ -1,7 +1,8 @@
 /**
- * Primary storefront header navigation — single source for desktop nav + admin read-only summary.
- * (Mobile menu can import the same rows.)
+ * Primary storefront header navigation — single source for desktop nav + mobile menu.
  */
+import type { StorePageFlags } from "@/lib/store-page-flags";
+
 export type StoreNavMatchContext = {
   pathname: string;
   collection: string | null;
@@ -14,7 +15,7 @@ export type StoreNavRow = {
   match: (ctx: StoreNavMatchContext) => boolean;
 };
 
-export const STORE_PRIMARY_NAV: StoreNavRow[] = [
+const ALL_NAV_ROWS: StoreNavRow[] = [
   {
     label: "Home",
     href: "/",
@@ -38,6 +39,26 @@ export const STORE_PRIMARY_NAV: StoreNavRow[] = [
   },
 ];
 
+function rowVisible(href: string, flags: StorePageFlags): boolean {
+  if (href === "/new-in") return flags.newIn;
+  if (href === "/collections") return flags.collections;
+  if (href === "/our-story") return flags.ourStory;
+  return true;
+}
+
+/** Build primary nav respecting admin page publish toggles. */
+export function buildStorePrimaryNav(flags?: Partial<StorePageFlags>): StoreNavRow[] {
+  const resolved: StorePageFlags = {
+    collections: flags?.collections !== false,
+    newIn: flags?.newIn !== false,
+    ourStory: flags?.ourStory !== false,
+  };
+  return ALL_NAV_ROWS.filter((row) => rowVisible(row.href, resolved));
+}
+
+/** Default nav (all store pages enabled). */
+export const STORE_PRIMARY_NAV: StoreNavRow[] = buildStorePrimaryNav();
+
 export function storeNavRowsForAdmin(): { label: string; href: string }[] {
-  return STORE_PRIMARY_NAV.map(({ label, href }) => ({ label, href }));
+  return ALL_NAV_ROWS.map(({ label, href }) => ({ label, href }));
 }

@@ -8,6 +8,7 @@ import { getPublishedLegalPages } from "@/lib/server-legal-pages";
 import { bustLogoPath, getLogoCacheRev } from "@/lib/logo-cache";
 import { NAYA_STORE_THEME_STYLE_ID, storefrontThemeCssString } from "@/lib/storefront-theme";
 import { STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
+import { storePageFlagsFromHomepage } from "@/lib/store-page-flags";
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const [data, legalPages] = await Promise.all([getSiteSettings(), getPublishedLegalPages()]);
@@ -20,6 +21,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       : STORE_LOGO_PUBLIC_PATH;
   const headerLogoSrc = logoPath.startsWith("/") ? bustLogoPath(logoPath, logoRev) : logoPath;
   const themeCss = storefrontThemeCssString(data.settings.homepage.theme);
+  const storePageFlags = storePageFlagsFromHomepage(data.settings.homepage);
   return (
     <>
       <StorefrontLiveSync />
@@ -40,6 +42,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         topPromoTextColors={data.settings.homepage.sectionTextColors?.promoBar}
         logoSrc={headerLogoSrc}
         logoAlt={footer?.logoAlt}
+        storePageFlags={storePageFlags}
       />
       <main className="min-h-screen overflow-x-hidden bg-ivory pt-[calc(var(--store-nav-pad)+var(--store-promo-bar-h))] lux-grain">
         {children}

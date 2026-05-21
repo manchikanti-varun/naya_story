@@ -9,6 +9,7 @@ import type { Product } from "@/types";
 import { readCompareSlugs, writeCompareSlugs } from "@/lib/product-compare";
 import { formatInr } from "@/lib/store-shipping";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
+import { StoreInlineLoading } from "@/components/ui/StoreLoadingUI";
 import { cn } from "@/lib/cn";
 
 export function ComparePageView() {
@@ -75,7 +76,12 @@ export function ComparePageView() {
       </p>
 
       {loading ? (
-        <p className="mt-12 font-sans text-sm text-ink-muted">Loading…</p>
+        <StoreInlineLoading
+          className="mt-8 px-0"
+          label="Loading your edit"
+          sublabel="Gathering pieces to compare"
+          variant="minimal"
+        />
       ) : (
         <div className="mt-10 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">

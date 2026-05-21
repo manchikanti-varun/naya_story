@@ -11,6 +11,7 @@ import type { HomepageConfig } from "@/types/homepage";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/cn";
 import { QuickViewModal } from "@/components/shop/QuickViewModal";
+import { StoreInlineLoading, StoreLoadingMore } from "@/components/ui/StoreLoadingUI";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
 
 const tileRhythm = [
@@ -202,9 +203,11 @@ export function NewInEditorial() {
       </header>
 
       {loading ? (
-        <p className="lux-shell py-20 font-sans text-sm text-ink-muted">
-          Building the editorial wall...
-        </p>
+        <StoreInlineLoading
+          label="Building the editorial wall"
+          sublabel="Latest arrivals, composed for you"
+          variant="masonry"
+        />
       ) : products.length === 0 ? (
         <p className="lux-shell py-20 font-sans text-sm text-ink-muted">
           No pieces match this curatorial cut.
@@ -232,11 +235,7 @@ export function NewInEditorial() {
             ))}
           </div>
           <div ref={sentinelRef} className="h-8 w-full" />
-          {loadingMore ? (
-            <p className="mt-4 text-center font-sans text-xs uppercase tracking-[0.16em] text-ink-soft">
-              Loading more...
-            </p>
-          ) : null}
+          {loadingMore ? <StoreLoadingMore label="Loading more pieces" /> : null}
         </section>
       )}
     </div>

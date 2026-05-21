@@ -15,6 +15,7 @@ import { CmsBlockCard } from "@/components/admin/cms/CmsBlockCard";
 import { AdminDrawer } from "@/components/admin/ui/AdminDrawer";
 import { AdminSection } from "@/components/admin/ui/AdminSection";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
+import { AdminInlineLoading } from "@/components/admin/ui/AdminLoader";
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
 import {
   isEditableHomepageBlock,
@@ -54,7 +55,7 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
   );
 
   if (!hp) {
-    return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading homepage…</p>;
+    return <AdminInlineLoading label="Loading homepage…" />;
   }
 
   const storefrontBlocks = getOrderedStorefrontBlocks(hp);
