@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { API_BASE } from "@/lib/api";
 import { fetchMediaUploadConfig, uploadMediaToCloudinary } from "@/lib/upload-media";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 
@@ -38,21 +39,35 @@ export function CloudinaryImageUpload({
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [cloudName, setCloudName] = useState<string | null>(null);
+  const [setupHint, setSetupHint] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) {
       setConfigured(false);
+      setLoadError(null);
       return;
     }
     let cancelled = false;
+    setLoadError(null);
     void fetchMediaUploadConfig(token)
       .then((c) => {
-        if (!cancelled) setConfigured(c.configured);
+        if (cancelled) return;
+        setConfigured(c.configured);
+        setCloudName(c.cloudName ?? null);
+        setSetupHint(c.hint ?? null);
       })
-      .catch(() => {
-        if (!cancelled) setConfigured(false);
+      .catch((e) => {
+        if (cancelled) return;
+        setConfigured(false);
+        setSetupHint(null);
+        const msg = e instanceof Error ? e.message : "Could not reach API";
+        setLoadError(
+          `${msg}. Check NEXT_PUBLIC_API_URL points to your Railway API (${API_BASE}). Redeploy the backend if upload was recently added.`,
+        );
       });
     return () => {
       cancelled = true;
@@ -92,20 +107,45 @@ export function CloudinaryImageUpload({
     );
   }
 
+  if (loadError) {
+    return (
+      <div
+        className={cn(
+          "rounded-[var(--admin-radius-sm)] border border-dashed border-amber-200 bg-amber-50/80 px-4 py-3",
+          className,
+        )}
+      >
+        <p className="font-sans text-sm text-amber-950">{loadError}</p>
+      </div>
+    );
+  }
+
   if (configured === false) {
     return (
       <div
         className={cn(
-          "rounded-[var(--admin-radius-sm)] border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-4 py-3",
+          "rounded-[var(--admin-radius-sm)] border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-4 py-3 space-y-2",
           className,
         )}
       >
+        <p className="font-sans text-sm font-medium text-[var(--admin-ink)]">
+          Cloudinary upload is not configured on the API
+        </p>
         <p className="font-sans text-sm text-[var(--admin-muted)]">
-          Cloudinary upload is not configured on the API. Add{" "}
-          <code className="rounded bg-black/[0.04] px-1 py-0.5 text-[11px]">CLOUDINARY_URL</code>{" "}
-          (from Cloudinary Dashboard → API Keys) to Railway or{" "}
-          <code className="text-[11px]">backend/.env</code>, then redeploy the API. You can still
-          paste image URLs below.
+          {setupHint ??
+            "On Railway (backend service only), add either CLOUDINARY_URL or all three: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET. Then redeploy the API."}
+        </p>
+        <p className="font-sans text-xs text-[var(--admin-faint)]">
+          <strong className="font-medium">CLOUDINARY_URL</strong> must look like{" "}
+          <code className="rounded bg-black/[0.04] px-1 text-[11px]">
+            cloudinary://API_KEY:API_SECRET@dvbee9lgq
+          </code>{" "}
+          — copy the full line from Cloudinary Dashboard → API Keys → API environment variable
+          (no quotes, no placeholders).
+        </p>
+        <p className="font-sans text-xs text-[var(--admin-faint)]">
+          After redeploy, check Railway logs for{" "}
+          <code className="text-[11px]">[cloudinary] Image uploads enabled</code>.
         </p>
       </div>
     );
@@ -136,6 +176,11 @@ export function CloudinaryImageUpload({
         )}
         {uploading ? "Uploading…" : label}
       </AdminButton>
+      {configured && cloudName ? (
+        <p className="font-sans text-[11px] text-[var(--admin-faint)]">
+          Connected to Cloudinary cloud <span className="font-mono">{cloudName}</span>
+        </p>
+      ) : null}
       {hint ? <p className="font-sans text-[11px] text-[var(--admin-faint)]">{hint}</p> : null}
       {error ? (
         <p className="font-sans text-xs text-red-600" role="alert">

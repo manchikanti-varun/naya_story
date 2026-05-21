@@ -5,7 +5,11 @@ import { MediaAsset } from "../models/MediaAsset.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { asyncHandler } from "../middleware/httpError.js";
 import { HttpError } from "../middleware/httpError.js";
-import { isCloudinaryConfigured, uploadImageBuffer } from "../lib/cloudinary.js";
+import {
+  getCloudinaryPublicStatus,
+  isCloudinaryConfigured,
+  uploadImageBuffer,
+} from "../lib/cloudinary.js";
 import { mediaUploadMulter, multerErrorMessage } from "../lib/media-upload-multer.js";
 
 function assertSecureMediaUrl(url: string): void {
@@ -29,8 +33,9 @@ export function createMediaRouter(secret: string) {
   r.use(...(requireAdmin(secret) as RequestHandler[]));
 
   r.get("/upload-config", (_req, res) => {
+    const status = getCloudinaryPublicStatus();
     res.json({
-      configured: isCloudinaryConfigured(),
+      ...status,
       maxBytes: 10 * 1024 * 1024,
       allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"],
     });

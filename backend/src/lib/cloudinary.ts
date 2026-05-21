@@ -15,12 +15,27 @@ type CloudinaryV2 = typeof import("cloudinary").v2;
 let configured = false;
 let cloudinarySdk: CloudinaryV2 | null = null;
 
+import { cloudinarySetupHint, isCloudinaryEnvReady } from "./cloudinary-env.js";
+
 export function isCloudinaryConfigured(): boolean {
-  return Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME?.trim() &&
-      process.env.CLOUDINARY_API_KEY?.trim() &&
-      process.env.CLOUDINARY_API_SECRET?.trim(),
-  );
+  return isCloudinaryEnvReady();
+}
+
+export function getCloudinaryPublicStatus(): {
+  configured: boolean;
+  cloudName?: string;
+  hint?: string;
+} {
+  if (isCloudinaryEnvReady()) {
+    return {
+      configured: true,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME?.trim(),
+    };
+  }
+  return {
+    configured: false,
+    hint: cloudinarySetupHint,
+  };
 }
 
 async function getCloudinarySdk(): Promise<CloudinaryV2> {

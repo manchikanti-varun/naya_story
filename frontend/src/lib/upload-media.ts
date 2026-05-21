@@ -3,6 +3,8 @@ import type { MediaAsset } from "@/types";
 
 export type MediaUploadConfig = {
   configured: boolean;
+  cloudName?: string;
+  hint?: string;
   maxBytes: number;
   allowedTypes: string[];
 };
