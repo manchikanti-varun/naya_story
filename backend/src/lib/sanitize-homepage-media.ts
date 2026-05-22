@@ -1,4 +1,5 @@
 import type { HomepageConfig, HomepageEditorialConfig } from "../types/homepage.js";
+import { defaultHomepageEditorial } from "./editorial-defaults.js";
 import { stripUnsplashUrl, stripUnsplashUrls } from "./strip-unsplash.js";
 
 function sanitizeEditorial(ed: HomepageEditorialConfig): HomepageEditorialConfig {
@@ -50,7 +51,7 @@ export function sanitizeHomepageFromUnsplash(hp: HomepageConfig): HomepageConfig
         image: stripUnsplashUrl(c.image),
       })),
     },
-    editorial: sanitizeEditorial(hp.editorial),
+    editorial: sanitizeEditorial(hp.editorial ?? defaultHomepageEditorial()),
     ourStoryPage: {
       ...hp.ourStoryPage,
       heroImage: stripUnsplashUrl(hp.ourStoryPage.heroImage),

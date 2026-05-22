@@ -13,10 +13,15 @@ import type { HomepageConfig } from "../types/homepage.js";
 
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/naya-studio";
 
+type SettingsLean = {
+  homepage?: unknown;
+  homepageDraft?: unknown;
+};
+
 async function main() {
   await connectDb(MONGODB_URI);
 
-  const settings = await SiteSettings.findOne().lean();
+  const settings = (await SiteSettings.findOne().lean()) as SettingsLean | null;
   if (settings) {
     const homepage = mergeHomepageConfig(settings.homepage as Partial<HomepageConfig>);
     const homepageDraft = mergeHomepageConfig(
@@ -29,21 +34,25 @@ async function main() {
   const products = await Product.find({}).lean();
   let updated = 0;
   for (const p of products) {
-    const clean = sanitizeProductMedia(p as Record<string, unknown>);
-    const before = JSON.stringify(p.images);
+    const row = p as Record<string, unknown> & { _id: unknown };
+    const clean = sanitizeProductMedia(row);
+    const before = JSON.stringify(row.images);
     const after = JSON.stringify(clean.images);
+    const hoverImage = typeof clean.hoverImage === "string" ? clean.hoverImage : "";
+    const newInHoverImage =
+      typeof clean.newInHoverImage === "string" ? clean.newInHoverImage : "";
     if (
       before !== after ||
-      p.hoverImage !== clean.hoverImage ||
-      p.newInHoverImage !== clean.newInHoverImage
+      row.hoverImage !== hoverImage ||
+      row.newInHoverImage !== newInHoverImage
     ) {
       await Product.updateOne(
-        { _id: p._id },
+        { _id: row._id },
         {
           $set: {
             images: clean.images,
-            hoverImage: clean.hoverImage || undefined,
-            newInHoverImage: clean.newInHoverImage || undefined,
+            hoverImage: hoverImage || undefined,
+            newInHoverImage: newInHoverImage || undefined,
           },
         },
       );

@@ -17,10 +17,10 @@ export function stripUnsplashUrls(urls: unknown): string[] {
 }
 
 /** Strip Unsplash URLs from product documents (API + DB migration). */
-export function sanitizeProductMedia<T extends Record<string, unknown>>(doc: T): T {
-  const out = { ...doc };
+export function sanitizeProductMedia(doc: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...doc };
   if ("images" in out) out.images = stripUnsplashUrls(out.images);
   if ("hoverImage" in out) out.hoverImage = stripUnsplashUrl(out.hoverImage);
   if ("newInHoverImage" in out) out.newInHoverImage = stripUnsplashUrl(out.newInHoverImage);
-  return out as T;
+  return out;
 }
