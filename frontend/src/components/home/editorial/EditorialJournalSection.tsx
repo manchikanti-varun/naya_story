@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
 import { Reveal } from "@/components/luxury/Reveal";
 import { SectionShell } from "@/components/cms/SectionShell";
 import { defaultHomepageEditorial } from "@/lib/cms/editorial-defaults";
@@ -46,13 +47,17 @@ export function EditorialJournalSection({ config, sectionText }: Props) {
             <Reveal key={story.title} delay={i * 0.07}>
               <Link href={story.href} className="group block">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-[2px] bg-ivory-soft">
-                  <Image
-                    src={story.image}
-                    alt=""
-                    fill
-                    className="object-cover transition duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
-                    sizes="(max-width:768px) 100vw, 33vw"
-                  />
+                  {story.image?.trim() ? (
+                    <Image
+                      src={story.image}
+                      alt=""
+                      fill
+                      className="object-cover transition duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+                      sizes="(max-width:768px) 100vw, 33vw"
+                    />
+                  ) : (
+                    <MediaPlaceholder />
+                  )}
                 </div>
                 <h3 className="mt-6 font-display text-2xl text-ink transition-colors duration-500 group-hover:text-gold">
                   {story.title}

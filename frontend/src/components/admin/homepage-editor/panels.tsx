@@ -46,6 +46,7 @@ export function ContentEditorHeroPanel() {
         {slides.map((slide, i) => (
           <HeroSlideEditorFields
             key={slide.id}
+            allSlides={slides}
             slide={slide}
             index={i}
             total={slides.length}

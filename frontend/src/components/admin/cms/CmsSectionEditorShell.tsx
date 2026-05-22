@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ExternalLink, Eye } from "lucide-react";
 import { useCmsEditorContext } from "@/components/admin/cms/CmsEditorContext";
+import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { cn } from "@/lib/cn";
 
 export type CmsEditorTab = "content" | "design" | "layout" | "seo" | "responsive" | "advanced";
@@ -84,6 +85,9 @@ export function CmsSectionEditorShell({
               Live store
             </Link>
             </div>
+          </div>
+          <div className="mt-5 border-t border-[var(--admin-border)] pt-5">
+            <CmsEditorSaveActions compact showPreviewLink={Boolean(previewHref)} />
           </div>
         </header>
       ) : null}

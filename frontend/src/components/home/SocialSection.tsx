@@ -1,17 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
 
-const tiles = [
-  "https://images.unsplash.com/photo-1496747611176-843222ebc4d2?w=600&q=80",
-  "https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80",
-  "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80",
-  "https://images.unsplash.com/photo-1525507119028-ed4c629a60a7?w=600&q=80",
-  "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&q=80",
-  "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80",
-];
+const TILE_COUNT = 6;
 
 export function SocialSection() {
   return (
@@ -37,23 +30,17 @@ export function SocialSection() {
         </div>
 
         <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-3 lg:gap-5">
-          {tiles.map((src, i) => (
+          {Array.from({ length: TILE_COUNT }).map((_, i) => (
             <motion.div
-              key={src}
+              key={i}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.65, delay: i * 0.05 }}
               className="group relative aspect-square overflow-hidden rounded-[24px] bg-ivory-soft"
             >
-              <Link href="https://instagram.com" target="_blank" rel="noreferrer">
-                <Image
-                  src={src}
-                  alt=""
-                  fill
-                  className="object-cover transition duration-[1.2s] ease-out group-hover:scale-[1.06]"
-                  sizes="(max-width:768px) 50vw, 33vw"
-                />
+              <Link href="https://instagram.com" target="_blank" rel="noreferrer" className="absolute inset-0">
+                <MediaPlaceholder label="Instagram" />
                 <div className="absolute inset-0 bg-ink/0 transition duration-500 group-hover:bg-ink/25" />
               </Link>
             </motion.div>

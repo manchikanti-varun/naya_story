@@ -41,6 +41,7 @@ type HomepageEditorContextValue = {
   save: () => Promise<void>;
   /** Promotes saved draft to live storefront homepage. */
   publish: () => Promise<void>;
+  saving: boolean;
   msg: string | null;
   token: string | null;
   moveSlide: (index: number, dir: -1 | 1) => void;
@@ -62,6 +63,7 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
   const [committedHp, setCommittedHp] = useState<HomepageConfig | null>(null);
   const [cmsMeta, setCmsMeta] = useState<HomepageCmsMeta | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     const data = await apiFetch<{
@@ -98,25 +100,35 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
   }, [committedHp]);
 
   const save = useCallback(async () => {
-    if (!token || !hp) return;
+    if (!token || !hp || saving) return;
     setMsg(null);
-    await apiFetch("/content/site", {
-      method: "PATCH",
-      token,
-      body: JSON.stringify({ homepage: hp }),
-    });
-    setMsg("Draft saved.");
-    await load();
-  }, [token, hp, load]);
+    setSaving(true);
+    try {
+      await apiFetch("/content/site", {
+        method: "PATCH",
+        token,
+        body: JSON.stringify({ homepage: hp }),
+      });
+      setMsg("Draft saved.");
+      await load();
+    } finally {
+      setSaving(false);
+    }
+  }, [token, hp, load, saving]);
 
   const publish = useCallback(async () => {
-    if (!token) return;
+    if (!token || saving) return;
     setMsg(null);
-    await apiFetch("/content/site/publish", { method: "POST", token });
-    publishStorefrontSettingsChanged();
-    setMsg("Published to storefront.");
-    await load();
-  }, [token, load]);
+    setSaving(true);
+    try {
+      await apiFetch("/content/site/publish", { method: "POST", token });
+      publishStorefrontSettingsChanged();
+      setMsg("Published to storefront.");
+      await load();
+    } finally {
+      setSaving(false);
+    }
+  }, [token, load, saving]);
 
   const moveSlide = useCallback((index: number, dir: -1 | 1) => {
     setHp((prev) => {
@@ -210,6 +222,7 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       load,
       save,
       publish,
+      saving,
       msg,
       token,
       moveSlide,
@@ -228,6 +241,7 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       load,
       save,
       publish,
+      saving,
       msg,
       token,
       moveSlide,
@@ -246,4 +260,9 @@ export function useHomepageEditor() {
   const ctx = useContext(HomepageEditorContext);
   if (!ctx) throw new Error("useHomepageEditor must be used within HomepageEditorProvider");
   return ctx;
+}
+
+/** Returns null outside `HomepageEditorProvider` (e.g. optional CMS chrome). */
+export function useHomepageEditorOptional() {
+  return useContext(HomepageEditorContext);
 }

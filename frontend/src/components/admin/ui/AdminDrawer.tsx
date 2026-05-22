@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { CmsEditorProvider } from "@/components/admin/cms/CmsEditorContext";
+import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { cn } from "@/lib/cn";
 
 type Size = "md" | "lg" | "xl";
@@ -91,6 +92,9 @@ export function AdminDrawer({
         <div className="admin-drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-6">
           <CmsEditorProvider compact>{children}</CmsEditorProvider>
         </div>
+        <footer className="shrink-0 border-t border-[var(--admin-border)] bg-[var(--admin-surface)] px-6 py-4">
+          <CmsEditorSaveActions compact showPreviewLink />
+        </footer>
       </aside>
     </div>
   );

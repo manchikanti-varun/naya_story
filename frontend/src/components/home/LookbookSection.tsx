@@ -39,7 +39,7 @@ export function LookbookSection({ config, sectionText }: Props) {
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-14 sm:gap-5 md:grid-cols-12">
-          {c.shots.map((s, i) => (
+          {c.shots.filter((s) => s.src?.trim()).map((s, i) => (
             <motion.figure
               key={`${s.src}-${i}`}
               initial={{ opacity: 0, y: 24 }}

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { cn } from "@/lib/cn";
 
 type ShellProps = {
@@ -18,15 +19,20 @@ export function CmsPageEditorShell({ title, description, children, embedded, id 
       id={id}
       className={cn(embedded ? "space-y-8 p-6 sm:p-8" : "admin-surface-elevated space-y-8 p-6 sm:p-8")}
     >
-      <header>
-        <h2 className="admin-page-title text-xl text-[var(--admin-ink)] sm:text-2xl">
-          {title}
-        </h2>
-        {description ? (
-          <div className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-[var(--admin-muted)]">
-            {description}
-          </div>
-        ) : null}
+      <header className="space-y-5">
+        <div>
+          <h2 className="admin-page-title text-xl text-[var(--admin-ink)] sm:text-2xl">
+            {title}
+          </h2>
+          {description ? (
+            <div className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-[var(--admin-muted)]">
+              {description}
+            </div>
+          ) : null}
+        </div>
+        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)]/60 px-4 py-3.5 sm:px-5">
+          <CmsEditorSaveActions compact />
+        </div>
       </header>
       {children}
     </section>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { SITE_NAME } from "@/lib/constants";
@@ -16,17 +15,8 @@ export function HeroSection() {
 
   return (
     <section ref={ref} className="relative min-h-[100svh] overflow-hidden bg-ink">
-      <motion.div style={{ y }} className="absolute inset-0">
-        <Image
-          src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1920&q=85"
-          alt={`${SITE_NAME} hero`}
-          fill
-          priority
-          className="object-cover opacity-90 animate-slow-zoom"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/55 via-ink/35 to-ivory/90" />
-      </motion.div>
+      <motion.div style={{ y }} className="absolute inset-0 bg-gradient-to-br from-ink via-ink/90 to-ivory-deep/40" />
+      <div className="absolute inset-0 bg-gradient-to-b from-ink/55 via-ink/35 to-ivory/90" />
 
       <div className="lux-shell relative z-10 flex min-h-[100svh] flex-col justify-end pb-24 pt-32 md:pb-32">
         <motion.div

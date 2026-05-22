@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
 import { websitePagesUrl } from "@/lib/admin/website-pages";
 
 export function PreviewToolbar() {
-  const { isDirty, discardDraft, save, cmsMeta } = useHomepageEditor();
+  const { isDirty, cmsMeta } = useHomepageEditor();
 
   return (
     <AdminCard elevated padding="md">
@@ -38,12 +39,7 @@ export function PreviewToolbar() {
               Back to editing
             </AdminButton>
           </Link>
-          <AdminButton variant="ghost" size="sm" disabled={!isDirty} onClick={() => discardDraft()}>
-            Discard changes
-          </AdminButton>
-          <AdminButton variant="primary" size="sm" disabled={!isDirty} onClick={() => void save()}>
-            Save draft
-          </AdminButton>
+          <CmsEditorSaveActions actionsOnly />
         </div>
       </div>
     </AdminCard>

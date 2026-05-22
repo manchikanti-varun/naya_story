@@ -20,6 +20,8 @@ export type Product = {
   collection?: string;
   tags?: string[];
   images: string[];
+  /** Optional label per gallery image (same order as `images`). */
+  imageCaptions?: string[];
   hoverImage?: string;
   variants: ProductVariant[];
   material?: string;

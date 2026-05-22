@@ -25,6 +25,8 @@ const ProductSchema = new mongoose.Schema(
     collection: String,
     tags: [{ type: String }],
     images: [{ type: String, required: true }],
+    /** Optional label per image (same order as `images`) — e.g. Front, Detail, Fabric. */
+    imageCaptions: [{ type: String }],
     hoverImage: String,
     variants: [VariantSchema],
     material: String,

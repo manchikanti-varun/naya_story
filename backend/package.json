@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "seed": "tsx src/seed.ts",
+    "strip-unsplash": "tsx src/scripts/strip-unsplash-media.ts",
     "clear-data": "tsx src/clear-data.ts",
     "set-admin": "tsx src/set-admin.ts",
     "test": "vitest run"

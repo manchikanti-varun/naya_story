@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import type { Product, ProductVariant } from "@/types";
+import { CmsImageUrlField } from "@/components/admin/cms/CmsImageUrlField";
 import { ProductImagesField } from "@/components/admin/ProductImagesField";
+import { normalizeProductCaptions } from "@/lib/product-gallery";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminStickySaveBar } from "@/components/admin/ui/AdminStickySaveBar";
 import { cn } from "@/lib/cn";
@@ -44,7 +46,8 @@ const emptyProduct = (): Partial<Product> & {
   subcategory: "",
   collection: "",
   tags: [],
-  images: ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&q=80"],
+  images: [""],
+  imageCaptions: [],
   hoverImage: "",
   variants: [defaultVariant()],
   material: "",
@@ -134,6 +137,7 @@ export function ProductEditor({
           ...p,
           tags: p.tags ?? [],
           images: p.images?.length ? p.images : [""],
+          imageCaptions: p.imageCaptions ?? [],
           variants: p.variants?.length ? p.variants : [defaultVariant()],
         });
         setTagInput((p.tags ?? []).join(", "));
@@ -154,6 +158,7 @@ export function ProductEditor({
 
   const payload = useMemo(() => {
     const images = form.images.map((s) => s.trim()).filter(Boolean);
+    const imageCaptions = normalizeProductCaptions(images, form.imageCaptions);
     const tags = tagInput
       .split(",")
       .map((s) => s.trim())
@@ -161,6 +166,7 @@ export function ProductEditor({
     return {
       ...form,
       images,
+      imageCaptions,
       tags,
       variants: form.variants.map((v) => ({
         ...v,
@@ -574,26 +580,32 @@ export function ProductEditor({
         <Collapsible title="Product media" id="media" open={openSections.media} onToggle={toggle}>
           <ProductImagesField
             token={token}
-            value={form.images}
-            onChange={(images) => setForm((f) => ({ ...f, images: images.length ? images : [""] }))}
+            images={form.images}
+            captions={form.imageCaptions}
+            onChange={(images, imageCaptions) =>
+              setForm((f) => ({
+                ...f,
+                images: images.length ? images : [""],
+                imageCaptions,
+              }))
+            }
           />
-          <label className={cn("mt-4 block", labelClass)}>
-            Card hover image (optional)
-            <input
-              className={inputClass}
-              placeholder="Overrides second gallery image for hover"
+          <div className="mt-4 space-y-4">
+            <CmsImageUrlField
+              label="Card hover image (optional)"
+              token={token}
+              hint="Overrides second gallery image on collection cards."
+              placeholder="https://…"
               value={form.hoverImage ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, hoverImage: e.target.value }))}
+              onChange={(hoverImage) => setForm((f) => ({ ...f, hoverImage }))}
             />
-          </label>
-          <label className={cn("mt-4 block", labelClass)}>
-            New In hover image (optional)
-            <input
-              className={inputClass}
+            <CmsImageUrlField
+              label="New In hover image (optional)"
+              token={token}
               value={form.newInHoverImage ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, newInHoverImage: e.target.value }))}
+              onChange={(newInHoverImage) => setForm((f) => ({ ...f, newInHoverImage }))}
             />
-          </label>
+          </div>
         </Collapsible>
 
         <Collapsible title="Merchandising flags" id="flags" open={openSections.flags} onToggle={toggle}>

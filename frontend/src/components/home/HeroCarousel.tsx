@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroSlide, SectionDesign, SectionTextColors } from "@/types/homepage";
 import { SITE_NAME } from "@/lib/constants";
+import { getEffectiveHeroSlideStyle } from "@/lib/cms/hero-slide-styles";
 import {
   heroCtaStyle,
   heroHeadingStyle,
@@ -39,9 +40,10 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
   const count = active.length || 1;
   const safeIndex = ((index % count) + count) % count;
   const slide = active[safeIndex] ?? active[0];
+  const effective = slide ? getEffectiveHeroSlideStyle(slides, slide.id) : {};
 
-  const slideDesign = mergeSectionDesign(carouselStyles, slide?.styles);
-  const mergedText = mergeSectionTextColors(sectionText, slide?.textColors);
+  const slideDesign = mergeSectionDesign(carouselStyles, effective.styles);
+  const mergedText = mergeSectionTextColors(sectionText, effective.textColors);
   const st = sectionTextStyles(mergedText);
   const overlayCustom = heroOverlayStyle(slideDesign);
   const sectionStyle = sectionDesignStyle(slideDesign);

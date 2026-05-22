@@ -73,10 +73,7 @@ export function ShopByCategorySection({
                     loading="lazy"
                     className="object-cover object-center lux-image-zoom group-hover:scale-[1.07]"
                     sizes="(max-width:768px) 50vw, 33vw"
-                    unoptimized={
-                      !cat.image.includes("images.unsplash.com") &&
-                      !cat.image.includes("res.cloudinary.com")
-                    }
+                    unoptimized={!cat.image.includes("res.cloudinary.com")}
                   />
                 ) : null}
                 <div className="lux-category-overlay" aria-hidden />

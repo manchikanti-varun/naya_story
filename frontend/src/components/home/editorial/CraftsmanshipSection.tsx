@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
 import { Reveal } from "@/components/luxury/Reveal";
 import { SectionShell } from "@/components/cms/SectionShell";
 import { defaultHomepageEditorial } from "@/lib/cms/editorial-defaults";
@@ -42,13 +43,17 @@ export function CraftsmanshipSection({ config, sectionText }: Props) {
         </Reveal>
         <Reveal className="relative lg:col-span-7" delay={0.12} as="section">
           <div className="relative aspect-[4/5] overflow-hidden rounded-lux sm:aspect-[16/10] md:aspect-[21/9]">
-            <Image
-              src={c.image}
-              alt={c.imageAlt}
-              fill
-              className="object-cover lux-image-zoom"
-              sizes="(max-width:1024px) 100vw, 60vw"
-            />
+            {c.image?.trim() ? (
+              <Image
+                src={c.image}
+                alt={c.imageAlt}
+                fill
+                className="object-cover lux-image-zoom"
+                sizes="(max-width:1024px) 100vw, 60vw"
+              />
+            ) : (
+              <MediaPlaceholder className="bg-ink-soft" label="Craft image" />
+            )}
           </div>
         </Reveal>
       </div>

@@ -7,6 +7,8 @@ import type {
   StorefrontTheme,
 } from "../types/homepage.js";
 import { mergeLayoutBlocksIntoHomepage } from "./layout-blocks.js";
+import { sanitizeHomepageFromUnsplash } from "./sanitize-homepage-media.js";
+import { stripUnsplashUrl, stripUnsplashUrls } from "./strip-unsplash.js";
 import { defaultHomepageEditorial } from "./editorial-defaults.js";
 import type { HomepageEditorialConfig } from "../types/homepage.js";
 
@@ -110,8 +112,8 @@ function mergeSectionTextColors(
   return Object.keys(base).length > 0 ? base : undefined;
 }
 
-const IMG = (id: string, w = 1920) =>
-  `https://images.unsplash.com/${id}?w=${w}&q=85`;
+/** Demo stock photos removed — add images via Admin → Media / section editors. */
+const IMG = (_id?: string, _w?: number) => "";
 
 const defaultSlides: HeroSlide[] = [
   {
@@ -466,8 +468,8 @@ function mergeSlides(raw: unknown): HeroSlide[] {
         id: String(s.id ?? base.id),
         enabled: s.enabled !== false,
         order: typeof s.order === "number" ? s.order : i,
-        desktopImage: String(s.desktopImage || base.desktopImage),
-        mobileImage: String(s.mobileImage ?? ""),
+        desktopImage: stripUnsplashUrl(String(s.desktopImage || base.desktopImage)),
+        mobileImage: stripUnsplashUrl(String(s.mobileImage ?? "")),
         kicker: typeof s.kicker === "string" ? s.kicker : "",
         heading: String(s.heading || base.heading),
         subheading: String(s.subheading ?? base.subheading ?? ""),
@@ -482,6 +484,7 @@ function mergeSlides(raw: unknown): HeroSlide[] {
           s.textColors && typeof s.textColors === "object"
             ? (s.textColors as HeroSlide["textColors"])
             : undefined,
+        matchPreviousSlideStyles: s.matchPreviousSlideStyles === true,
       } satisfies HeroSlide;
     });
   return list.sort((a, b) => a.order - b.order);
@@ -497,7 +500,7 @@ function mergeCategories(raw: unknown): CategoryCard[] {
       return {
         id: String(c.id ?? base.id),
         name: String(c.name || base.name),
-        image: String(c.image || base.image),
+        image: stripUnsplashUrl(String(c.image || base.image)),
         href: String(c.href || base.href),
         enabled: c.enabled !== false,
         order: typeof c.order === "number" ? c.order : i,
@@ -692,7 +695,7 @@ export function mergeHomepageConfig(
     ...r,
     heroTitle: typeof r.heroTitle === "string" ? r.heroTitle : d.heroTitle,
     heroSubtitle: typeof r.heroSubtitle === "string" ? r.heroSubtitle : d.heroSubtitle,
-    heroImage: typeof r.heroImage === "string" ? r.heroImage : d.heroImage,
+    heroImage: stripUnsplashUrl(typeof r.heroImage === "string" ? r.heroImage : d.heroImage),
     announcements: Array.isArray(r.announcements)
       ? (r.announcements as string[])
       : d.announcements,
@@ -738,10 +741,11 @@ export function mergeHomepageConfig(
         typeof ourStoryPage.subtitle === "string"
           ? ourStoryPage.subtitle
           : d.ourStoryPage.subtitle,
-      heroImage:
+      heroImage: stripUnsplashUrl(
         typeof ourStoryPage.heroImage === "string"
           ? ourStoryPage.heroImage
           : d.ourStoryPage.heroImage,
+      ),
       ctaLabel:
         typeof ourStoryPage.ctaLabel === "string"
           ? ourStoryPage.ctaLabel
@@ -771,13 +775,13 @@ export function mergeHomepageConfig(
             order: typeof safe.order === "number" ? safe.order : index,
             heading: String(safe.heading ?? fallback.heading),
             body: String(safe.body ?? fallback.body),
-            image: String(safe.image ?? fallback.image ?? ""),
+            image: stripUnsplashUrl(String(safe.image ?? fallback.image ?? "")),
             imageAlt: String(safe.imageAlt ?? fallback.imageAlt ?? ""),
             quote: String(safe.quote ?? fallback.quote ?? ""),
             secondaryBody: String(safe.secondaryBody ?? fallback.secondaryBody ?? ""),
             gallery: Array.isArray(safe.gallery)
-              ? safe.gallery.map(String).filter(Boolean)
-              : fallback.gallery ?? [],
+              ? stripUnsplashUrls(safe.gallery.map(String))
+              : stripUnsplashUrls(fallback.gallery ?? []),
           };
         })
         .sort((a, b) => a.order - b.order),
@@ -851,5 +855,5 @@ export function mergeHomepageConfig(
     theme: mergeTheme(r.theme),
     sectionTextColors: mergeSectionTextColors(r.sectionTextColors, d.sectionTextColors),
   };
-  return mergeLayoutBlocksIntoHomepage(merged, r.layoutBlocks);
+  return sanitizeHomepageFromUnsplash(mergeLayoutBlocksIntoHomepage(merged, r.layoutBlocks));
 }

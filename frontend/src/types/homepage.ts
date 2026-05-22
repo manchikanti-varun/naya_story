@@ -16,6 +16,8 @@ export type HeroSlide = {
   styles?: SectionDesign;
   /** Per-slide text color overrides (heading, subheading, CTA, kicker). */
   textColors?: SectionTextColors;
+  /** When true, uses the previous slide’s design & text colors (by carousel order). */
+  matchPreviousSlideStyles?: boolean;
 };
 
 export type SectionOrderEntry = {

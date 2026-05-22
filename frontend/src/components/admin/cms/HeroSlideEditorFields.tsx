@@ -1,7 +1,11 @@
 "use client";
 
 import type { HeroSlide } from "@/types/homepage";
-import { ChevronDown, ChevronUp, ImageIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, ImageIcon, Link2 } from "lucide-react";
+import {
+  cloneHeroSlideStyle,
+  getEffectiveHeroSlideStyle,
+} from "@/lib/cms/hero-slide-styles";
 import { BlockTextColorFields } from "@/components/admin/cms/BlockTextColorFields";
 import { CmsFieldGroup } from "@/components/admin/cms/CmsFieldGroup";
 import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
@@ -15,12 +19,44 @@ type Props = {
   slide: HeroSlide;
   index: number;
   total: number;
+  /** All slides in carousel order — used to resolve “same as previous”. */
+  allSlides: HeroSlide[];
   token?: string | null;
   onUpdate: (patch: Partial<HeroSlide>) => void;
   onMove: (dir: -1 | 1) => void;
 };
 
-export function HeroSlideEditorFields({ slide, index, total, token, onUpdate, onMove }: Props) {
+export function HeroSlideEditorFields({
+  slide,
+  index,
+  total,
+  allSlides,
+  token,
+  onUpdate,
+  onMove,
+}: Props) {
+  const inheritFromPrevious = slide.matchPreviousSlideStyles === true && index > 0;
+  const previousLabel =
+    index > 0
+      ? allSlides[index - 1]?.heading?.trim() || `Slide ${index}`
+      : null;
+  const effectiveDesign = inheritFromPrevious
+    ? getEffectiveHeroSlideStyle(allSlides, slide.id)
+    : { styles: slide.styles, textColors: slide.textColors };
+
+  const toggleMatchPrevious = (checked: boolean) => {
+    if (!checked) {
+      onUpdate({ matchPreviousSlideStyles: false });
+      return;
+    }
+    const inherited = getEffectiveHeroSlideStyle(allSlides, allSlides[index - 1]!.id);
+    const copied = cloneHeroSlideStyle(inherited);
+    onUpdate({
+      matchPreviousSlideStyles: true,
+      styles: copied.styles,
+      textColors: copied.textColors,
+    });
+  };
   const desktop = slide.desktopImage?.trim() || "";
   const mobile = slide.mobileImage?.trim() || "";
 
@@ -180,19 +216,50 @@ export function HeroSlideEditorFields({ slide, index, total, token, onUpdate, on
           title="Design & typography"
           description="Colors, fonts, overlay, and layout for this slide only. Carousel-wide defaults apply when fields are empty."
         >
-          <div className="space-y-6">
-            <BlockTextColorFields
-              fields={["kicker", "heading", "subheading", "link"]}
-              value={slide.textColors}
-              onChange={(textColors) => onUpdate({ textColors })}
-              intro="Override text colors for this slide."
-            />
-            <SectionDesignFields
-              value={slide.styles}
-              onChange={(styles) => onUpdate({ styles })}
-              showTypography
-            />
-          </div>
+          {index > 0 ? (
+            <label className="admin-cms-inherit-style mb-6 flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)]/80 px-4 py-3.5">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={inheritFromPrevious}
+                onChange={(e) => toggleMatchPrevious(e.target.checked)}
+              />
+              <span className="min-w-0">
+                <span className="flex items-center gap-2 font-sans text-sm font-medium text-[var(--admin-ink)]">
+                  <Link2 className="h-3.5 w-3.5 shrink-0 text-[var(--admin-accent)]" strokeWidth={1.75} aria-hidden />
+                  Same styling as previous slide
+                </span>
+                <span className="mt-1 block font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
+                  Inherits design and text colors from{" "}
+                  <span className="font-medium text-[var(--admin-ink)]">{previousLabel}</span>. Uncheck
+                  to customize this slide on its own.
+                </span>
+              </span>
+            </label>
+          ) : null}
+
+          {inheritFromPrevious ? (
+            <p className="rounded-lg border border-dashed border-[var(--admin-border)] bg-white/60 px-4 py-3 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
+              This slide mirrors the previous slide&apos;s styling on the storefront. Uncheck above to
+              edit colors and typography here.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              <BlockTextColorFields
+                fields={["kicker", "heading", "subheading", "link"]}
+                value={effectiveDesign.textColors}
+                onChange={(textColors) =>
+                  onUpdate({ textColors, matchPreviousSlideStyles: false })
+                }
+                intro="Override text colors for this slide."
+              />
+              <SectionDesignFields
+                value={effectiveDesign.styles}
+                onChange={(styles) => onUpdate({ styles, matchPreviousSlideStyles: false })}
+                showTypography
+              />
+            </div>
+          )}
         </CmsFieldGroup>
       </div>
     </article>

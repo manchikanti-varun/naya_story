@@ -12,6 +12,7 @@ export type HeroSlide = {
   metaLabel?: string;
   styles?: SectionDesign;
   textColors?: SectionTextColors;
+  matchPreviousSlideStyles?: boolean;
 };
 
 export type SectionOrderEntry = {

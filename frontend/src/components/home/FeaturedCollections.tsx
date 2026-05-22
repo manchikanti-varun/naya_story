@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
 import { COLLECTIONS } from "@/lib/constants";
 
 const container = {
@@ -55,13 +56,17 @@ export function FeaturedCollections() {
           >
             <Link href={`/collections?collection=${COLLECTIONS[0].slug}`}>
               <div className="relative aspect-[4/5] md:absolute md:inset-0 md:aspect-auto">
-                <Image
-                  src={COLLECTIONS[0].image}
-                  alt={COLLECTIONS[0].title}
-                  fill
-                  className="object-cover transition duration-[1.4s] ease-out group-hover:scale-[1.06]"
-                  sizes="(max-width:768px) 100vw, 58vw"
-                />
+                {COLLECTIONS[0].image ? (
+                  <Image
+                    src={COLLECTIONS[0].image}
+                    alt={COLLECTIONS[0].title}
+                    fill
+                    className="object-cover transition duration-[1.4s] ease-out group-hover:scale-[1.06]"
+                    sizes="(max-width:768px) 100vw, 58vw"
+                  />
+                ) : (
+                  <MediaPlaceholder />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/10 to-transparent opacity-90 transition duration-700 group-hover:from-ink/75" />
               </div>
               <div className="pointer-events-none absolute inset-x-0 bottom-0 p-8 md:p-12">
@@ -84,13 +89,17 @@ export function FeaturedCollections() {
               >
                 <Link href={`/collections?collection=${c.slug}`}>
                   <div className="relative aspect-[16/11] md:absolute md:inset-0 md:aspect-auto">
-                    <Image
-                      src={c.image}
-                      alt={c.title}
-                      fill
-                      className="object-cover transition duration-[1.4s] ease-out group-hover:scale-[1.05]"
-                      sizes="(max-width:768px) 100vw, 40vw"
-                    />
+                    {c.image ? (
+                      <Image
+                        src={c.image}
+                        alt={c.title}
+                        fill
+                        className="object-cover transition duration-[1.4s] ease-out group-hover:scale-[1.05]"
+                        sizes="(max-width:768px) 100vw, 40vw"
+                      />
+                    ) : (
+                      <MediaPlaceholder />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-tr from-ink/55 via-transparent to-transparent opacity-90 transition duration-700 group-hover:from-ink/65" />
                   </div>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 p-7">

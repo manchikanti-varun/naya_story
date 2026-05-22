@@ -8,6 +8,7 @@ import { User } from "../models/User.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { verifyAccessToken } from "../lib/accessJwt.js";
 import { removeProductFromHomepagePins } from "../lib/homepage-product-pins.js";
+import { sanitizeProductMedia } from "../lib/strip-unsplash.js";
 
 async function requestIsAdmin(req: Request, secret: string): Promise<boolean> {
   const header = req.headers.authorization;
@@ -78,7 +79,7 @@ export function createProductsRouter(secret: string) {
       const ordered = oids
         .map((id) => map.get(String(id)))
         .filter((p): p is NonNullable<typeof p> => Boolean(p));
-      return res.json({ products: ordered });
+      return res.json({ products: ordered.map((p) => sanitizeProductMedia(p as Record<string, unknown>)) });
     }
 
     const filter: Record<string, unknown> = {};
@@ -124,7 +125,7 @@ export function createProductsRouter(secret: string) {
     ]);
 
     res.json({
-      products,
+      products: products.map((p) => sanitizeProductMedia(p as Record<string, unknown>)),
       total,
       page: currentPage,
       pages: Math.max(Math.ceil(total / lim), 1),
@@ -152,7 +153,10 @@ export function createProductsRouter(secret: string) {
       .sort({ createdAt: -1 })
       .limit(16)
       .lean();
-    res.json({ product, related });
+    res.json({
+      product: sanitizeProductMedia(product as unknown as Record<string, unknown>),
+      related: related.map((p) => sanitizeProductMedia(p as Record<string, unknown>)),
+    });
   });
 
   r.post(
@@ -170,8 +174,9 @@ export function createProductsRouter(secret: string) {
       if (!errors.isEmpty())
         return res.status(400).json({ message: "Validation failed", errors: errors.array() });
       try {
-        const doc = await Product.create(req.body);
-        res.status(201).json({ product: doc });
+        const body = sanitizeProductMedia(req.body as Record<string, unknown>);
+        const doc = await Product.create(body);
+        res.status(201).json({ product: sanitizeProductMedia(doc.toObject() as Record<string, unknown>) });
       } catch (e) {
         res.status(400).json({ message: (e as Error).message });
       }
@@ -180,11 +185,12 @@ export function createProductsRouter(secret: string) {
 
   r.patch("/:id", ...(requireAdmin(secret) as RequestHandler[]), async (req, res) => {
     try {
-      const doc = await Product.findByIdAndUpdate(req.params.id, req.body, {
+      const body = sanitizeProductMedia(req.body as Record<string, unknown>);
+      const doc = await Product.findByIdAndUpdate(req.params.id, body, {
         new: true,
       });
       if (!doc) return res.status(404).json({ message: "Not found" });
-      res.json({ product: doc });
+      res.json({ product: sanitizeProductMedia(doc.toObject() as Record<string, unknown>) });
     } catch (e) {
       res.status(400).json({ message: (e as Error).message });
     }

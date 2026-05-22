@@ -133,7 +133,8 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
       <AdminCard elevated padding="md" className="border-[var(--admin-accent)]/15 bg-[var(--admin-accent-soft)]/30">
         <p className="font-sans text-sm text-[var(--admin-ink)]">
           <span className="font-semibold">Workflow:</span> reorder here → Edit a section → adjust Content & Design
-          tabs → <span className="font-semibold">Save changes</span> in the bar below. Announcement bar and footer are
+          tabs → <span className="font-semibold">Save draft</span> or <span className="font-semibold">Publish live</span>{" "}
+          in the edit panel (top or bottom) or the bar at the bottom of the page. Announcement bar and footer are
           under <span className="font-semibold">Website → Announcement bar</span> and{" "}
           <span className="font-semibold">Website → Footer</span>. Use{" "}
           <kbd className="rounded border border-[var(--admin-border)] bg-[var(--admin-surface)] px-1.5 py-0.5 font-mono text-[10px]">

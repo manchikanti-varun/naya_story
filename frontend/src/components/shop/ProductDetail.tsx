@@ -14,7 +14,9 @@ import type { Product } from "@/types";
 import { cn } from "@/lib/cn";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductCarouselRail } from "@/components/shop/ProductCarouselRail";
+import { ProductDesignGallery } from "@/components/shop/ProductDesignGallery";
 import { ProductGallery } from "@/components/shop/ProductGallery";
+import { buildProductGalleryItems } from "@/lib/product-gallery";
 import { ProductStickyCartBar } from "@/components/shop/ProductStickyCartBar";
 import { LimitedStockBanner } from "@/components/shop/LimitedStockBanner";
 import { ProductDetailExtras, getProductDetailAccordionFlags } from "@/components/shop/ProductDetailExtras";
@@ -103,6 +105,11 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
     () => (product?.images ?? []).map((s) => s.trim()).filter(Boolean),
     [product?.images],
   );
+  const galleryItems = useMemo(
+    () => buildProductGalleryItems(product?.images ?? [], product?.imageCaptions),
+    [product?.images, product?.imageCaptions],
+  );
+  const galleryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!zoomOpen) return;
@@ -230,6 +237,12 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
     ? Math.min(activeIdx, galleryImages.length - 1)
     : 0;
   const image = galleryImages[safeActiveIdx];
+  const activeLabel = galleryItems[safeActiveIdx]?.label;
+
+  const focusGalleryIndex = (index: number) => {
+    setActiveIdx(index);
+    galleryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const canAdd = variant && variant.stock > 0;
 
   return (
@@ -261,11 +274,15 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
         </nav>
 
         <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
-          <div className="lg:sticky lg:top-[calc(var(--store-nav-pad)+0.25rem)] lg:self-start">
+          <div
+            ref={galleryRef}
+            className="lg:sticky lg:top-[calc(var(--store-nav-pad)+0.25rem)] lg:self-start"
+          >
             <Reveal>
               <ProductGallery
                 variant="pdp"
                 images={galleryImages}
+                captions={product.imageCaptions}
                 productName={product.name}
                 activeIdx={safeActiveIdx}
                 onActiveChange={setActiveIdx}
@@ -424,6 +441,17 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
           </Reveal>
         </div>
 
+        {galleryImages.length >= 2 ? (
+          <Reveal delay={0.08} className="mt-12 lg:mt-14">
+            <ProductDesignGallery
+              images={galleryImages}
+              captions={product.imageCaptions}
+              productName={product.name}
+              onSelectIndex={focusGalleryIndex}
+            />
+          </Reveal>
+        ) : null}
+
         <div className="mx-auto mt-8 flex w-full max-w-3xl flex-col items-center lg:mt-10">
           <Reveal delay={0.1} className="w-full">
             <ProductDetailExtras product={product} className="w-full" />
@@ -566,9 +594,16 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
               </div>
               {galleryImages.length > 1 ? (
                 <>
-                  <p className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 font-sans text-[10px] uppercase tracking-[0.2em] text-ink-muted">
-                    {safeActiveIdx + 1} / {galleryImages.length}
-                  </p>
+                  <div className="absolute bottom-16 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-1.5">
+                    {activeLabel ? (
+                      <p className="rounded-full bg-white/95 px-3 py-1 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-ink">
+                        {activeLabel}
+                      </p>
+                    ) : null}
+                    <p className="rounded-full bg-white/90 px-3 py-1 font-sans text-[10px] uppercase tracking-[0.2em] text-ink-muted">
+                      {safeActiveIdx + 1} / {galleryImages.length}
+                    </p>
+                  </div>
                   <button
                     type="button"
                     aria-label="Previous image"

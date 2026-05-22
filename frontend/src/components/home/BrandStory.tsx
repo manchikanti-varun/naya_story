@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
 import { SectionShell } from "@/components/cms/SectionShell";
 import { defaultHomepageEditorial } from "@/lib/cms/editorial-defaults";
 import { sectionTextStyles } from "@/lib/section-text-styles";
@@ -28,13 +29,17 @@ export function BrandStory({ config, sectionText }: Props) {
           transition={{ duration: 0.9 }}
           className="relative order-1 aspect-[4/5] overflow-hidden rounded-lux-lg lg:order-none"
         >
-          <Image
-            src={c.image}
-            alt={c.imageAlt}
-            fill
-            className="object-cover"
-            sizes="(max-width:1024px) 100vw, 50vw"
-          />
+          {c.image?.trim() ? (
+            <Image
+              src={c.image}
+              alt={c.imageAlt}
+              fill
+              className="object-cover"
+              sizes="(max-width:1024px) 100vw, 50vw"
+            />
+          ) : (
+            <MediaPlaceholder />
+          )}
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 28 }}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
 import { sanitizeHexColor } from "@/lib/storefront-theme";
 import type { HomepageConfig, StorefrontTheme } from "@/types/homepage";
@@ -113,7 +114,10 @@ export function ContentEditorThemePanel() {
         <h2 className="font-sans text-xl font-semibold tracking-tight text-[var(--admin-ink)] sm:text-2xl">
           Storefront text colors
         </h2>
-        <p className="mt-2 max-w-2xl font-sans text-sm leading-relaxed text-[var(--admin-muted)]">
+        <div className="mt-5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)]/60 px-4 py-3.5 sm:px-5">
+          <CmsEditorSaveActions compact />
+        </div>
+        <p className="mt-5 max-w-2xl font-sans text-sm leading-relaxed text-[var(--admin-muted)]">
           Optional hex colors for the public site. They map to design tokens (
           <span className="rounded bg-[var(--admin-surface-raised)] px-1 font-mono text-[11px] text-[var(--admin-ink)]">
             text-ink

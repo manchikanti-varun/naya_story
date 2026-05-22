@@ -1,16 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Images, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { CloudinaryImageUpload } from "@/components/admin/CloudinaryImageUpload";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
-import { AdminField, AdminInput } from "@/components/admin/ui/AdminField";
+import { AdminField, AdminInput, AdminSelect } from "@/components/admin/ui/AdminField";
+import {
+  normalizeProductCaptions,
+  PRODUCT_IMAGE_LABEL_PRESETS,
+} from "@/lib/product-gallery";
+
 const MAX_IMAGES = 12;
 
 type Props = {
-  value: string[];
-  onChange: (urls: string[]) => void;
+  images: string[];
+  captions?: string[];
+  onChange: (images: string[], captions: string[]) => void;
   token?: string | null;
 };
 
@@ -18,31 +25,56 @@ function normalize(urls: string[]) {
   return urls.map((u) => u.trim()).filter(Boolean);
 }
 
-export function ProductImagesField({ value, onChange, token }: Props) {
+export function ProductImagesField({ images: imagesProp, captions: captionsProp, onChange, token }: Props) {
   const [draft, setDraft] = useState("");
-  const images = normalize(value.length ? value : []);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const images = normalize(imagesProp.length ? imagesProp : []);
+  const captions = normalizeProductCaptions(images, captionsProp);
+  const atMax = images.length >= MAX_IMAGES;
 
-  const setImages = (next: string[]) => onChange(normalize(next).slice(0, MAX_IMAGES));
+  const emit = (nextImages: string[], nextCaptions: string[]) => {
+    const urls = normalize(nextImages).slice(0, MAX_IMAGES);
+    onChange(urls, normalizeProductCaptions(urls, nextCaptions));
+  };
 
-  const addUrl = () => {
-    const url = draft.trim();
-    if (!url) return;
-    if (images.length >= MAX_IMAGES) return;
-    setImages([...images, url]);
+  const setImages = (next: string[]) => emit(next, captions);
+
+  const addUrl = (url: string, caption = "") => {
+    const trimmed = url.trim();
+    if (!trimmed || atMax || images.includes(trimmed)) return;
+    emit([...images, trimmed], [...captions, caption]);
     setDraft("");
   };
 
+  const addUrlFromDraft = () => addUrl(draft);
+
   const move = (index: number, dir: -1 | 1) => {
     const next = [...images];
+    const nextCaps = [...captions];
     const j = index + dir;
     if (j < 0 || j >= next.length) return;
     [next[index], next[j]] = [next[j]!, next[index]!];
-    setImages(next);
+    [nextCaps[index], nextCaps[j]] = [nextCaps[j]!, nextCaps[index]!];
+    emit(next, nextCaps);
   };
 
-  const addUploaded = (url: string) => {
-    if (images.length >= MAX_IMAGES) return;
-    setImages([...images, url]);
+  const removeAt = (index: number) => {
+    emit(
+      images.filter((_, j) => j !== index),
+      captions.filter((_, j) => j !== index),
+    );
+  };
+
+  const setCaption = (index: number, label: string) => {
+    const nextCaps = [...captions];
+    nextCaps[index] = label;
+    emit(images, nextCaps);
+  };
+
+  const setUrl = (index: number, url: string) => {
+    const next = [...images];
+    next[index] = url;
+    emit(next, captions);
   };
 
   return (
@@ -52,12 +84,16 @@ export function ProductImagesField({ value, onChange, token }: Props) {
         category="product"
         label="Upload to Cloudinary"
         hint={`Adds to gallery (max ${MAX_IMAGES}). Also saved in Media library.`}
-        disabled={images.length >= MAX_IMAGES}
-        onUploaded={addUploaded}
+        disabled={atMax}
+        onUploaded={(url) => addUrl(url)}
       />
       <AdminField
         label="Gallery images"
-        hint={`First image is the main product photo. Up to ${MAX_IMAGES} — upload above or paste a URL.`}
+        hint={
+          token
+            ? `First image is the main photo on /products/your-slug. Label each shot (front, detail, fabric) for the design gallery below the hero.`
+            : `First image is the main product photo. Label each shot for the storefront design section.`
+        }
       >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <AdminInput
@@ -68,17 +104,29 @@ export function ProductImagesField({ value, onChange, token }: Props) {
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                addUrl();
+                addUrlFromDraft();
               }
             }}
             className="flex-1"
           />
+          {token ? (
+            <AdminButton
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={atMax}
+              onClick={() => setPickerOpen(true)}
+            >
+              <Images className="h-4 w-4" strokeWidth={1.5} />
+              Library
+            </AdminButton>
+          ) : null}
           <AdminButton
             type="button"
             variant="secondary"
             size="sm"
-            disabled={!draft.trim() || images.length >= MAX_IMAGES}
-            onClick={addUrl}
+            disabled={!draft.trim() || atMax}
+            onClick={addUrlFromDraft}
           >
             <Plus className="h-4 w-4" strokeWidth={1.5} />
             Add image
@@ -86,9 +134,19 @@ export function ProductImagesField({ value, onChange, token }: Props) {
         </div>
       </AdminField>
 
+      {token ? (
+        <MediaLibraryPicker
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          token={token}
+          title="Choose product image"
+          onSelect={(url) => addUrl(url)}
+        />
+      ) : null}
+
       {images.length === 0 ? (
         <p className="rounded-[var(--admin-radius-sm)] border border-dashed border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-4 py-6 text-center font-sans text-sm text-[var(--admin-muted)]">
-          No gallery images yet. Add at least one URL before saving.
+          No gallery images yet. Add at least one image before saving.
         </p>
       ) : (
         <ul className="space-y-3">
@@ -100,19 +158,38 @@ export function ProductImagesField({ value, onChange, token }: Props) {
               <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-md bg-[var(--admin-surface)]">
                 <Image src={url} alt="" fill className="object-cover" sizes="64px" unoptimized />
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 space-y-2">
                 <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-faint)]">
-                  {i === 0 ? "Primary · storefront hero" : `Image ${i + 1}`}
+                  {i === 0 ? "Primary · main gallery & cards" : `Gallery image ${i + 1}`}
                 </p>
-                <p className="mt-1 break-all font-mono text-[11px] text-[var(--admin-muted)]">{url}</p>
+                <AdminField label="Design label" className="!mt-0">
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <AdminSelect
+                      className="sm:max-w-[11rem]"
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) setCaption(i, e.target.value);
+                      }}
+                    >
+                      <option value="">Quick label…</option>
+                      {PRODUCT_IMAGE_LABEL_PRESETS.filter(Boolean).map((preset) => (
+                        <option key={preset} value={preset}>
+                          {preset}
+                        </option>
+                      ))}
+                    </AdminSelect>
+                    <AdminInput
+                      placeholder="e.g. Embroidery detail"
+                      value={captions[i] ?? ""}
+                      onChange={(e) => setCaption(i, e.target.value)}
+                      className="min-w-0 flex-1"
+                    />
+                  </div>
+                </AdminField>
                 <AdminInput
-                  className="mt-2 font-mono text-xs"
+                  className="font-mono text-xs"
                   value={url}
-                  onChange={(e) => {
-                    const next = [...images];
-                    next[i] = e.target.value;
-                    onChange(next);
-                  }}
+                  onChange={(e) => setUrl(i, e.target.value)}
                 />
               </div>
               <div className="flex shrink-0 flex-col gap-1">
@@ -139,7 +216,7 @@ export function ProductImagesField({ value, onChange, token }: Props) {
                   className="rounded-lg p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-30"
                   disabled={images.length <= 1}
                   title="Remove"
-                  onClick={() => setImages(images.filter((_, j) => j !== i))}
+                  onClick={() => removeAt(i)}
                 >
                   <Trash2 className="h-4 w-4" strokeWidth={1.5} />
                 </button>
@@ -150,7 +227,8 @@ export function ProductImagesField({ value, onChange, token }: Props) {
       )}
 
       <p className="font-sans text-[11px] text-[var(--admin-faint)]">
-        {images.length}/{MAX_IMAGES} images · Shoppers see every image on the product page gallery.
+        {images.length}/{MAX_IMAGES} images · All appear in the product page gallery; additional shots show in
+        &quot;Design & construction&quot; on <span className="font-mono">/products/[slug]</span>.
       </p>
     </div>
   );

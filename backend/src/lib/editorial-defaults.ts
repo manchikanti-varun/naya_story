@@ -1,7 +1,6 @@
 import type { HomepageEditorialConfig } from "../types/homepage.js";
 
-const IMG = (id: string, w = 1200) =>
-  `https://images.unsplash.com/${id}?w=${w}&q=85`;
+const IMG = (_id?: string, _w?: number) => "";
 
 export function defaultHomepageEditorial(): HomepageEditorialConfig {
   return {

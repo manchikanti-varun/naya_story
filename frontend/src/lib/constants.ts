@@ -24,29 +24,25 @@ export const COLLECTIONS = [
     slug: "new-arrivals",
     title: "New Arrivals",
     subtitle: "Fresh silhouettes",
-    image:
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1200&q=80",
+    image: "",
   },
   {
     slug: "summer-edit",
     title: "Summer Edit",
     subtitle: "Lightness & ease",
-    image:
-      "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&q=80",
+    image: "",
   },
   {
     slug: "elevated-essentials",
     title: "Elevated Essentials",
     subtitle: "The refined everyday",
-    image:
-      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80",
+    image: "",
   },
   {
     slug: "everyday-luxury",
     title: "Everyday Luxury",
     subtitle: "Quiet confidence",
-    image:
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1200&q=80",
+    image: "",
   },
 ] as const;
 

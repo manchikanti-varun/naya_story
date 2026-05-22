@@ -3,11 +3,13 @@
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { buildProductGalleryItems } from "@/lib/product-gallery";
 import { cn } from "@/lib/cn";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
 
 type Props = {
   images: string[];
+  captions?: string[] | null;
   productName: string;
   activeIdx: number;
   onActiveChange: (index: number) => void;
@@ -18,6 +20,7 @@ type Props = {
 
 export function ProductGallery({
   images,
+  captions,
   productName,
   activeIdx,
   onActiveChange,
@@ -26,9 +29,11 @@ export function ProductGallery({
 }: Props) {
   const mediaClass =
     variant === "pdp" ? "lux-product-media lux-product-media--pdp" : "lux-product-media";
-  const gallery = useMemo(() => images.map((s) => s.trim()).filter(Boolean), [images]);
+  const items = useMemo(() => buildProductGalleryItems(images, captions), [images, captions]);
+  const gallery = useMemo(() => items.map((it) => it.url), [items]);
   const safeIdx = gallery.length ? Math.min(activeIdx, gallery.length - 1) : 0;
   const mainSrc = gallery[safeIdx];
+  const activeLabel = items[safeIdx]?.label;
   const thumbStripRef = useRef<HTMLDivElement>(null);
 
   const go = useCallback(
@@ -75,6 +80,7 @@ export function ProductGallery({
                 key={`${src}-${i}`}
                 src={src}
                 index={i}
+                label={items[i]?.label}
                 active={safeIdx === i}
                 layout="vertical"
                 onSelect={() => onActiveChange(i)}
@@ -95,7 +101,7 @@ export function ProductGallery({
               <Image
                 key={mainSrc}
                 src={mainSrc}
-                alt={productName}
+                alt={activeLabel ? `${productName} — ${activeLabel}` : productName}
                 fill
                 priority={safeIdx === 0}
                 className="object-cover transition duration-[1.4s] ease-luxury group-hover:scale-[1.02]"
@@ -107,9 +113,16 @@ export function ProductGallery({
 
           {gallery.length > 1 ? (
             <>
-              <p className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-ivory/90 px-3 py-1 font-sans text-[10px] uppercase tracking-[0.2em] text-ink-muted backdrop-blur-sm">
-                {safeIdx + 1} / {gallery.length}
-              </p>
+              <div className="pointer-events-none absolute bottom-3 left-3 flex max-w-[min(100%,16rem)] flex-col gap-1">
+                {activeLabel ? (
+                  <p className="rounded-full bg-ivory/95 px-3 py-1 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-ink backdrop-blur-sm">
+                    {activeLabel}
+                  </p>
+                ) : null}
+                <p className="w-fit rounded-full bg-ivory/90 px-3 py-1 font-sans text-[10px] uppercase tracking-[0.2em] text-ink-muted backdrop-blur-sm">
+                  {safeIdx + 1} / {gallery.length}
+                </p>
+              </div>
               <button
                 type="button"
                 aria-label="Previous image"
@@ -139,6 +152,7 @@ export function ProductGallery({
                   key={`${src}-${i}`}
                   src={src}
                   index={i}
+                  label={items[i]?.label}
                   active={safeIdx === i}
                   layout="horizontal"
                   onSelect={() => onActiveChange(i)}
@@ -155,12 +169,14 @@ export function ProductGallery({
 function ThumbButton({
   src,
   index,
+  label,
   active,
   layout,
   onSelect,
 }: {
   src: string;
   index: number;
+  label?: string;
   active: boolean;
   layout: "horizontal" | "vertical";
   onSelect: () => void;
@@ -169,6 +185,7 @@ function ThumbButton({
     <button
       type="button"
       data-thumb-index={index}
+      title={label}
       onClick={onSelect}
       className={cn(
         "relative overflow-hidden rounded-lux transition-all duration-500",
@@ -181,7 +198,7 @@ function ThumbButton({
     >
       <Image
         src={src}
-        alt=""
+        alt={label ?? ""}
         fill
         className="object-cover"
         sizes={layout === "horizontal" ? "80px" : "72px"}

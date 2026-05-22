@@ -1,5 +1,6 @@
 "use client";
 
+import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
 import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
 import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
@@ -80,6 +81,11 @@ export function ContentEditorEditorialPanel({ focusType }: Props) {
 
   return (
     <div className="space-y-8">
+      {!focusType ? (
+        <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)]/60 px-4 py-3.5 sm:px-5">
+          <CmsEditorSaveActions compact />
+        </div>
+      ) : null}
       {show("brandStory") ? (
         <section className="admin-cms-panel space-y-4 p-5 sm:p-6">
           <h3 className="admin-cms-kicker">Brand story</h3>

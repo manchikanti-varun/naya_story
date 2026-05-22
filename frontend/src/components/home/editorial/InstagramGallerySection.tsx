@@ -48,7 +48,7 @@ export function InstagramGallerySection({ config, sectionText }: Props) {
             visible: { transition: { staggerChildren: 0.05 } },
           }}
         >
-          {c.images.map((src, i) => (
+          {c.images.filter((src) => src.trim()).map((src, i) => (
             <motion.div
               key={`${src}-${i}`}
               variants={{

@@ -1,5 +1,6 @@
 export { CmsBlockCard } from "./CmsBlockCard";
 export { CmsLayoutTabLink } from "./CmsLayoutTabLink";
+export { CmsEditorSaveActions } from "./CmsEditorSaveActions";
 export { CmsSectionEditorShell } from "./CmsSectionEditorShell";
 export type { CmsEditorTab } from "./CmsSectionEditorShell";
 export { CmsFieldGroup } from "./CmsFieldGroup";
