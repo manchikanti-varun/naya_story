@@ -9,6 +9,10 @@ import { requireAdmin } from "../middleware/auth.js";
 import { verifyAccessToken } from "../lib/accessJwt.js";
 import { removeProductFromHomepagePins } from "../lib/homepage-product-pins.js";
 import { sanitizeProductMedia } from "../lib/strip-unsplash.js";
+import { mergeHomepageConfig } from "../lib/homepage-defaults.js";
+import { loadPdpSuggestedProducts } from "../lib/pdp-suggestions.js";
+import { mergeStorefrontSettings } from "../lib/storefront-settings.js";
+import { SiteSettings } from "../models/SiteSettings.js";
 
 async function requestIsAdmin(req: Request, secret: string): Promise<boolean> {
   const header = req.headers.authorization;
@@ -140,22 +144,28 @@ export function createProductsRouter(secret: string) {
     if (!admin && row.storefrontVisible === false)
       return res.status(404).json({ message: "Not found" });
     const product = raw as unknown as LeanProduct;
-    const relatedOr: Record<string, unknown>[] = [{ category: product.category }];
-    if (product.collection?.trim()) {
-      relatedOr.push({ collection: product.collection.trim() });
-    }
-    const relatedFilter: Record<string, unknown> = {
-      $or: relatedOr,
-      _id: { $ne: product._id },
-    };
-    if (!admin) relatedFilter.storefrontVisible = { $ne: false };
-    const related = await Product.find(relatedFilter)
-      .sort({ createdAt: -1 })
-      .limit(16)
-      .lean();
+    const settingsDoc = (await SiteSettings.findOne().lean()) as {
+      homepage?: unknown;
+      storefront?: unknown;
+    } | null;
+    const homepage = mergeHomepageConfig(
+      (settingsDoc?.homepage ?? {}) as Parameters<typeof mergeHomepageConfig>[0],
+    );
+    const storefront = mergeStorefrontSettings(settingsDoc?.storefront);
+    const suggested = await loadPdpSuggestedProducts(
+      product as Parameters<typeof loadPdpSuggestedProducts>[0],
+      storefront.pdpSuggestedMode ?? "auto",
+      homepage,
+    );
     res.json({
       product: sanitizeProductMedia(product as unknown as Record<string, unknown>),
-      related: related.map((p) => sanitizeProductMedia(p as Record<string, unknown>)),
+      related: suggested.products.map((p) => sanitizeProductMedia(p)),
+      suggested: {
+        mode: suggested.mode,
+        label: suggested.label,
+        products: suggested.products.map((p) => sanitizeProductMedia(p)),
+      },
+      storefront,
     });
   });
 

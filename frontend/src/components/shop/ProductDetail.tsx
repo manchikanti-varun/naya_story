@@ -14,14 +14,10 @@ import type { Product } from "@/types";
 import { cn } from "@/lib/cn";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductCarouselRail } from "@/components/shop/ProductCarouselRail";
-import { ProductDesignGallery } from "@/components/shop/ProductDesignGallery";
 import { ProductGallery } from "@/components/shop/ProductGallery";
-import {
-  buildProductGalleryItems,
-  captionsForDetailGallery,
-  PDP_DETAIL_START_INDEX,
-  splitPdpGallery,
-} from "@/lib/product-gallery";
+import { buildProductGalleryItems } from "@/lib/product-gallery";
+import type { SizeGuideConfig, StorefrontSettings } from "@/types/storefront-settings";
+import { mergeStorefrontSettings } from "@/lib/storefront-settings";
 import { ProductStickyCartBar } from "@/components/shop/ProductStickyCartBar";
 import { LimitedStockBanner } from "@/components/shop/LimitedStockBanner";
 import { ProductDetailDescription } from "@/components/shop/ProductDetailDescription";
@@ -46,7 +42,9 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
   const { token, wishlistIds, updateWishlistLocal } = useAuth();
   const { ids: recentIds, track } = useRecentlyViewed();
   const [product, setProduct] = useState<Product | null>(null);
-  const [related, setRelated] = useState<Product[]>([]);
+  const [suggested, setSuggested] = useState<Product[]>([]);
+  const [suggestedLabel, setSuggestedLabel] = useState("Suggested for you");
+  const [sizeGuide, setSizeGuide] = useState<SizeGuideConfig | null>(null);
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [size, setSize] = useState("");
@@ -66,12 +64,22 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
         const path = adminPreviewToken
           ? `/admin/products/slug/${slug}`
           : `/products/slug/${slug}`;
-        const data = await apiFetch<{ product: Product; related: Product[] }>(path, {
+        const data = await apiFetch<{
+          product: Product;
+          related?: Product[];
+          suggested?: { label: string; products: Product[] };
+          storefront?: StorefrontSettings;
+        }>(path, {
           token: adminPreviewToken ?? undefined,
         });
         if (cancelled) return;
         setProduct(data.product);
-        setRelated(data.related);
+        const list = data.suggested?.products ?? data.related ?? [];
+        setSuggested(list);
+        setSuggestedLabel(data.suggested?.label ?? "Suggested for you");
+        setSizeGuide(
+          mergeStorefrontSettings(data.storefront).sizeGuide ?? null,
+        );
         track(data.product._id);
         const v0 = data.product.variants[0];
         if (v0) {
@@ -106,11 +114,11 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
     };
   }, [recentIds, product?._id]);
 
-  const pdpSplit = useMemo(
-    () => splitPdpGallery(product?.images ?? []),
+  const galleryImages = useMemo(
+    () => (product?.images ?? []).map((s) => s.trim()).filter(Boolean),
     [product?.images],
   );
-  const galleryImages = pdpSplit.all;
+  const hoverOverlaySrc = galleryImages[1];
   const galleryItems = useMemo(
     () => buildProductGalleryItems(product?.images ?? [], product?.imageCaptions),
     [product?.images, product?.imageCaptions],
@@ -245,10 +253,6 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
   const image = galleryImages[safeActiveIdx];
   const activeLabel = galleryItems[safeActiveIdx]?.label;
 
-  const focusGalleryIndex = (index: number) => {
-    setActiveIdx(index);
-    galleryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
   const canAdd = variant && variant.stock > 0;
 
   return (
@@ -287,11 +291,11 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
             <Reveal>
               <ProductGallery
                 variant="pdp"
-                images={pdpSplit.hero ? [pdpSplit.hero] : []}
-                hoverOverlaySrc={pdpSplit.hoverOverlay}
+                images={galleryImages}
+                hoverOverlaySrc={hoverOverlaySrc}
                 captions={product.imageCaptions}
                 productName={product.name}
-                activeIdx={0}
+                activeIdx={safeActiveIdx}
                 onActiveChange={setActiveIdx}
                 onOpenZoom={() => setZoomOpen(true)}
               />
@@ -445,21 +449,6 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
           </Reveal>
         </div>
 
-        {pdpSplit.detail.length > 0 ? (
-          <Reveal delay={0.08} className="mt-12 lg:mt-14">
-            <ProductDesignGallery
-              images={pdpSplit.detail}
-              captions={captionsForDetailGallery(
-                product.imageCaptions,
-                pdpSplit.detail.length,
-              )}
-              detailStartIndex={PDP_DETAIL_START_INDEX}
-              productName={product.name}
-              onSelectIndex={focusGalleryIndex}
-            />
-          </Reveal>
-        ) : null}
-
         <div className="mx-auto mt-8 flex w-full max-w-3xl flex-col items-center lg:mt-10">
           {accordionFlags &&
           (accordionFlags.showFabric || accordionFlags.showStyling) ? (
@@ -501,12 +490,12 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
           />
         </div>
 
-        {related.length > 0 ? (
+        {suggested.length > 0 ? (
           <div className="mt-12 overflow-visible border-t border-ivory-deep pt-10 md:mt-14">
             <ProductCarouselRail
-              eyebrow="Complete the look"
-              title="Related silhouettes"
-              products={related}
+              eyebrow="Suggested"
+              title={suggestedLabel}
+              products={suggested}
             />
           </div>
         ) : null}
@@ -538,7 +527,11 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
         onAdd={() => handleAdd()}
       />
 
-      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
+      <SizeGuideModal
+        open={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+        config={sizeGuide}
+      />
 
       <AnimatePresence>
         {zoomOpen && image ? (

@@ -12,6 +12,7 @@ import {
   Package,
   Palette,
   Percent,
+  Ruler,
   Server,
   Shield,
   ShoppingBag,
@@ -72,6 +73,18 @@ export const adminNavGroups: AdminNavGroup[] = [
         label: "Pages",
         icon: FileText,
         keywords: ["homepage", "collections browse", "new in", "our story", "cms", "builder", "edit homepage"],
+      },
+      {
+        href: "/admin/website/product-page",
+        label: "Product page",
+        icon: Package,
+        keywords: ["pdp", "suggested", "gallery", "product detail", "related"],
+      },
+      {
+        href: "/admin/website/size-chart",
+        label: "Size chart",
+        icon: Ruler,
+        keywords: ["size guide", "fit", "measurements", "global", "sizing"],
       },
       {
         href: "/admin/website/navigation",

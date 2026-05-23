@@ -6,6 +6,7 @@ import { SiteSettings } from "../models/SiteSettings.js";
 import { HomepageRevision } from "../models/HomepageRevision.js";
 import { isAdminRequest, requireAdmin } from "../middleware/auth.js";
 import type { HomepageConfig } from "../types/homepage.js";
+import { mergeStorefrontSettings } from "../lib/storefront-settings.js";
 import { asyncHandler } from "../middleware/httpError.js";
 import { HttpError } from "../middleware/httpError.js";
 
@@ -57,6 +58,7 @@ export function createContentRouter(secret: string) {
   const buildPublicSettings = (doc: SiteDoc) => ({
     homepage: publishedHomepage(doc),
     banners: doc.banners ?? [],
+    storefront: mergeStorefrontSettings(doc.storefront),
     updatedAt: doc.updatedAt,
   });
 
@@ -66,6 +68,7 @@ export function createContentRouter(secret: string) {
     return {
       homepage: draftView,
       banners: doc.banners ?? [],
+      storefront: mergeStorefrontSettings(doc.storefront),
       updatedAt: doc.updatedAt,
       cms: {
         publishedAt: doc.homepagePublishedAt?.toISOString() ?? null,
@@ -113,7 +116,11 @@ export function createContentRouter(secret: string) {
     "/site",
     ...(requireAdmin(secret) as RequestHandler[]),
     asyncHandler(async (req, res) => {
-      const body = req.body as { homepage?: unknown; banners?: unknown };
+      const body = req.body as {
+        homepage?: unknown;
+        banners?: unknown;
+        storefront?: unknown;
+      };
       const patch: Record<string, unknown> = {};
       if (body.homepage !== undefined) {
         patch.homepageDraft = mergeHomepageConfig(
@@ -121,8 +128,11 @@ export function createContentRouter(secret: string) {
         );
       }
       if (body.banners !== undefined) patch.banners = body.banners;
+      if (body.storefront !== undefined) {
+        patch.storefront = mergeStorefrontSettings(body.storefront);
+      }
       if (Object.keys(patch).length === 0) {
-        throw new HttpError(400, "No valid fields to update (expected homepage and/or banners).");
+        throw new HttpError(400, "No valid fields to update (expected homepage, banners, and/or storefront).");
       }
       const doc = (await SiteSettings.findOneAndUpdate(
         {},

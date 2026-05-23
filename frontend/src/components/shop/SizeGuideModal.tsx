@@ -4,22 +4,21 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { cn } from "@/lib/cn";
+import type { SizeGuideConfig } from "@/types/storefront-settings";
+import { DEFAULT_SIZE_GUIDE } from "@/types/storefront-settings";
 
 type Props = {
   open: boolean;
   onClose: () => void;
+  config?: SizeGuideConfig | null;
 };
 
-const rows = [
-  { size: "XS", bust: "80", waist: "62", hip: "88" },
-  { size: "S", bust: "84", waist: "66", hip: "92" },
-  { size: "M", bust: "88", waist: "70", hip: "96" },
-  { size: "L", bust: "92", waist: "74", hip: "100" },
-  { size: "XL", bust: "96", waist: "78", hip: "104" },
-];
-
-export function SizeGuideModal({ open, onClose }: Props) {
+export function SizeGuideModal({ open, onClose, config }: Props) {
   const [mounted, setMounted] = useState(false);
+  const guide = config ?? DEFAULT_SIZE_GUIDE;
+  const columns = guide.columns?.length ? guide.columns : DEFAULT_SIZE_GUIDE.columns;
+  const rows = guide.rows?.length ? guide.rows : DEFAULT_SIZE_GUIDE.rows;
 
   useEffect(() => {
     setMounted(true);
@@ -76,10 +75,10 @@ export function SizeGuideModal({ open, onClose }: Props) {
                 <div>
                   <p className="lux-kicker text-gold/90">Fit guide</p>
                   <h2 id="size-guide-title" className="mt-2 font-display text-3xl text-ink">
-                    Size chart
+                    {guide.title ?? DEFAULT_SIZE_GUIDE.title}
                   </h2>
                   <p className="mt-2 font-sans text-sm font-light text-ink-muted">
-                    Measurements in centimetres. Between sizes? We recommend sizing up.
+                    {guide.subtitle ?? DEFAULT_SIZE_GUIDE.subtitle}
                   </p>
                 </div>
                 <button
@@ -95,19 +94,27 @@ export function SizeGuideModal({ open, onClose }: Props) {
                 <table className="min-w-[320px] w-full text-left font-sans text-sm">
                   <thead>
                     <tr className="border-b border-ivory-deep text-[10px] uppercase tracking-[0.22em] text-ink-soft">
-                      <th className="pb-3 pr-4">Size</th>
-                      <th className="pb-3 pr-4">Bust</th>
-                      <th className="pb-3 pr-4">Waist</th>
-                      <th className="pb-3">Hip</th>
+                      {columns.map((col) => (
+                        <th key={col.id} className="pb-3 pr-4 last:pr-0">
+                          {col.label}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {rows.map((row) => (
                       <tr key={row.size} className="border-b border-ivory-deep/60">
-                        <td className="py-3.5 font-medium text-ink">{row.size}</td>
-                        <td className="py-3.5 text-ink-muted">{row.bust}</td>
-                        <td className="py-3.5 text-ink-muted">{row.waist}</td>
-                        <td className="py-3.5 text-ink-muted">{row.hip}</td>
+                        {columns.map((col) => (
+                          <td
+                            key={col.id}
+                            className={cn(
+                              "py-3.5 pr-4 last:pr-0",
+                              col.id === "size" ? "font-medium text-ink" : "text-ink-muted",
+                            )}
+                          >
+                            {row[col.id] ?? "—"}
+                          </td>
+                        ))}
                       </tr>
                     ))}
                   </tbody>

@@ -16,6 +16,8 @@ const SiteSettingsSchema = new mongoose.Schema(
         placement: String,
       },
     ],
+    /** PDP size chart, suggested-products mode, etc. */
+    storefront: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
   },
   { timestamps: true },
 );

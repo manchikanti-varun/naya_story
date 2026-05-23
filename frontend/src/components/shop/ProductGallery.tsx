@@ -15,7 +15,7 @@ type Props = {
   onActiveChange: (index: number) => void;
   onOpenZoom: () => void;
   variant?: "default" | "pdp";
-  /** PDP only: second product image shown over the hero on hover / tap. */
+  /** PDP only: second image as hover overlay when viewing photo 1. */
   hoverOverlaySrc?: string;
 };
 
@@ -36,18 +36,13 @@ export function ProductGallery({
     variant === "pdp" ? "lux-product-media lux-product-media--pdp" : "lux-product-media";
   const items = useMemo(() => buildProductGalleryItems(images, captions), [images, captions]);
   const gallery = useMemo(() => items.map((it) => it.url), [items]);
-  const heroSrc = gallery[0];
-  const overlaySrc = hoverOverlaySrc?.trim() || (isPdp ? gallery[1] : undefined);
-  const hasPdpOverlay = isPdp && Boolean(overlaySrc);
-
   const safeIdx = gallery.length ? Math.min(activeIdx, gallery.length - 1) : 0;
-  const mainSrc = isPdp ? heroSrc : gallery[safeIdx];
-  const activeLabel = isPdp
-    ? mobileShowOverlay
-      ? items[1]?.label ?? "View 2"
-      : items[0]?.label
-    : items[safeIdx]?.label;
+  const overlaySrc = hoverOverlaySrc?.trim() || (isPdp && gallery.length > 1 ? gallery[1] : undefined);
+  const showHoverOverlay = isPdp && safeIdx === 0 && Boolean(overlaySrc);
+  const mainSrc = gallery[safeIdx] ?? gallery[0];
+  const activeLabel = items[safeIdx]?.label;
   const thumbStripRef = useRef<HTMLDivElement>(null);
+  const showThumbs = gallery.length > 1;
 
   const go = useCallback(
     (dir: -1 | 1) => {
@@ -61,19 +56,17 @@ export function ProductGallery({
   useEffect(() => {
     if (!isPdp) return;
     setMobileShowOverlay(false);
-  }, [heroSrc, overlaySrc, isPdp]);
+  }, [safeIdx, isPdp]);
 
   useEffect(() => {
     const el = thumbStripRef.current;
-    if (!el || isPdp) return;
+    if (!el || !showThumbs) return;
     const thumb = el.querySelector<HTMLElement>(`[data-thumb-index="${safeIdx}"]`);
     thumb?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-  }, [safeIdx, isPdp]);
+  }, [safeIdx, showThumbs]);
 
-  if (!heroSrc && !mainSrc) {
-    return (
-      <div className={cn(mediaClass, "rounded-lux", storefrontImageShellClass)} />
-    );
+  if (!mainSrc) {
+    return <div className={cn(mediaClass, "rounded-lux", storefrontImageShellClass)} />;
   }
 
   const thumbMaxH =
@@ -82,7 +75,7 @@ export function ProductGallery({
       : "max-h-[min(58vh,480px)]";
 
   const handlePdpMainClick = () => {
-    if (hasPdpOverlay && typeof window !== "undefined" && window.innerWidth < 1024) {
+    if (showHoverOverlay && typeof window !== "undefined" && window.innerWidth < 1024) {
       setMobileShowOverlay((v) => !v);
       return;
     }
@@ -91,7 +84,7 @@ export function ProductGallery({
 
   return (
     <div className="lg:flex lg:gap-3 xl:gap-4">
-      {!isPdp && gallery.length > 1 ? (
+      {showThumbs ? (
         <div className={cn("hidden shrink-0 lg:block lg:w-[4rem] xl:w-[4.5rem]", thumbMaxH)}>
           <div
             className={cn(
@@ -118,44 +111,56 @@ export function ProductGallery({
         <div className="group relative">
           <button
             type="button"
-            onClick={isPdp ? handlePdpMainClick : onOpenZoom}
+            onClick={isPdp && showHoverOverlay ? handlePdpMainClick : onOpenZoom}
             className={cn(mediaClass, "rounded-lux", storefrontImageShellClass)}
           >
-            {heroSrc || mainSrc ? (
+            {showHoverOverlay ? (
+              <>
+                <Image
+                  key={gallery[0]}
+                  src={gallery[0]!}
+                  alt={items[0]?.label ? `${productName} — ${items[0].label}` : productName}
+                  fill
+                  priority
+                  className={cn(
+                    "object-cover transition duration-[1.4s] ease-luxury",
+                    mobileShowOverlay ? "opacity-0" : "opacity-100",
+                  )}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  {...storefrontImageProps}
+                />
+                <Image
+                  src={overlaySrc!}
+                  alt={`${productName} — alternate view`}
+                  fill
+                  className={cn(
+                    "object-cover transition duration-[1.2s] ease-luxury",
+                    "opacity-0 group-hover:opacity-100",
+                    mobileShowOverlay && "opacity-100",
+                    !mobileShowOverlay && "max-lg:opacity-0",
+                  )}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  {...storefrontImageProps}
+                />
+              </>
+            ) : (
               <Image
-                key={heroSrc ?? mainSrc}
-                src={heroSrc ?? mainSrc!}
+                key={mainSrc}
+                src={mainSrc}
                 alt={activeLabel ? `${productName} — ${activeLabel}` : productName}
                 fill
-                priority
+                priority={safeIdx === 0}
                 className={cn(
                   "object-cover transition duration-[1.4s] ease-luxury",
                   !isPdp && "group-hover:scale-[1.02]",
-                  hasPdpOverlay &&
-                    (mobileShowOverlay ? "opacity-0" : "opacity-100"),
                 )}
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 {...storefrontImageProps}
               />
-            ) : null}
-            {hasPdpOverlay && overlaySrc ? (
-              <Image
-                src={overlaySrc}
-                alt={`${productName} — alternate view`}
-                fill
-                className={cn(
-                  "object-cover transition duration-[1.2s] ease-luxury",
-                  "opacity-0 group-hover:opacity-100",
-                  mobileShowOverlay && "opacity-100",
-                  !mobileShowOverlay && "max-lg:opacity-0",
-                )}
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                {...storefrontImageProps}
-              />
-            ) : null}
+            )}
           </button>
 
-          {hasPdpOverlay ? (
+          {showHoverOverlay ? (
             <>
               <p className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-ivory/90 px-3 py-1 font-sans text-[10px] uppercase tracking-[0.2em] text-ink-muted backdrop-blur-sm max-lg:hidden lg:opacity-0 lg:transition lg:group-hover:opacity-100">
                 Hover for alternate view
@@ -165,23 +170,22 @@ export function ProductGallery({
               </p>
             </>
           ) : null}
-          {isPdp ? (
-            <button
-              type="button"
-              aria-label="Expand image"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenZoom();
-              }}
-              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-ivory-deep/60 bg-ivory/90 text-ink shadow-sm transition hover:border-gold/50 hover:text-gold"
-            >
-              <Expand className="h-4 w-4" strokeWidth={1.25} />
-            </button>
-          ) : null}
 
-          {!isPdp && gallery.length > 1 ? (
+          <button
+            type="button"
+            aria-label="Expand image"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenZoom();
+            }}
+            className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-ivory-deep/60 bg-ivory/90 text-ink shadow-sm transition hover:border-gold/50 hover:text-gold"
+          >
+            <Expand className="h-4 w-4" strokeWidth={1.25} />
+          </button>
+
+          {showThumbs ? (
             <>
-              <div className="pointer-events-none absolute bottom-3 left-3 flex max-w-[min(100%,16rem)] flex-col gap-1">
+              <div className="pointer-events-none absolute bottom-3 left-3 flex max-w-[min(100%,16rem)] flex-col gap-1.5">
                 {activeLabel ? (
                   <p className="rounded-full bg-ivory/95 px-3 py-1 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-ink backdrop-blur-sm">
                     {activeLabel}
@@ -211,7 +215,7 @@ export function ProductGallery({
           ) : null}
         </div>
 
-        {!isPdp && gallery.length > 1 ? (
+        {showThumbs ? (
           <div ref={thumbStripRef} className="mt-3 md:mt-4 lg:hidden">
             <div className="lux-scroll-x gap-2.5 md:gap-3">
               {gallery.map((src, i) => (

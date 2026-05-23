@@ -1,8 +1,12 @@
 import type { RequestHandler } from "express";
 import { Router } from "express";
 import mongoose from "mongoose";
+import { mergeHomepageConfig } from "../lib/homepage-defaults.js";
+import { loadPdpSuggestedProducts } from "../lib/pdp-suggestions.js";
+import { mergeStorefrontSettings } from "../lib/storefront-settings.js";
 import { Order } from "../models/Order.js";
 import { Product } from "../models/Product.js";
+import { SiteSettings } from "../models/SiteSettings.js";
 import { User } from "../models/User.js";
 import { requireAdmin } from "../middleware/auth.js";
 
@@ -176,24 +180,31 @@ export function createAdminRouter(secret: string) {
     });
   });
 
-  /** Full product + related for admin storefront preview (includes hidden). */
+  /** Full product + suggested rail for admin storefront preview (includes hidden). */
   r.get("/products/slug/:slug", async (req, res) => {
     const raw = await Product.findOne({ slug: req.params.slug }).lean();
     if (!raw) return res.status(404).json({ message: "Not found" });
     const product = raw;
-    const category = (product as { category?: string }).category;
-    const collection = (product as { collection?: string }).collection?.trim();
-    const relatedOr: Record<string, unknown>[] = [{ category }];
-    if (collection) relatedOr.push({ collection });
-    const related = await Product.find({
-      $or: relatedOr,
-      _id: { $ne: (product as { _id: mongoose.Types.ObjectId })._id },
-      storefrontVisible: { $ne: false },
-    })
-      .sort({ createdAt: -1 })
-      .limit(16)
-      .lean();
-    res.json({ product, related });
+    const settingsDoc = (await SiteSettings.findOne().lean()) as { storefront?: unknown; homepage?: unknown } | null;
+    const homepage = mergeHomepageConfig(
+      (settingsDoc?.homepage ?? {}) as Parameters<typeof mergeHomepageConfig>[0],
+    );
+    const storefront = mergeStorefrontSettings(settingsDoc?.storefront);
+    const suggested = await loadPdpSuggestedProducts(
+      product as unknown as { _id: mongoose.Types.ObjectId; category: string; collection?: string },
+      storefront.pdpSuggestedMode ?? "auto",
+      homepage,
+    );
+    res.json({
+      product,
+      related: suggested.products,
+      suggested: {
+        mode: suggested.mode,
+        label: suggested.label,
+        products: suggested.products,
+      },
+      storefront,
+    });
   });
 
   return r;
