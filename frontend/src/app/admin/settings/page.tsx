@@ -32,7 +32,6 @@ function InfoBlock({
 export default function AdminEnvironmentPage() {
   return (
     <AdminPageLayout
-      eyebrow="System"
       title="Environment"
       maxWidthClass="max-w-2xl"
       description={

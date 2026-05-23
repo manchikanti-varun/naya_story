@@ -35,7 +35,6 @@ const cards = [
 export default function AdminMapPage() {
   return (
     <AdminPageLayout
-      eyebrow="System"
       title="Admin map"
       maxWidthClass="max-w-3xl"
       description="Quick reference — sidebar follows workflows: Website, Products, Orders, Customers, Marketing."

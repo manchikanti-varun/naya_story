@@ -175,7 +175,6 @@ export default function AdminCustomersPage() {
 
   return (
     <AdminPageLayout
-      eyebrow="Customers"
       title="Customers"
       description="Registered accounts and guest checkout emails with order history and lifetime value."
       actions={

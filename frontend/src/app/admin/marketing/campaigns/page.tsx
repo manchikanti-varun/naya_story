@@ -29,7 +29,6 @@ const lanes = [
 export default function MarketingCampaignsPage() {
   return (
     <AdminPageLayout
-      eyebrow="Marketing"
       title="Campaigns"
       maxWidthClass="max-w-4xl"
       description="Coordinate offers, editorial moments, and creative assets. Saves that affect the public site broadcast to open storefront tabs automatically."

@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 
 type Props = {
-  eyebrow?: string;
   title: string;
   description?: ReactNode;
   children: ReactNode;
@@ -14,7 +13,6 @@ type Props = {
 
 /** @deprecated Use AdminPageLayout — kept for backward compatibility. */
 export function AdminPageShell({
-  eyebrow,
   title,
   description,
   children,
@@ -25,7 +23,6 @@ export function AdminPageShell({
 }: Props) {
   return (
     <AdminPageLayout
-      eyebrow={eyebrow}
       title={title}
       description={description}
       actions={actions}

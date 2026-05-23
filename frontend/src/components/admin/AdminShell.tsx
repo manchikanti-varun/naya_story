@@ -20,21 +20,23 @@ function NavLinks({
   onNavigate?: () => void;
 }) {
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-3">
       {adminNavGroups.map((group) => (
         <details key={group.id} className="admin-nav-group group" open={group.defaultOpen ?? false}>
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-2 py-2.5 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--admin-faint)] outline-none marker:hidden hover:text-[var(--admin-muted)] [&::-webkit-details-marker]:hidden">
+          <summary className="admin-nav-group-label">
             {group.label}
             <ChevronDown
-              className="h-3.5 w-3.5 shrink-0 transition duration-200 group-open:rotate-180"
+              className="h-4 w-4 shrink-0 text-[var(--admin-faint)] transition duration-200 group-open:rotate-180"
               strokeWidth={1.75}
               aria-hidden
             />
           </summary>
-          <nav className="mt-0.5 space-y-0.5 pb-2 pl-0.5" aria-label={group.label}>
-            {group.items.map((item) => (
-              <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />
-            ))}
+          <nav className="mt-1 space-y-0.5" aria-label={group.label}>
+            {group.items
+              .filter((item) => !item.hidden)
+              .map((item) => (
+                <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} />
+              ))}
           </nav>
         </details>
       ))}
@@ -62,14 +64,14 @@ function NavLink({
     >
       {Icon ? (
         <Icon
-          className={cn("h-[15px] w-[15px] shrink-0", active ? "text-[var(--admin-accent)]" : "text-[var(--admin-faint)]")}
+          className={cn("h-4 w-4 shrink-0", active ? "text-[var(--admin-accent)]" : "text-[var(--admin-faint)]")}
           strokeWidth={1.65}
           aria-hidden
         />
       ) : (
-        <span className="w-[15px] shrink-0" aria-hidden />
+        <span className="w-4 shrink-0" aria-hidden />
       )}
-      <span className="min-w-0 truncate">{item.label}</span>
+      <span className="truncate">{item.label}</span>
     </Link>
   );
 }
@@ -119,15 +121,15 @@ export function AdminShell({
         <header className="sticky top-0 z-50 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-[var(--admin-border)] bg-[var(--admin-surface)]/95 px-4 py-3 backdrop-blur md:px-6">
           <Link
             href="/admin/products"
-            className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1.5 font-sans text-xs font-medium text-[var(--admin-ink)] shadow-sm hover:bg-[var(--admin-surface-raised)]"
+            className="inline-flex w-fit items-center gap-2 rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1.5 font-sans text-sm text-[var(--admin-ink)] hover:bg-[var(--admin-surface-raised)]"
           >
             <ChevronLeft className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-            <span className="hidden sm:inline">Back</span>
+            Back
           </Link>
           <AdminBrand href="/admin" showSubtitle={false} align="center" logoClassName="h-8 w-[108px] sm:h-9 sm:w-[124px]" logoSrc={logoSrc} />
           <Link
             href="/"
-            className="justify-self-end text-xs font-medium text-[var(--admin-muted)] underline-offset-4 hover:text-[var(--admin-ink)] hover:underline"
+            className="justify-self-end text-sm text-[var(--admin-muted)] underline-offset-4 hover:text-[var(--admin-ink)] hover:underline"
           >
             Open shop
           </Link>
@@ -150,7 +152,7 @@ export function AdminShell({
 
       <aside
         className={cn(
-          "admin-sidebar-inner fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[272px] shrink-0 flex-col overflow-hidden border-r px-3 py-5 shadow-[4px_0_28px_-18px_rgba(28,25,23,0.18)] transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0",
+          "admin-sidebar-inner fixed inset-y-0 left-0 z-50 flex h-[100dvh] max-h-[100dvh] w-[260px] shrink-0 flex-col overflow-hidden border-r border-[var(--admin-border)] px-3 py-5 shadow-[var(--admin-shadow-sm)] transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
@@ -167,7 +169,7 @@ export function AdminShell({
         </div>
 
         <nav
-          className="mt-4 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5 [-webkit-overflow-scrolling:touch]"
+          className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5 [-webkit-overflow-scrolling:touch]"
           aria-label="Admin navigation"
         >
           <NavLinks pathname={pathname} onNavigate={() => setSidebarOpen(false)} />
@@ -195,7 +197,7 @@ export function AdminShell({
           <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
             <button
               type="button"
-              className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-2 text-[var(--admin-ink)] shadow-sm lg:hidden"
+              className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-surface)] p-2 text-[var(--admin-ink)] lg:hidden"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
             >
@@ -207,7 +209,7 @@ export function AdminShell({
             <div className="hidden min-w-0 flex-1 lg:block">
               <AdminBreadcrumbs />
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto">
               <AdminCommandPalette />
             </div>
           </div>
@@ -216,7 +218,7 @@ export function AdminShell({
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-x-auto overflow-y-auto px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
+        <main className="min-h-0 flex-1 overflow-x-auto overflow-y-auto px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
           {children}
         </main>
       </div>

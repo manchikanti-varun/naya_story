@@ -22,9 +22,7 @@ export function AdminMetricCard({ label, value, hint, icon: Icon, href, accent }
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-faint)]">
-          {label}
-        </p>
+        <p className="admin-metric-label">{label}</p>
         {Icon ? (
           <Icon className="h-4 w-4 shrink-0 text-[var(--admin-accent-bright)]" strokeWidth={1.5} aria-hidden />
         ) : null}

@@ -31,16 +31,10 @@ function PagesEditor() {
   const tab = normalizePagesTab(searchParams.get("tab"));
 
   const description =
-    tab === "homepage"
-      ? "Visual section builder for the storefront home — reorder, edit, and publish sections."
-      : "Store routes — collections browse, New In, and Our Story.";
+    tab === "homepage" ? "Homepage sections — edit, reorder, publish." : "Collections, New In, and Our Story pages.";
 
   return (
-    <AdminPageLayout
-      eyebrow="Website"
-      title="Pages"
-      maxWidthClass="max-w-4xl"
-      description={description}
+    <AdminPageLayout title="Pages" maxWidthClass="max-w-4xl" description={description}
       actions={
         tab === "homepage" ? (
           <>
@@ -56,13 +50,15 @@ function PagesEditor() {
         ) : undefined
       }
     >
-      <AdminTabs
-        tabs={TABS.map((t) => ({ id: t.id, label: t.label, href: websitePagesUrl(t.id) }))}
-        activeId={tab}
-      />
+      <div className="mb-6">
+        <AdminTabs
+          tabs={TABS.map((t) => ({ id: t.id, label: t.label, href: websitePagesUrl(t.id) }))}
+          activeId={tab}
+        />
+      </div>
 
       {tab === "homepage" ? (
-        <div className="mt-6">
+        <div>
           <UnifiedHomepageBuilder embedded />
         </div>
       ) : (

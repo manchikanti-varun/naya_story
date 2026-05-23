@@ -12,7 +12,7 @@ export function AdminBreadcrumbs() {
   if (crumbs.length <= 1) return null;
 
   return (
-    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 font-sans text-xs text-[var(--admin-muted)]">
+    <nav aria-label="Breadcrumb" className="admin-breadcrumbs flex flex-wrap items-center gap-1 text-xs text-[var(--admin-muted)]">
       {crumbs.map((crumb, i) => {
         const isLast = i === crumbs.length - 1;
         return (

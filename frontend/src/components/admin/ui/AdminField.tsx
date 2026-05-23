@@ -1,8 +1,7 @@
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-const inputClass =
-  "mt-1.5 w-full rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-3 py-2.5 font-sans text-sm text-[var(--admin-ink)] shadow-sm transition placeholder:text-[var(--admin-faint)] focus:border-[var(--admin-accent)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--admin-accent-ring)]";
+const inputClass = "admin-input mt-1.5 w-full";
 
 type LabelProps = {
   label: string;
@@ -13,9 +12,9 @@ type LabelProps = {
 
 export function AdminField({ label, hint, children, className }: LabelProps) {
   return (
-    <label className={cn("block font-sans", className)}>
-      <span className="text-xs font-medium text-[var(--admin-muted)]">{label}</span>
-      {hint ? <span className="mt-0.5 block text-[11px] text-[var(--admin-faint)]">{hint}</span> : null}
+    <label className={cn("block", className)}>
+      <span className="admin-label">{label}</span>
+      {hint ? <span className="mt-1 block text-xs leading-relaxed text-[var(--admin-faint)]">{hint}</span> : null}
       {children}
     </label>
   );

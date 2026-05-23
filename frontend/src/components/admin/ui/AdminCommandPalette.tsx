@@ -42,11 +42,12 @@ export function AdminCommandPalette() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="admin-command-trigger hidden items-center gap-2 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-3 py-1.5 font-sans text-xs text-[var(--admin-muted)] shadow-sm transition hover:border-[var(--admin-border-strong)] hover:text-[var(--admin-ink)] lg:inline-flex"
+        className="admin-command-trigger inline-flex items-center gap-2 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-1.5 font-sans text-xs text-[var(--admin-muted)] transition hover:border-[var(--admin-border-strong)] hover:text-[var(--admin-ink)] sm:px-3"
+        aria-label="Search admin pages"
       >
-        <Search className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-        <span>Search</span>
-        <kbd className="ml-2 rounded border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--admin-faint)]">
+        <Search className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+        <span className="hidden sm:inline">Search</span>
+        <kbd className="hidden rounded border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--admin-faint)] sm:inline">
           ⌘K
         </kbd>
       </button>
@@ -58,7 +59,7 @@ export function AdminCommandPalette() {
             role="dialog"
             aria-modal
             aria-label="Command palette"
-            className="relative z-10 w-full max-w-lg overflow-hidden rounded-[var(--admin-radius)] border border-[var(--admin-border-strong)] bg-[var(--admin-surface)] shadow-[var(--admin-shadow)]"
+            className="admin-command-dialog relative z-10 w-full max-w-lg overflow-hidden border border-[var(--admin-border-strong)] bg-[var(--admin-surface)]"
           >
             <div className="flex items-center gap-2 border-b border-[var(--admin-border)] px-4 py-3">
               <Search className="h-4 w-4 text-[var(--admin-faint)]" strokeWidth={1.75} />
@@ -79,7 +80,7 @@ export function AdminCommandPalette() {
                     <Link
                       href={item.href}
                       onClick={close}
-                      className="flex items-center justify-between gap-3 rounded-[var(--admin-radius-sm)] px-3 py-2.5 font-sans text-sm text-[var(--admin-ink)] transition hover:bg-black/[0.04]"
+                      className="admin-command-item flex items-center justify-between gap-3 px-3 py-2.5 text-sm text-[var(--admin-ink)]"
                     >
                       <span>{item.label}</span>
                       <span className="truncate font-mono text-[10px] text-[var(--admin-faint)]">{item.href}</span>

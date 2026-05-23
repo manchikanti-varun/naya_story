@@ -44,14 +44,14 @@ export type AdminNavGroup = {
 export const adminNavGroups: AdminNavGroup[] = [
   {
     id: "dashboard",
-    label: "Dashboard",
+    label: "Home",
     defaultOpen: true,
     items: [
       {
         href: "/admin",
-        label: "Overview",
+        label: "Dashboard",
         icon: LayoutDashboard,
-        keywords: ["home", "metrics", "revenue"],
+        keywords: ["home", "metrics", "revenue", "overview"],
       },
     ],
   },
@@ -62,15 +62,16 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       {
         href: "/admin/website",
-        label: "Website hub",
+        label: "Website overview",
         icon: Globe,
-        keywords: ["storefront", "overview", "what customers see", "website"],
+        keywords: ["storefront", "hub", "what customers see"],
+        hidden: true,
       },
       {
         href: "/admin/website/pages",
         label: "Pages",
         icon: FileText,
-        keywords: ["homepage", "collections browse", "new in", "our story", "cms", "builder"],
+        keywords: ["homepage", "collections browse", "new in", "our story", "cms", "builder", "edit homepage"],
       },
       {
         href: "/admin/website/navigation",
@@ -98,9 +99,9 @@ export const adminNavGroups: AdminNavGroup[] = [
       },
       {
         href: "/admin/website/theme",
-        label: "Theme Studio",
+        label: "Theme",
         icon: Palette,
-        keywords: ["colors", "typography", "brand"],
+        keywords: ["colors", "typography", "brand", "theme studio"],
       },
       {
         href: "/admin/media",
@@ -113,13 +114,20 @@ export const adminNavGroups: AdminNavGroup[] = [
   {
     id: "products",
     label: "Products",
-    defaultOpen: true,
+    defaultOpen: false,
     items: [
       {
         href: "/admin/products",
-        label: "All products",
+        label: "Products",
         icon: Package,
-        keywords: ["catalog", "sku"],
+        keywords: ["catalog", "sku", "add product"],
+      },
+      {
+        href: "/admin/products/new",
+        label: "Add product",
+        icon: Package,
+        keywords: ["create", "new"],
+        hidden: true,
       },
       {
         href: "/admin/inventory",
@@ -132,11 +140,11 @@ export const adminNavGroups: AdminNavGroup[] = [
   {
     id: "orders",
     label: "Orders",
-    defaultOpen: true,
+    defaultOpen: false,
     items: [
       {
         href: "/admin/orders",
-        label: "All orders",
+        label: "Orders",
         icon: ShoppingBag,
         keywords: ["fulfillment", "tracking", "status"],
       },
@@ -157,7 +165,7 @@ export const adminNavGroups: AdminNavGroup[] = [
   {
     id: "customers",
     label: "Customers",
-    defaultOpen: true,
+    defaultOpen: false,
     items: [
       {
         href: "/admin/customers",
@@ -251,8 +259,25 @@ export const legacyContentLinks: AdminNavItem[] = [
 export const contentSectionLinks = legacyContentLinks;
 
 export function flattenNavItems(): AdminNavItem[] {
+  const visible = adminNavGroups.flatMap((g) => g.items.filter((i) => !i.hidden));
+  const shortcuts: AdminNavItem[] = [
+    {
+      href: "/admin/products/new",
+      label: "Add product",
+      icon: Package,
+      keywords: ["create", "new product"],
+    },
+    {
+      href: "/admin/media",
+      label: "Media library",
+      icon: ImageIcon,
+      keywords: ["upload", "images"],
+    },
+  ];
+  const seen = new Set(visible.map((i) => i.href));
   return [
-    ...adminNavGroups.flatMap((g) => g.items.filter((i) => !i.hidden)),
+    ...visible,
+    ...shortcuts.filter((s) => !seen.has(s.href)),
     ...legacyContentLinks.filter((i) => !i.hidden),
   ];
 }

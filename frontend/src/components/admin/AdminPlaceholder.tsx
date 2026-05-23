@@ -12,7 +12,7 @@ type Props = {
 
 export function AdminPlaceholder({ title, description, docsHref, docsLabel = "Open related area" }: Props) {
   return (
-    <AdminPageLayout eyebrow="Coming soon" title={title} description={description} maxWidthClass="max-w-2xl">
+    <AdminPageLayout title={title} description={description} maxWidthClass="max-w-2xl">
       <AdminCard elevated>
         <p className="font-sans text-sm leading-relaxed text-[var(--admin-muted)]">
           This surface is reserved for a future release. Your catalog, orders, and storefront CMS continue to work

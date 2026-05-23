@@ -11,7 +11,6 @@ export default function WebsiteNavigationPage() {
 
   return (
     <AdminPageLayout
-      eyebrow="Website"
       title="Store navigation"
       maxWidthClass="max-w-3xl"
       description="Primary menu labels and destinations. Homepage, /collections browse, New In, and Our Story live under Website → Pages."

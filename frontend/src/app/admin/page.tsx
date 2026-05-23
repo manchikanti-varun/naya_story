@@ -15,7 +15,6 @@ import {
   ArrowRight,
   CircleDollarSign,
   ClipboardList,
-  Home,
   Package,
   ShoppingBag,
   Users,
@@ -51,15 +50,6 @@ type Overview = {
   outOfStockCount: number;
 };
 
-import { websitePagesUrl } from "@/lib/admin/website-pages";
-
-const QUICK_LINKS = [
-  { href: websitePagesUrl("homepage"), label: "Homepage", icon: Home },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-];
-
 export default function AdminDashboardPage() {
   const { token } = useAuth();
   const [data, setData] = useState<Overview | null>(null);
@@ -88,7 +78,7 @@ export default function AdminDashboardPage() {
 
   if (!data) {
     return (
-      <AdminPageLayout eyebrow="Dashboard" title="Overview" description="Could not load dashboard data.">
+      <AdminPageLayout title="Dashboard" description="Could not load dashboard data.">
         <AdminCard padding="md">
           <p className="font-sans text-sm text-[var(--admin-muted)]">Check your connection and try refreshing.</p>
           <AdminButton variant="primary" size="sm" className="mt-4" onClick={() => void load()}>
@@ -103,24 +93,7 @@ export default function AdminDashboardPage() {
     (data.outOfStockCount ?? 0) > 0 || (data.lowStock?.length ?? 0) > 0;
 
   return (
-    <AdminPageLayout
-      eyebrow="Dashboard"
-      title="Overview"
-      description="Revenue, fulfilment queue, and recent activity. Manage your storefront under Website in the sidebar."
-    >
-      <section className="flex flex-wrap gap-2">
-        {QUICK_LINKS.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="admin-quick-link"
-          >
-            <Icon className="h-3.5 w-3.5" strokeWidth={1.65} aria-hidden />
-            {label}
-          </Link>
-        ))}
-      </section>
-
+    <AdminPageLayout title="Dashboard" description="Sales, orders, and stock at a glance.">
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <AdminMetricCard
           label="Lifetime revenue"

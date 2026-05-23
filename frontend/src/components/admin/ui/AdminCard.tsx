@@ -19,8 +19,7 @@ export function AdminCard({ children, className, padding = "md", elevated = fals
   return (
     <div
       className={cn(
-        elevated ? "admin-surface-elevated" : "admin-surface",
-        "rounded-[var(--admin-radius)]",
+        elevated ? "admin-surface-elevated" : "admin-panel",
         paddingMap[padding],
         className,
       )}

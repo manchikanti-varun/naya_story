@@ -172,9 +172,8 @@ export default function AdminOrdersPage() {
 
   return (
     <AdminPageLayout
-      eyebrow="Orders"
-      title="All orders"
-      description="Search, filter, and sort orders. Update status and tracking — changes sync to customer order views."
+      title="Orders"
+      description="Search orders and update status or tracking."
       toolbar={
         <AdminToolbar className="w-full flex-col gap-4 border-0 bg-transparent p-0 shadow-none lg:flex-row lg:items-end">
           <div className="relative min-w-0 flex-1">

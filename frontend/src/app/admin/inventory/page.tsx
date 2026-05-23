@@ -37,7 +37,7 @@ export default function AdminInventoryPage() {
 
   if (!data) {
     return (
-      <AdminPageLayout eyebrow="Operations" title="Stock" maxWidthClass="max-w-3xl">
+      <AdminPageLayout title="Stock" maxWidthClass="max-w-3xl">
         <p className="font-sans text-sm text-[var(--admin-muted)]">Loading stock data…</p>
       </AdminPageLayout>
     );
@@ -45,7 +45,6 @@ export default function AdminInventoryPage() {
 
   return (
     <AdminPageLayout
-      eyebrow="Operations"
       title="Stock"
       maxWidthClass="max-w-3xl"
       description={

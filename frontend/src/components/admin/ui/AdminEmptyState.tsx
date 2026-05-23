@@ -12,7 +12,7 @@ export function AdminEmptyState({ title, description, action, className }: Props
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-[var(--admin-radius)] border border-dashed border-[var(--admin-border-strong)] bg-[var(--admin-surface-raised)]/60 px-6 py-14 text-center",
+        "admin-empty-state flex flex-col items-center justify-center px-6 py-14 text-center",
         className,
       )}
     >

@@ -84,10 +84,7 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
 
   const body = (
     <>
-      <AdminSection
-        title="Homepage sections"
-        description="Drag a section or use arrows to reorder. Click Edit for content, design, and layout tabs."
-      >
+      <AdminSection title="Sections" description="Edit a section, drag to reorder, or turn off to hide on the shop.">
         <ol className="space-y-3">
           {storefrontBlocks.map((b, sfIdx) => {
             const meta = getSectionMeta(b.type);
@@ -129,20 +126,6 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
           })}
         </ol>
       </AdminSection>
-
-      <AdminCard elevated padding="md" className="border-[var(--admin-accent)]/15 bg-[var(--admin-accent-soft)]/30">
-        <p className="font-sans text-sm text-[var(--admin-ink)]">
-          <span className="font-semibold">Workflow:</span> reorder here → Edit a section → adjust Content & Design
-          tabs → <span className="font-semibold">Save draft</span> or <span className="font-semibold">Publish live</span>{" "}
-          in the edit panel (top or bottom) or the bar at the bottom of the page. Announcement bar and footer are
-          under <span className="font-semibold">Website → Announcement bar</span> and{" "}
-          <span className="font-semibold">Website → Footer</span>. Use{" "}
-          <kbd className="rounded border border-[var(--admin-border)] bg-[var(--admin-surface)] px-1.5 py-0.5 font-mono text-[10px]">
-            ⌘K
-          </kbd>{" "}
-          to jump anywhere in admin.
-        </p>
-      </AdminCard>
     </>
   );
 
@@ -152,10 +135,9 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
         body
       ) : (
         <AdminPageLayout
-          eyebrow="Website"
           title="Homepage"
           maxWidthClass="max-w-4xl"
-          description="Reorder sections, toggle visibility, and edit content and design. Save draft stores your work; Publish live updates the public storefront when you are ready."
+          description="Edit sections and publish when ready."
           actions={
             <>
               <Link href="/admin/content/preview/hero" className="admin-action-link">

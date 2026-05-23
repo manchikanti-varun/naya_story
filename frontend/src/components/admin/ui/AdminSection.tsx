@@ -15,11 +15,7 @@ export function AdminSection({ title, description, actions, children, className 
       {title || description || actions ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            {title ? (
-              <h2 className="font-sans text-xs font-semibold uppercase tracking-[0.2em] text-[var(--admin-faint)]">
-                {title}
-              </h2>
-            ) : null}
+            {title ? <h2 className="admin-section-heading">{title}</h2> : null}
             {description ? (
               <p className="mt-1 max-w-2xl font-sans text-sm text-[var(--admin-muted)]">{description}</p>
             ) : null}

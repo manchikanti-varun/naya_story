@@ -22,7 +22,6 @@ const lanes = [
 export default function MarketingFeaturedPage() {
   return (
     <AdminPageLayout
-      eyebrow="Marketing"
       title="Featured placements"
       maxWidthClass="max-w-3xl"
       description="Homepage merchandising is driven by explicit product IDs so merchandisers control the story without duplicate catalog entries."

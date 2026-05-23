@@ -23,7 +23,10 @@ function ContentEditorChrome({ children }: { children: ReactNode }) {
 
   const saveBar =
     !isPreviewRoute && hp && !bypassHomepageWait ? (
-      <AdminStickySaveBar dirty={isDirty || Boolean(cmsMeta?.hasUnpublishedChanges)}>
+      <AdminStickySaveBar
+        dirty={isDirty || Boolean(cmsMeta?.hasUnpublishedChanges)}
+        message="Save draft keeps your work · Publish updates the live store"
+      >
         <CmsEditorSaveActions actionsOnly showPreviewLink />
       </AdminStickySaveBar>
     ) : null;

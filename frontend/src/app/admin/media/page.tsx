@@ -77,7 +77,6 @@ export default function AdminMediaPage() {
 
   return (
     <AdminPageLayout
-      eyebrow="Website"
       title="Media library"
       description="Upload to Cloudinary or paste HTTPS URLs. In page editors, use Library next to any image field to pick from here."
     >

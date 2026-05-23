@@ -12,7 +12,7 @@ export function AdminToolbar({ children, className }: Props) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-[var(--admin-shadow-sm)] sm:flex-row sm:flex-wrap sm:items-center",
+        "admin-panel flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center",
         className,
       )}
     >

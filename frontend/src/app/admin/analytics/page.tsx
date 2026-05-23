@@ -48,7 +48,7 @@ export default function AdminAnalyticsPage() {
 
   if (!data) {
     return (
-      <AdminPageLayout eyebrow="Insights" title="Analytics" description="Loading metrics…">
+      <AdminPageLayout title="Analytics" description="Loading metrics…">
         <p className="font-sans text-sm text-[var(--admin-muted)]">Pulling analytics…</p>
       </AdminPageLayout>
     );
@@ -64,7 +64,6 @@ export default function AdminAnalyticsPage() {
 
   return (
     <AdminPageLayout
-      eyebrow="Insights"
       title="Analytics"
       description="Revenue rhythm and order pace from paid orders. Replace the conversion proxy with funnel events when you scale traffic."
     >

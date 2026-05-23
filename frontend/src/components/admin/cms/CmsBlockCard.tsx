@@ -54,9 +54,9 @@ export function CmsBlockCard({
   return (
     <li
       className={cn(
-        "admin-surface overflow-hidden rounded-[var(--admin-radius)] transition",
-        !enabled && "opacity-60",
-        isDragOver && "ring-2 ring-[var(--admin-accent)]/40",
+        "admin-block-card overflow-hidden",
+        !enabled && "opacity-55",
+        isDragOver && "ring-2 ring-[var(--admin-accent)]/35",
         draggable && "cursor-grab active:cursor-grabbing",
       )}
       draggable={draggable}
@@ -95,7 +95,7 @@ export function CmsBlockCard({
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="font-sans text-sm font-semibold text-[var(--admin-ink)]">{title}</h3>
+              <h3 className="text-sm font-semibold text-[var(--admin-ink)]">{title}</h3>
               <AdminBadge tone={enabled ? "success" : "neutral"}>
                 {enabled ? "Visible" : "Hidden"}
               </AdminBadge>
@@ -115,7 +115,7 @@ export function CmsBlockCard({
             <div className="flex gap-0.5">
               <button
                 type="button"
-                className="rounded-lg p-1.5 text-[var(--admin-muted)] hover:bg-black/[0.04] disabled:opacity-30"
+                className="admin-icon-btn admin-icon-btn--secondary !p-1.5 disabled:opacity-30"
                 disabled={!onMoveUp}
                 onClick={onMoveUp}
                 aria-label="Move up"
@@ -124,7 +124,7 @@ export function CmsBlockCard({
               </button>
               <button
                 type="button"
-                className="rounded-lg p-1.5 text-[var(--admin-muted)] hover:bg-black/[0.04] disabled:opacity-30"
+                className="admin-icon-btn admin-icon-btn--secondary !p-1.5 disabled:opacity-30"
                 disabled={!onMoveDown}
                 onClick={onMoveDown}
                 aria-label="Move down"
@@ -136,38 +136,24 @@ export function CmsBlockCard({
 
           <div className="flex flex-wrap gap-1.5">
             {onEdit ? (
-              <button
-                type="button"
-                onClick={onEdit}
-                className="inline-flex items-center gap-1 rounded-full bg-[var(--admin-ink)] px-2.5 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-white"
-              >
-                <Pencil className="h-3 w-3" />
+              <button type="button" onClick={onEdit} className="admin-icon-btn admin-icon-btn--primary">
+                <Pencil className="h-3.5 w-3.5" />
                 Edit
               </button>
             ) : editHref ? (
-              <Link
-                href={editHref}
-                className="inline-flex items-center gap-1 rounded-full bg-[var(--admin-ink)] px-2.5 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-white"
-              >
-                <Pencil className="h-3 w-3" />
+              <Link href={editHref} className="admin-icon-btn admin-icon-btn--primary">
+                <Pencil className="h-3.5 w-3.5" />
                 Edit
               </Link>
             ) : null}
             {previewHref ? (
-              <Link
-                href={previewHref}
-                className="inline-flex items-center gap-1 rounded-full border border-[var(--admin-border)] px-2.5 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--admin-muted)] hover:text-[var(--admin-ink)]"
-              >
-                <Eye className="h-3 w-3" />
+              <Link href={previewHref} className="admin-icon-btn admin-icon-btn--secondary">
+                <Eye className="h-3.5 w-3.5" />
                 Preview
               </Link>
             ) : null}
             {canToggle && onToggle ? (
-              <button
-                type="button"
-                onClick={onToggle}
-                className="inline-flex items-center gap-1 rounded-full border border-[var(--admin-border-strong)] px-2.5 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--admin-ink)] hover:bg-[var(--admin-surface-raised)]"
-              >
+              <button type="button" onClick={onToggle} className="admin-icon-btn admin-icon-btn--secondary">
                 {enabled ? "Hide" : "Show"}
               </button>
             ) : null}

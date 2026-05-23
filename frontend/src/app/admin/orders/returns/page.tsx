@@ -6,7 +6,6 @@ import { AdminCard } from "@/components/admin/ui/AdminCard";
 export default function AdminReturnsPage() {
   return (
     <AdminPageLayout
-      eyebrow="Orders"
       title="Returns & exchanges"
       maxWidthClass="max-w-2xl"
       description="Operational hub for post-purchase workflows. Full RMA automation can plug in here (carrier labels, restock, partial refunds)."

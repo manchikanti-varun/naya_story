@@ -107,23 +107,9 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <AdminPageLayout
-      eyebrow="Catalog"
-      title="Products"
-      description={
-        <>
-          Search, edit, duplicate, or preview. Homepage rails pick products from{" "}
-          <Link href="/admin/content" className="font-medium text-[var(--admin-accent)] underline-offset-2">
-            section editors
-          </Link>
-          .
-        </>
-      }
+    <AdminPageLayout title="Products" description="Search, edit, duplicate, or preview your catalog."
       actions={
-        <Link
-          href="/admin/products/new"
-          className="inline-flex items-center justify-center rounded-full bg-gradient-to-b from-[#292524] to-[#1c1917] px-5 py-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-white shadow-md ring-1 ring-white/10 transition hover:from-[#44403c] hover:to-[#292524]"
-        >
+        <Link href="/admin/products/new" className="admin-btn admin-btn--md admin-btn--primary">
           New product
         </Link>
       }

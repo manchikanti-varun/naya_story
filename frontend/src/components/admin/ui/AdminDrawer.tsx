@@ -67,9 +67,9 @@ export function AdminDrawer({
           className,
         )}
       >
-        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--admin-border)] bg-gradient-to-b from-[var(--admin-surface-raised)] to-[var(--admin-surface)] px-6 py-5">
+        <header className="admin-drawer-header flex shrink-0 items-start justify-between gap-4 px-6 py-5">
           <div className="min-w-0">
-            <p className="admin-kicker">Edit section</p>
+            <p className="admin-metric-label text-[var(--admin-accent)]">Edit section</p>
             <h2
               id="admin-drawer-title"
               className="admin-page-title mt-1 text-lg text-[var(--admin-ink)] md:text-xl"

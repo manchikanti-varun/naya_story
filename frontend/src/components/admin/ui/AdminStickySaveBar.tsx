@@ -14,11 +14,11 @@ export function AdminStickySaveBar({ dirty, message, children, className }: Prop
   return (
     <div
       className={cn(
-        "pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4 pt-6 lg:pl-[272px]",
+        "pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-4 pt-6 lg:pl-[260px]",
         className,
       )}
     >
-      <div className="pointer-events-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-3 rounded-full border border-[var(--admin-border-strong)] bg-[var(--admin-surface)]/95 px-4 py-2.5 shadow-[var(--admin-shadow)] backdrop-blur-md">
+      <div className="admin-save-bar pointer-events-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="min-w-0 pl-1 font-sans text-xs text-[var(--admin-muted)]">
           {dirty ? (
             <span className="inline-flex items-center gap-2 font-medium text-amber-950">

@@ -13,10 +13,35 @@ import { AdminStickySaveBar } from "@/components/admin/ui/AdminStickySaveBar";
 import { cn } from "@/lib/cn";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 
-const labelClass = "font-sans text-xs font-medium text-[var(--admin-muted)]";
+const labelClass = "admin-label";
 const inputClass = "admin-input mt-1.5 w-full";
 
 type SectionKey = "basic" | "pricing" | "inventory" | "taxonomy" | "media" | "flags" | "pdp";
+
+const SECTION_TITLES: Record<SectionKey, string> = {
+  basic: "Basics",
+  pricing: "Pricing",
+  inventory: "Sizes & stock",
+  taxonomy: "Category & tags",
+  media: "Photos",
+  flags: "Visibility & badges",
+  pdp: "Extra product page text",
+};
+
+function FormSection({
+  id,
+  children,
+}: {
+  id: SectionKey;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="admin-form-block admin-panel">
+      <h2 className="admin-form-block-title">{SECTION_TITLES[id]}</h2>
+      <div className="admin-form-block-body">{children}</div>
+    </section>
+  );
+}
 
 const defaultVariant = (): ProductVariant => ({
   sku: `NS-${Date.now().toString(36).toUpperCase().slice(-6)}`,
@@ -68,34 +93,6 @@ const emptyProduct = (): Partial<Product> & {
   storefrontVisible: true,
 });
 
-function Collapsible({
-  title,
-  id,
-  open,
-  onToggle,
-  children,
-}: {
-  title: string;
-  id: SectionKey;
-  open: boolean;
-  onToggle: (id: SectionKey) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="admin-surface overflow-hidden rounded-[var(--admin-radius)]">
-      <button
-        type="button"
-        onClick={() => onToggle(id)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left font-sans text-base font-semibold text-[var(--admin-ink)] transition hover:bg-[var(--admin-surface-raised)]"
-      >
-        {title}
-        <span className="font-sans text-xs text-[var(--admin-faint)]">{open ? "Hide" : "Show"}</span>
-      </button>
-      {open ? <div className="border-t border-[var(--admin-border)] px-5 py-5">{children}</div> : null}
-    </section>
-  );
-}
-
 export function ProductEditor({
   productId,
   token,
@@ -107,15 +104,6 @@ export function ProductEditor({
   const [loading, setLoading] = useState(Boolean(productId));
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
-    basic: true,
-    pricing: true,
-    inventory: true,
-    taxonomy: true,
-    media: true,
-    flags: true,
-    pdp: true,
-  });
   const [form, setForm] = useState(emptyProduct);
   const [tagInput, setTagInput] = useState("");
 
@@ -149,12 +137,6 @@ export function ProductEditor({
       cancelled = true;
     };
   }, [productId, token]);
-
-  const toggle = (id: SectionKey) =>
-    setOpenSections((s) => ({
-      ...s,
-      [id]: !s[id],
-    }));
 
   const payload = useMemo(() => {
     const images = form.images.map((s) => s.trim()).filter(Boolean);
@@ -240,22 +222,14 @@ export function ProductEditor({
     <div className="pb-28">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <Link
-            href="/admin/products"
-            className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--admin-faint)] hover:text-[var(--admin-ink)]"
-          >
+          <Link href="/admin/products" className="admin-back-link">
             ← Products
           </Link>
-          <h1 className="mt-2 font-sans text-2xl font-semibold tracking-tight text-[var(--admin-ink)] md:text-3xl">
-            {productId ? "Edit product" : "New product"}
-          </h1>
+          <h1 className="admin-page-title mt-3">{productId ? "Edit product" : "New product"}</h1>
         </div>
         {productId ? (
-          <Link
-            href={`/admin/preview/product/${form.slug}`}
-            className="inline-flex rounded-full border border-[var(--admin-border)] bg-[var(--admin-surface)] px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-ink)] shadow-sm hover:bg-[var(--admin-surface-raised)]"
-          >
-            Preview storefront
+          <Link href={`/admin/preview/product/${form.slug}`} className="admin-btn admin-btn--secondary admin-btn--sm">
+            Preview
           </Link>
         ) : null}
       </div>
@@ -266,8 +240,9 @@ export function ProductEditor({
         </p>
       ) : null}
 
-      <div className="space-y-4">
-        <Collapsible title="Basic information" id="basic" open={openSections.basic} onToggle={toggle}>
+      <div className="admin-product-form space-y-10">
+        <FormSection id="basic"
+>
           <div className="grid gap-4 md:grid-cols-2">
             <label className={labelClass}>
               Product name
@@ -310,9 +285,10 @@ export function ProductEditor({
               />
             </label>
           </div>
-        </Collapsible>
+        </FormSection>
 
-        <Collapsible title="Product detail page (storefront)" id="pdp" open={openSections.pdp} onToggle={toggle}>
+        <FormSection id="pdp"
+>
           <p className="mb-4 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
             Leave a field blank to use the automatic default. The story block and accordions also use{" "}
             <strong className="text-[var(--admin-ink)]">Full description</strong>,{" "}
@@ -372,9 +348,10 @@ export function ProductEditor({
               />
             </label>
           </div>
-        </Collapsible>
+        </FormSection>
 
-        <Collapsible title="Pricing" id="pricing" open={openSections.pricing} onToggle={toggle}>
+        <FormSection id="pricing"
+>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className={labelClass}>
               Price (₹)
@@ -418,9 +395,10 @@ export function ProductEditor({
               />
             </label>
           </div>
-        </Collapsible>
+        </FormSection>
 
-        <Collapsible title="Inventory & variants" id="inventory" open={openSections.inventory} onToggle={toggle}>
+        <FormSection id="inventory"
+>
           <div className="space-y-3">
             {form.variants.map((v, i) => (
               <div
@@ -498,9 +476,10 @@ export function ProductEditor({
               Add variant
             </button>
           </div>
-        </Collapsible>
+        </FormSection>
 
-        <Collapsible title="Categories & attributes" id="taxonomy" open={openSections.taxonomy} onToggle={toggle}>
+        <FormSection id="taxonomy"
+>
           <div className="grid gap-4 md:grid-cols-2">
             <label className={labelClass}>
               Category
@@ -575,9 +554,10 @@ export function ProductEditor({
               />
             </label>
           </div>
-        </Collapsible>
+        </FormSection>
 
-        <Collapsible title="Product media" id="media" open={openSections.media} onToggle={toggle}>
+        <FormSection id="media"
+>
           <ProductImagesField
             token={token}
             images={form.images}
@@ -606,9 +586,10 @@ export function ProductEditor({
               onChange={(newInHoverImage) => setForm((f) => ({ ...f, newInHoverImage }))}
             />
           </div>
-        </Collapsible>
+        </FormSection>
 
-        <Collapsible title="Merchandising flags" id="flags" open={openSections.flags} onToggle={toggle}>
+        <FormSection id="flags"
+>
           <div className="grid gap-3 sm:grid-cols-2">
             {(
               [
@@ -653,7 +634,7 @@ export function ProductEditor({
               />
             </label>
           </div>
-        </Collapsible>
+        </FormSection>
       </div>
 
       <AdminStickySaveBar message="Changes sync to the API on save.">

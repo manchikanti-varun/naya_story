@@ -44,7 +44,6 @@ export default function AdminCouponsPage() {
 
   return (
     <AdminPageLayout
-      eyebrow="Marketing"
       title="Coupons"
       description="Discount codes apply at checkout. Toggling activation updates the storefront after save."
     >
