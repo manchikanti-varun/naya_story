@@ -52,6 +52,7 @@ export function CmsSectionEditorShell({
   );
 
   const activeTab = enabledTabs.find((t) => t.id === active) ?? enabledTabs[0];
+  const showTabs = enabledTabs.length > 1;
 
   return (
     <article
@@ -92,21 +93,23 @@ export function CmsSectionEditorShell({
         </header>
       ) : null}
 
-      <div className={cn("admin-cms-tabs-wrap", compact ? "" : "border-b border-[var(--admin-border)] px-4 sm:px-6")}>
-        <div className="admin-cms-tabs py-2">
-          {enabledTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              data-active={active === tab.id}
-              onClick={() => setActive(tab.id)}
-              className="admin-cms-tab"
-            >
-              {tab.label ?? TAB_LABELS[tab.id]}
-            </button>
-          ))}
+      {showTabs ? (
+        <div className={cn("admin-cms-tabs-wrap", compact ? "" : "border-b border-[var(--admin-border)] px-4 sm:px-6")}>
+          <div className="admin-cms-tabs py-2">
+            {enabledTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                data-active={active === tab.id}
+                onClick={() => setActive(tab.id)}
+                className="admin-cms-tab"
+              >
+                {tab.label ?? TAB_LABELS[tab.id]}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className={cn("admin-cms-tab-body", compact ? "pt-5" : "p-6 sm:p-8")}>
         {activeTab?.hint ? (

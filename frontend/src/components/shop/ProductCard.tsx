@@ -10,6 +10,9 @@ import { apiFetch } from "@/lib/api";
 import type { Product } from "@/types";
 import { cn } from "@/lib/cn";
 import { QuickViewModal } from "@/components/shop/QuickViewModal";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
+import { isNextImageSrc } from "@/lib/image-src";
+import { ProductPriceDisplay } from "@/components/shop/ProductPriceDisplay";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
 
 type Props = {
@@ -19,11 +22,9 @@ type Props = {
 };
 
 export function ProductCard({ product, className, badge }: Props) {
-  const [hovered, setHovered] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const { token, wishlistIds, updateWishlistLocal } = useAuth();
-  const secondImage = product.images[1];
-  const primary = product.images[0];
+  const primary = product.images[0]?.trim();
   const liked = useMemo(
     () => Boolean(wishlistIds.includes(product._id)),
     [wishlistIds, product._id],
@@ -50,41 +51,24 @@ export function ProductCard({ product, className, badge }: Props) {
     <motion.article
       layout
       className={cn("group", className)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       whileHover={{ y: -6 }}
       transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link href={`/products/${product.slug}`} className="block">
         <div className={cn("lux-product-frame", storefrontImageShellClass)}>
-          {primary ? (
+          {isNextImageSrc(primary) ? (
             <Image
               src={primary}
               alt={product.name}
               fill
               loading="lazy"
               sizes="(max-width:768px) 50vw, 25vw"
-              className={cn(
-                "lux-image-zoom object-cover",
-                secondImage && hovered ? "scale-[1.03] opacity-0" : "scale-100 opacity-100",
-              )}
+              className="lux-image-zoom object-cover"
               {...storefrontImageProps}
             />
-          ) : null}
-          {secondImage ? (
-            <Image
-              src={secondImage}
-              alt=""
-              fill
-              loading="lazy"
-              sizes="(max-width:768px) 50vw, 25vw"
-              className={cn(
-                "lux-image-zoom object-cover",
-                hovered ? "scale-[1.03] opacity-100" : "opacity-0",
-              )}
-              {...storefrontImageProps}
-            />
-          ) : null}
+          ) : (
+            <MediaPlaceholder />
+          )}
           {badge ? (
             <span className="pointer-events-none absolute left-4 top-4 rounded-full border border-[rgb(245_241_236/0.55)] bg-[rgb(44_40_37/0.3)] px-3 py-1 font-sans text-[9px] font-light uppercase tracking-[0.22em] text-[rgb(245_241_236/0.95)] backdrop-blur-sm">
               {badge === "bestseller"
@@ -124,14 +108,7 @@ export function ProductCard({ product, className, badge }: Props) {
         <div className="mt-3 space-y-1.5">
           <h3 className="lux-product-name">{product.name}</h3>
           <p className="lux-product-meta">{product.category}</p>
-          <div className="flex items-baseline gap-3">
-            <span className="lux-product-price">₹{product.price.toLocaleString("en-IN")}</span>
-            {product.compareAtPrice && product.compareAtPrice > product.price ? (
-              <span className="font-sans text-xs text-ink-soft line-through">
-                ₹{product.compareAtPrice.toLocaleString("en-IN")}
-              </span>
-            ) : null}
-          </div>
+          <ProductPriceDisplay product={product} size="compact" />
         </div>
       </Link>
       <QuickViewModal product={product} open={quickOpen} onClose={() => setQuickOpen(false)} />

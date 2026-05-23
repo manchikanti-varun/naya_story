@@ -1,4 +1,5 @@
 import type { HomepageLayoutBlockType, HomepageStorefrontBlockType } from "@/types/homepage";
+import { homepageSectionEditUrl } from "@/lib/admin/homepage-edit";
 
 export type SectionMeta = {
   label: string;
@@ -23,7 +24,7 @@ export const STOREFRONT_SECTION_META: Record<HomepageStorefrontBlockType, Sectio
   bestsellers: {
     label: "Bestsellers rail",
     description: "Curated product carousel — homepage commerce.",
-    editHref: "/admin/content/bestsellers",
+    editHref: homepageSectionEditUrl("bestsellers"),
     previewSlug: "bestsellers",
   },
   lookbook: {
@@ -35,7 +36,7 @@ export const STOREFRONT_SECTION_META: Record<HomepageStorefrontBlockType, Sectio
   newIn: {
     label: "New In rail",
     description: "Latest pieces on the homepage.",
-    editHref: "/admin/content/new-in-home",
+    editHref: homepageSectionEditUrl("newIn"),
     previewSlug: "new-in-home",
   },
   craftsmanship: {
@@ -47,7 +48,7 @@ export const STOREFRONT_SECTION_META: Record<HomepageStorefrontBlockType, Sectio
   categories: {
     label: "Shop by category",
     description: "Category cards linking into collections.",
-    editHref: "/admin/content/categories",
+    editHref: homepageSectionEditUrl("categories"),
     previewSlug: "categories",
   },
   asSeenIn: {

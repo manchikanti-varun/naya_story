@@ -9,6 +9,8 @@ import { lineKey, useCart } from "@/context/cart-context";
 import { validateCouponCode, useCouponDiscount } from "@/hooks/use-coupon-discount";
 import { cn } from "@/lib/cn";
 import { FREE_SHIPPING_THRESHOLD_INR } from "@/lib/store-shipping";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
+import { isNextImageSrc } from "@/lib/image-src";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
 
 export function CartDrawer() {
@@ -97,14 +99,18 @@ export function CartDrawer() {
                             storefrontImageShellClass,
                           )}
                         >
-                          <Image
-                            src={line.image}
-                            alt={line.name}
-                            fill
-                            className="object-cover"
-                            sizes="96px"
-                            {...storefrontImageProps}
-                          />
+                          {isNextImageSrc(line.image) ? (
+                            <Image
+                              src={line.image}
+                              alt={line.name}
+                              fill
+                              className="object-cover"
+                              sizes="96px"
+                              {...storefrontImageProps}
+                            />
+                          ) : (
+                            <MediaPlaceholder />
+                          )}
                         </div>
                         <div className="flex flex-1 flex-col gap-3">
                           <div className="flex justify-between gap-4">

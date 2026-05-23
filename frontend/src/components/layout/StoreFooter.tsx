@@ -6,8 +6,8 @@ import { SiInstagram } from "react-icons/si";
 import type { HomepageConfig } from "@/types/homepage";
 import type { LegalPageSummary } from "@/types/legal-page";
 import { legalPageHref } from "@/types/legal-page";
-import { bustLogoPath } from "@/lib/logo-cache";
 import { SITE_NAME, STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
+import { resolveStoreLogoSrc } from "@/lib/image-src";
 
 const fallbackFooter: HomepageConfig["footer"] = {
   logoUrl: STORE_LOGO_PUBLIC_PATH,
@@ -92,7 +92,7 @@ export function StoreFooter({
   const instagramHref =
     socials.find((s) => s.platform === "instagram")?.href ?? "https://instagram.com";
   const whatsappHref = `https://wa.me/${safeFooter.phone.replace(/[^\d]/g, "")}`;
-  const footerLogoSrc = bustLogoPath(safeFooter.logoUrl, logoRev);
+  const footerLogoSrc = resolveStoreLogoSrc(safeFooter.logoUrl, logoRev);
 
   return (
     <footer className="relative overflow-hidden border-t border-ivory-deep bg-gradient-to-b from-ivory via-ivory-muted to-ivory-soft">

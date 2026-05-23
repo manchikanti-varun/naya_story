@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ExternalLink, Sparkles } from "lucide-react";
@@ -17,10 +17,8 @@ import { AdminSection } from "@/components/admin/ui/AdminSection";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
 import { AdminInlineLoading } from "@/components/admin/ui/AdminLoader";
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
-import {
-  isEditableHomepageBlock,
-  renderHomepageSectionEditor,
-} from "@/lib/admin/section-editor-registry";
+import { renderHomepageSectionEditor } from "@/lib/admin/section-editor-registry";
+import { homepageSectionEditUrl, resolveHomepageEditSection } from "@/lib/admin/homepage-edit";
 import type { HomepageLayoutBlockType, HomepageStorefrontBlockType } from "@/types/homepage";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 
@@ -41,7 +39,13 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
-  const editParam = searchParams.get("edit") as HomepageLayoutBlockType | null;
+  const rawEdit = searchParams.get("edit");
+  const editSection = resolveHomepageEditSection(rawEdit);
+
+  useEffect(() => {
+    if (!rawEdit || !editSection || rawEdit === editSection) return;
+    router.replace(homepageSectionEditUrl(editSection), { scroll: false });
+  }, [rawEdit, editSection, router]);
 
   const closeDrawer = useCallback(() => {
     router.replace("/admin/website/pages?tab=homepage", { scroll: false });
@@ -59,7 +63,7 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
   }
 
   const storefrontBlocks = getOrderedStorefrontBlocks(hp);
-  const drawerMeta = editParam ? getSectionMeta(editParam) : null;
+  const drawerMeta = editSection ? getSectionMeta(editSection) : null;
 
   const toggleBlock = (id: string) => {
     setHp((prev) => {
@@ -78,9 +82,9 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
   };
 
   const drawerContent = useMemo(() => {
-    if (!editParam || !isEditableHomepageBlock(editParam)) return null;
-    return renderHomepageSectionEditor(editParam);
-  }, [editParam]);
+    if (!editSection) return null;
+    return renderHomepageSectionEditor(editSection);
+  }, [editSection]);
 
   const body = (
     <>
@@ -105,7 +109,7 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
                 onMoveDown={
                   sfIdx < storefrontBlocks.length - 1 ? () => moveStorefrontBlock(type, 1) : undefined
                 }
-                onEdit={isEditableHomepageBlock(b.type) ? () => openEdit(b.type) : undefined}
+                onEdit={() => openEdit(b.type)}
                 onDragStart={() => setDragIndex(sfIdx)}
                 onDragEnd={() => {
                   setDragIndex(null);
@@ -156,13 +160,13 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
       )}
 
       <AdminDrawer
-        open={Boolean(editParam && drawerContent)}
+        open={Boolean(editSection && drawerContent)}
         onClose={closeDrawer}
         title={drawerMeta?.label ?? "Edit section"}
         description={drawerMeta?.description}
-        size={editParam === "hero" ? "xl" : "lg"}
+        size={editSection === "hero" ? "xl" : "lg"}
       >
-        {drawerContent}
+        <div key={editSection ?? "none"}>{drawerContent}</div>
       </AdminDrawer>
     </>
   );

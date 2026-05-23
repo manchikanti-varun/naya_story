@@ -82,19 +82,12 @@ export function ProductImagesField({ images: imagesProp, captions: captionsProp,
       <CloudinaryImageUpload
         token={token}
         category="product"
-        label="Upload to Cloudinary"
-        hint={`Adds to gallery (max ${MAX_IMAGES}). Also saved in Media library.`}
+        label="Upload photo"
+        hint={`Up to ${MAX_IMAGES} images. Saved to Media library.`}
         disabled={atMax}
         onUploaded={(url) => addUrl(url)}
       />
-      <AdminField
-        label="Gallery images"
-        hint={
-          token
-            ? `First image is the main photo on /products/your-slug. Label each shot (front, detail, fabric) for the design gallery below the hero.`
-            : `First image is the main product photo. Label each shot for the storefront design section.`
-        }
-      >
+      <AdminField label="Add by URL">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <AdminInput
             type="url"
@@ -159,10 +152,14 @@ export function ProductImagesField({ images: imagesProp, captions: captionsProp,
                 <Image src={url} alt="" fill className="object-cover" sizes="64px" unoptimized />
               </div>
               <div className="min-w-0 flex-1 space-y-2">
-                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-faint)]">
-                  {i === 0 ? "Primary · main gallery & cards" : `Gallery image ${i + 1}`}
+                <p className="text-xs font-medium text-[var(--admin-muted)]">
+                  {i === 0
+                    ? "Photo 1 — Hero (product page)"
+                    : i === 1
+                      ? "Photo 2 — Hover on hero (product page only)"
+                      : `Photo ${i + 1} — Design & construction grid`}
                 </p>
-                <AdminField label="Design label" className="!mt-0">
+                <AdminField label="Label" className="!mt-0">
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <AdminSelect
                       className="sm:max-w-[11rem]"
@@ -226,9 +223,9 @@ export function ProductImagesField({ images: imagesProp, captions: captionsProp,
         </ul>
       )}
 
-      <p className="font-sans text-[11px] text-[var(--admin-faint)]">
-        {images.length}/{MAX_IMAGES} images · All appear in the product page gallery; additional shots show in
-        &quot;Design & construction&quot; on <span className="font-mono">/products/[slug]</span>.
+      <p className="text-xs text-[var(--admin-faint)]">
+        {images.length}/{MAX_IMAGES} · Photo 1 = hero, photo 2 = hover on hero, photos 3+ = Design
+        &amp; construction section only (no duplicates on cards or listings).
       </p>
     </div>
   );

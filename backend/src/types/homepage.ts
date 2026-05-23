@@ -30,6 +30,18 @@ export type CategoryCard = {
   order: number;
 };
 
+export type GlobalStoreCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  href: string;
+  enabled: boolean;
+  order: number;
+  homepage: boolean;
+  collections: boolean;
+};
+
 export type TopPromoBarConfig = {
   enabled: boolean;
   message: string;
@@ -194,6 +206,7 @@ export type HomepageConfig = {
   editorial?: HomepageEditorialConfig;
   bestsellers: {
     enabled?: boolean;
+    kicker?: string;
     title: string;
     subtitle: string;
     productIds: string[];
@@ -203,6 +216,7 @@ export type HomepageConfig = {
   };
   newIn: {
     enabled?: boolean;
+    kicker?: string;
     title: string;
     subtitle: string;
     productIds: string[];
@@ -218,8 +232,10 @@ export type HomepageConfig = {
     subheading?: string;
     productIds: string[];
   };
+  globalCategories?: GlobalStoreCategory[];
   categories: {
     enabled?: boolean;
+    kicker?: string;
     title: string;
     subtitle: string;
     items: CategoryCard[];

@@ -8,7 +8,7 @@ import type { HomepageSectionTextKey, HomepageConfig, SectionTextColors } from "
 export type CmsTextSection = HomepageSectionTextKey;
 
 const LABELS: Record<keyof SectionTextColors, string> = {
-  kicker: "Eyebrow / kicker",
+  kicker: "Eyebrow color",
   heading: "Title",
   subheading: "Subtitle",
   body: "Body / message",
@@ -35,7 +35,7 @@ const SECTION_FIELDS: Record<CmsTextSection, FieldKey[]> = {
 
 export function SectionTypographyFields({
   section,
-  intro = "Optional hex colors for this block only. Cleared fields use the global theme.",
+  intro = "Optional hex colors for this block. Eyebrow wording is set on the Content tab, not here.",
 }: {
   section: CmsTextSection;
   intro?: string;

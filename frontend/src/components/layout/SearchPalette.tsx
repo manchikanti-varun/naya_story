@@ -260,9 +260,9 @@ export function SearchPalette({ open, onClose }: Props) {
                               storefrontImageShellClass,
                             )}
                           >
-                            {p.images[0] ? (
+                            {p.images[0]?.trim() ? (
                               <Image
-                                src={p.images[0]}
+                                src={p.images[0].trim()}
                                 alt={p.name}
                                 fill
                                 className="object-cover transition duration-700 group-hover:scale-105"

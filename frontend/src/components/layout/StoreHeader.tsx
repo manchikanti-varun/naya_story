@@ -5,12 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
+  ArrowLeftRight,
   Heart,
   Menu,
   Search,
   ShoppingBag,
   UserRound,
 } from "lucide-react";
+import { useCompareList } from "@/hooks/use-product-compare";
 import { Suspense, useEffect, useState } from "react";
 import { SearchPalette } from "@/components/layout/SearchPalette";
 import { TopPromoBar } from "@/components/layout/TopPromoBar";
@@ -65,6 +67,7 @@ export function StoreHeader({
 
   const count = lines.reduce((n, l) => n + l.quantity, 0);
   const wishCount = wishlistIds.length;
+  const { count: compareCount, mounted: compareMounted } = useCompareList();
   const resolvedLogoSrc = logoSrc?.trim() || STORE_LOGO_PUBLIC_PATH;
   const logoAltText = logoAlt?.trim() || SITE_NAME;
 
@@ -253,6 +256,23 @@ export function StoreHeader({
                   onClose={() => setProfileOpen(false)}
                 />
               </div>
+
+              <Link
+                href="/compare"
+                aria-label={
+                  compareMounted && compareCount > 0
+                    ? `Compare ${compareCount} products`
+                    : "Compare products"
+                }
+                className={cn(iconClass, "relative")}
+              >
+                <motion.span {...iconMotion} className="inline-flex">
+                  <ArrowLeftRight className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.05} />
+                </motion.span>
+                {compareMounted && compareCount > 0 ? (
+                  <span className={cartCountBadgeClass}>{compareCount}</span>
+                ) : null}
+              </Link>
 
               <div className="relative">
                 <motion.button

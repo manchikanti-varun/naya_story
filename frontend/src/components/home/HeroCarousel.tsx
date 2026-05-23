@@ -18,7 +18,9 @@ import {
   sectionDesignStyle,
 } from "@/lib/cms/section-design";
 import { sectionTextStyles } from "@/lib/section-text-styles";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
 import { cn } from "@/lib/cn";
+import { isValidImageSrc } from "@/lib/image-src";
 
 const easeLux = [0.22, 1, 0.36, 1] as const;
 
@@ -35,6 +37,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
     .filter((s) => s.enabled)
     .sort((a, b) => a.order - b.order);
   const [index, setIndex] = useState(0);
+  const slideDirection = useRef<1 | -1>(1);
   const touchStart = useRef(0);
 
   const count = active.length || 1;
@@ -50,17 +53,33 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
 
   const go = useCallback(
     (dir: -1 | 1) => {
-      setIndex((i) => (i + dir + count * 10) % count);
+      slideDirection.current = dir;
+      setIndex((i) => (i + dir + count) % count);
     },
     [count],
   );
 
   useEffect(() => {
     if (count <= 1) return;
-    const ms = Math.max(10_000, autoplayMs || 12_000);
-    const t = window.setInterval(() => setIndex((i) => (i + 1) % count), ms);
+    const ms = Math.max(4000, autoplayMs || 12_000);
+    const t = window.setInterval(() => {
+      slideDirection.current = 1;
+      setIndex((i) => (i + 1) % count);
+    }, ms);
     return () => window.clearInterval(t);
   }, [count, autoplayMs]);
+
+  const copyMotion = {
+    initial: (dir: number) => ({
+      opacity: 0,
+      y: dir >= 0 ? 32 : -32,
+    }),
+    animate: { opacity: 1, y: 0 },
+    exit: (dir: number) => ({
+      opacity: 0,
+      y: dir >= 0 ? -24 : 24,
+    }),
+  };
 
   if (!slide) {
     return (
@@ -72,8 +91,10 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
     );
   }
 
-  const desktop = slide.desktopImage?.trim() || "";
+  const desktop = slide.desktopImage?.trim() ?? "";
   const mobile = slide.mobileImage?.trim() || desktop;
+  const hasHeroImage = isValidImageSrc(desktop) || isValidImageSrc(mobile);
+  const imgSrc = isValidImageSrc(desktop) ? desktop : mobile;
   const kickerText =
     slide.kicker?.trim() || `${SITE_NAME} — ${String(safeIndex + 1).padStart(2, "0")}`;
   const alignClass =
@@ -85,7 +106,8 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
 
   return (
     <section
-      className="relative min-h-[var(--store-hero-min-h)] overflow-hidden bg-[#f2efe9]"
+      key={slide.id}
+      className="relative min-h-[var(--store-hero-min-h)] overflow-hidden bg-[#f2efe9] transition-[background-color,color] duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
       style={sectionStyle}
     >
       <AnimatePresence mode="wait">
@@ -97,14 +119,22 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
           transition={{ duration: 1.25, ease: easeLux }}
           className="absolute inset-0"
         >
-          <picture className="absolute inset-0">
-            <source media="(max-width: 768px)" srcSet={mobile} />
-            <img
-              src={desktop}
-              alt=""
-              className="h-full w-full object-cover object-center animate-slow-zoom"
-            />
-          </picture>
+          {hasHeroImage ? (
+            <picture className="absolute inset-0">
+              {isValidImageSrc(mobile) && mobile !== imgSrc ? (
+                <source media="(max-width: 768px)" srcSet={mobile} />
+              ) : null}
+              <img
+                src={imgSrc}
+                alt=""
+                className="h-full w-full object-cover object-center animate-slow-zoom"
+              />
+            </picture>
+          ) : (
+            <div className="absolute inset-0">
+              <MediaPlaceholder label="Add hero image in admin" />
+            </div>
+          )}
           {overlayCustom ? (
             <div className="pointer-events-none absolute inset-0" style={overlayCustom} aria-hidden />
           ) : (
@@ -147,13 +177,15 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
           if (d > 48) go(-1);
         }}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" custom={slideDirection.current}>
           <motion.div
             key={slide.id + "-copy"}
-            initial={{ opacity: 0, y: 36 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 1.15, ease: easeLux }}
+            custom={slideDirection.current}
+            variants={copyMotion}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.85, ease: easeLux }}
             className={cn(
               "max-w-3xl text-balance md:col-span-7 md:max-w-none [text-shadow:0_2px_40px_rgba(0,0,0,0.35)]",
               slideDesign?.align === "center" && "mx-auto",
@@ -204,7 +236,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
           >
             <p
               className="lux-hero-kicker text-ivory/55"
-              style={st.kicker}
+              style={heroKickerStyle(slideDesign, st.kicker)}
             >
               {slide.metaLabel}
             </p>
@@ -225,7 +257,12 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
                     "lux-hero-dot",
                     i === safeIndex ? "w-9 bg-ivory" : "w-1.5 bg-ivory/30 hover:bg-ivory/50",
                   )}
-                  onClick={() => setIndex(i)}
+                  onClick={() => {
+                    const forward = (i - safeIndex + count) % count;
+                    slideDirection.current =
+                      forward === 0 ? 1 : forward <= count / 2 ? 1 : -1;
+                    setIndex(i);
+                  }}
                 />
               ))}
             </div>

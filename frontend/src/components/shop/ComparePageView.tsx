@@ -18,7 +18,14 @@ export function ComparePageView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setSlugs(readCompareSlugs());
+    const sync = () => setSlugs(readCompareSlugs());
+    sync();
+    window.addEventListener("naya-compare-change", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("naya-compare-change", sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -30,12 +37,20 @@ export function ComparePageView() {
     let cancelled = false;
     setLoading(true);
     void Promise.all(
-      slugs.map((slug) =>
-        apiFetch<Product>(`/products/${encodeURIComponent(slug)}`).catch(() => null),
-      ),
+      slugs.map(async (slug) => {
+        try {
+          const data = await apiFetch<{ product: Product }>(
+            `/products/slug/${encodeURIComponent(slug)}`,
+          );
+          return data.product;
+        } catch {
+          return null;
+        }
+      }),
     ).then((results) => {
       if (cancelled) return;
-      setProducts(results.filter((p): p is Product => p != null));
+      const bySlug = new Map(results.filter((p): p is Product => p != null).map((p) => [p.slug, p]));
+      setProducts(slugs.map((slug) => bySlug.get(slug)).filter((p): p is Product => p != null));
       setLoading(false);
     });
     return () => {
@@ -75,6 +90,13 @@ export function ComparePageView() {
         {slugs.length} of 4 pieces
       </p>
 
+      {!loading && slugs.length > 0 && products.length === 0 ? (
+        <p className="mt-6 font-sans text-sm text-ink-muted">
+          We could not load these pieces (they may have been removed or hidden). Clear the list and
+          add products again from their pages.
+        </p>
+      ) : null}
+
       {loading ? (
         <StoreInlineLoading
           className="mt-8 px-0"
@@ -82,7 +104,7 @@ export function ComparePageView() {
           sublabel="Gathering pieces to compare"
           variant="minimal"
         />
-      ) : (
+      ) : products.length > 0 ? (
         <div className="mt-10 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
@@ -162,7 +184,7 @@ export function ComparePageView() {
             </tbody>
           </table>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

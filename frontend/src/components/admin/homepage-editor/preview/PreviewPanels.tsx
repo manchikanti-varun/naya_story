@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import type { HomepageConfig } from "@/types/homepage";
+import { homepageSectionEditUrl } from "@/lib/admin/homepage-edit";
 import { sortSlides, sortSections } from "@/components/admin/homepage-editor/context";
 import { PreviewCmsImage } from "@/components/admin/homepage-editor/preview/PreviewCmsImage";
 import { useAdminProductCatalog } from "@/hooks/use-admin-product-catalog";
@@ -15,10 +17,28 @@ const promoVariant: Record<NonNullable<HomepageConfig["topPromoBar"]["variant"]>
   gold: "bg-gradient-to-r from-[#f0e6d8] to-[#ebe1d4] text-slate-900",
 };
 
-function PanelShell({ title, children }: { title: string; children: ReactNode }) {
+function PanelShell({
+  title,
+  editHref,
+  children,
+}: {
+  title: string;
+  editHref?: string;
+  children: ReactNode;
+}) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="font-display text-xl text-slate-900">{title}</h3>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h3 className="font-display text-xl text-slate-900">{title}</h3>
+        {editHref ? (
+          <Link
+            href={editHref}
+            className="shrink-0 rounded-full border border-slate-300 px-3 py-1.5 font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+          >
+            Edit section
+          </Link>
+        ) : null}
+      </div>
       <div className="mt-6 space-y-6">{children}</div>
     </section>
   );
@@ -233,7 +253,7 @@ function PreviewHomeLayout({ hp }: { hp: HomepageConfig }) {
 function PreviewBestsellers({ hp }: { hp: HomepageConfig }) {
   const b = hp.bestsellers;
   return (
-    <PanelShell title="Bestsellers rail (homepage)">
+    <PanelShell title="Bestsellers rail (homepage)" editHref={homepageSectionEditUrl("bestsellers")}>
       <Field label="Visible on homepage">{b.enabled !== false ? "Yes" : "No"}</Field>
       <Field label="Title">{b.title}</Field>
       <Field label="Subtitle">{b.subtitle}</Field>
@@ -247,7 +267,7 @@ function PreviewBestsellers({ hp }: { hp: HomepageConfig }) {
 function PreviewNewInHome({ hp }: { hp: HomepageConfig }) {
   const n = hp.newIn;
   return (
-    <PanelShell title="New In rail (homepage)">
+    <PanelShell title="New In rail (homepage)" editHref={homepageSectionEditUrl("newIn")}>
       <Field label="Visible on homepage">{n.enabled !== false ? "Yes" : "No"}</Field>
       <Field label="Title">{n.title}</Field>
       <Field label="Subtitle">{n.subtitle}</Field>

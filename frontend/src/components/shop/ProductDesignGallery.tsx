@@ -10,7 +10,9 @@ type Props = {
   captions?: string[] | null;
   productName: string;
   className?: string;
-  onSelectIndex?: (index: number) => void;
+  /** Maps detail-grid index to full product gallery index (default: same index). */
+  onSelectIndex?: (galleryIndex: number) => void;
+  detailStartIndex?: number;
 };
 
 /** Editorial grid of design / detail shots below the main PDP gallery. */
@@ -20,14 +22,10 @@ export function ProductDesignGallery({
   productName,
   className,
   onSelectIndex,
+  detailStartIndex = 0,
 }: Props) {
   const items = buildProductGalleryItems(images, captions);
-  if (items.length < 2) return null;
-
-  const detailItems = items.slice(1);
-  const showSection = detailItems.length >= 1;
-
-  if (!showSection) return null;
+  if (items.length < 1) return null;
 
   return (
     <section className={cn("border-t border-ivory-deep pt-10 md:pt-12", className)} aria-label="Design details">
@@ -38,8 +36,8 @@ export function ProductDesignGallery({
       </p>
 
       <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-        {detailItems.map((item, idx) => {
-          const galleryIndex = idx + 1;
+        {items.map((item, idx) => {
+          const galleryIndex = detailStartIndex + idx;
           return (
             <li key={`${item.url}-${galleryIndex}`}>
               <button
@@ -60,13 +58,13 @@ export function ProductDesignGallery({
                     src={item.url}
                     alt={`${productName} — ${item.label}`}
                     fill
-                    className="object-cover transition duration-[1.2s] ease-luxury group-hover:scale-[1.03]"
+                    className="object-cover"
                     sizes="(max-width: 640px) 100vw, 33vw"
                     loading="lazy"
                     {...storefrontImageProps}
                   />
                 </div>
-                <p className="mt-3 font-sans text-[10px] font-medium uppercase tracking-[0.22em] text-ink-soft transition group-hover:text-gold">
+                <p className="mt-3 font-sans text-[10px] font-medium uppercase tracking-[0.22em] text-ink-soft">
                   {item.label}
                 </p>
               </button>

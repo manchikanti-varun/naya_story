@@ -8,7 +8,12 @@ import {
   useMemo,
   useState,
 } from "react";
+import { stripUnsplashUrl } from "@/lib/strip-unsplash";
 import type { CartLine } from "@/types";
+
+function sanitizeCartLine(line: CartLine): CartLine {
+  return { ...line, image: stripUnsplashUrl(line.image) };
+}
 
 type CartContextValue = {
   lines: CartLine[];
@@ -43,7 +48,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { lines: CartLine[]; coupon?: string };
-        setLines(parsed.lines ?? []);
+        setLines((parsed.lines ?? []).map(sanitizeCartLine));
         setCoupon(parsed.coupon);
       }
     } catch {
@@ -67,7 +72,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const key = lineKey(input);
         const idx = prev.findIndex((l) => lineKey(l) === key);
         if (idx === -1) {
-          return [...prev, { ...input, quantity: qty }];
+          return [...prev, sanitizeCartLine({ ...input, quantity: qty })];
         }
         const next = [...prev];
         next[idx] = { ...next[idx], quantity: next[idx].quantity + qty };

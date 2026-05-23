@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { websitePagesUrl } from "@/lib/admin/website-pages";
+import { homepageSectionEditUrl } from "@/lib/admin/homepage-edit";
 
 export default function LegacyNewInHomeRedirect() {
-  redirect(websitePagesUrl("homepage", { edit: "newIn" }));
+  redirect(homepageSectionEditUrl("newIn"));
 }

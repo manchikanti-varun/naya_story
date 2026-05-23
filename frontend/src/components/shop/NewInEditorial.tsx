@@ -18,6 +18,8 @@ import {
   StoreBrowseShell,
 } from "@/components/shop/StoreBrowseUI";
 import { StoreInlineLoading, StoreLoadingMore } from "@/components/ui/StoreLoadingUI";
+import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
+import { isNextImageSrc } from "@/lib/image-src";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
 
 const tileRhythm = [
@@ -270,6 +272,7 @@ function NewInTile({
   onToggleWishlist: () => Promise<void>;
 }) {
   const [quickOpen, setQuickOpen] = useState(false);
+  const primary = product.images[0]?.trim();
 
   return (
     <motion.article
@@ -286,24 +289,18 @@ function NewInTile({
             storefrontImageShellClass,
           )}
         >
-          <Image
-            src={product.images[0]}
-            alt={product.name}
-            fill
-            sizes="(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 33vw"
-            className="object-cover transition duration-[1.6s] ease-out group-hover:scale-[1.06]"
-            {...storefrontImageProps}
-          />
-          {product.newInHoverImage ? (
+          {isNextImageSrc(primary) ? (
             <Image
-              src={product.newInHoverImage}
-              alt=""
+              src={primary}
+              alt={product.name}
               fill
               sizes="(max-width: 767px) 100vw, (max-width: 1279px) 50vw, 33vw"
-              className="object-cover opacity-0 transition duration-[1.1s] ease-out group-hover:opacity-100"
+              className="object-cover transition duration-[1.6s] ease-out group-hover:scale-[1.06]"
               {...storefrontImageProps}
             />
-          ) : null}
+          ) : (
+            <MediaPlaceholder />
+          )}
           <div className="absolute right-3 top-3 z-10 flex translate-y-1 gap-2 opacity-0 transition duration-500 group-hover:translate-y-0 group-hover:opacity-100">
             <button
               type="button"

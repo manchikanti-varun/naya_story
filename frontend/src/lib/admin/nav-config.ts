@@ -241,7 +241,7 @@ export const adminNavGroups: AdminNavGroup[] = [
 export const legacyContentLinks: AdminNavItem[] = [
   { href: "/admin/content/hero", label: "Hero", hidden: true, keywords: ["homepage"] },
   { href: "/admin/content/bestsellers", label: "Bestsellers", hidden: true },
-  { href: "/admin/content/new-in-home", label: "New In (home)", hidden: true },
+  { href: "/admin/website/pages?tab=homepage&edit=newIn", label: "New In (home)", hidden: true },
   { href: "/admin/content/new-in-page", label: "New In page", hidden: true },
   { href: "/admin/content/collections", label: "Collections browse", hidden: true },
   { href: "/admin/content/categories", label: "Shop by category", hidden: true },

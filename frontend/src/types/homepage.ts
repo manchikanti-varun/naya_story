@@ -35,6 +35,19 @@ export type CategoryCard = {
   order: number;
 };
 
+/** Canonical category — syncs homepage shop-by-category cards and collections tabs. */
+export type GlobalStoreCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  href: string;
+  enabled: boolean;
+  order: number;
+  homepage: boolean;
+  collections: boolean;
+};
+
 /** Thin strip above the main nav — coupons, shipping notes, etc. */
 export type TopPromoBarConfig = {
   enabled: boolean;
@@ -212,6 +225,8 @@ export type HomepageConfig = {
   editorial?: HomepageEditorialConfig;
   bestsellers: {
     enabled?: boolean;
+    /** Small uppercase line above the title; leave blank to hide. */
+    kicker?: string;
     title: string;
     subtitle: string;
     productIds: string[];
@@ -221,6 +236,7 @@ export type HomepageConfig = {
   };
   newIn: {
     enabled?: boolean;
+    kicker?: string;
     title: string;
     subtitle: string;
     productIds: string[];
@@ -237,8 +253,11 @@ export type HomepageConfig = {
     subheading?: string;
     productIds: string[];
   };
+  /** When set, drives `categories.items` and catalog category tabs (see `applyGlobalCategories`). */
+  globalCategories?: GlobalStoreCategory[];
   categories: {
     enabled?: boolean;
+    kicker?: string;
     title: string;
     subtitle: string;
     items: CategoryCard[];

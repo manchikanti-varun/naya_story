@@ -41,3 +41,32 @@ export function buildProductGalleryItems(
 export function hasDesignGalleryLabels(captions?: string[] | null): boolean {
   return (captions ?? []).some((c) => c.trim().length > 0);
 }
+
+/** Image index where the below-fold “Design & construction” grid starts. */
+export const PDP_DETAIL_START_INDEX = 2;
+
+export type PdpGallerySplit = {
+  all: string[];
+  hero?: string;
+  hoverOverlay?: string;
+  detail: string[];
+};
+
+/** PDP: 1 = hero, 2 = hover on hero, 3+ = detail section only (no duplicates). */
+export function splitPdpGallery(images: string[]): PdpGallerySplit {
+  const all = images.map((s) => s.trim()).filter(Boolean);
+  return {
+    all,
+    hero: all[0],
+    hoverOverlay: all[1],
+    detail: all.slice(PDP_DETAIL_START_INDEX),
+  };
+}
+
+export function captionsForDetailGallery(
+  captions: string[] | null | undefined,
+  detailLength: number,
+): string[] {
+  const caps = captions ?? [];
+  return caps.slice(PDP_DETAIL_START_INDEX, PDP_DETAIL_START_INDEX + detailLength);
+}

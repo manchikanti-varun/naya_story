@@ -119,6 +119,26 @@
   background: linear-gradient(90deg, transparent, rgb(242 238 232 / 0.95));
 }
 
+/* Homepage shop-by-category — horizontal card rail */
+.store-app .lux-shop-categories {
+  position: relative;
+  margin-left: max(-1.5rem, calc(50% - 50vw + 1.5rem));
+  margin-right: max(-1.5rem, calc(50% - 50vw + 1.5rem));
+  padding-left: max(1.5rem, calc(50vw - 50% + 1.5rem));
+  padding-right: max(1.5rem, calc(50vw - 50% + 1.5rem));
+}
+
+.store-app .lux-shop-categories::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0.5rem;
+  width: 3rem;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(242 238 232 / 0.92));
+}
+
 .store-app .lux-collection-filter-bar {
   border-radius: var(--radius-lux-lg, 24px);
   border: 1px solid var(--store-line);

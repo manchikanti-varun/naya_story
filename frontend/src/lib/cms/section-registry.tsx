@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Product } from "@/types";
+import { BESTSELLERS_HOMEPAGE_VISIBLE } from "@/lib/cms/homepage-product-limits";
 import type {
   HomepageConfig,
   HomepageEditorialConfig,
@@ -62,6 +63,8 @@ const sectionRegistry: Record<HomepageStorefrontBlockType, SectionRenderer> = {
       title={ctx.homepage.bestsellers.title}
       subtitle={ctx.homepage.bestsellers.subtitle}
       products={ctx.bestList}
+      maxVisible={BESTSELLERS_HOMEPAGE_VISIBLE}
+      kicker={ctx.homepage.bestsellers.kicker}
       badge="bestseller"
       sectionText={ctx.colors?.bestsellers}
       design={ctx.homepage.bestsellers.styles}
@@ -84,6 +87,7 @@ const sectionRegistry: Record<HomepageStorefrontBlockType, SectionRenderer> = {
       title={ctx.homepage.newIn.title}
       subtitle={ctx.homepage.newIn.subtitle}
       products={ctx.newList}
+      kicker={ctx.homepage.newIn.kicker}
       badge="latest"
       sectionText={ctx.colors?.newIn}
       design={ctx.homepage.newIn.styles}
@@ -107,6 +111,7 @@ const sectionRegistry: Record<HomepageStorefrontBlockType, SectionRenderer> = {
       key={block.id}
       title={ctx.homepage.categories.title}
       subtitle={ctx.homepage.categories.subtitle}
+      kicker={ctx.homepage.categories.kicker}
       items={ctx.homepage.categories.items}
       compactTop={commerceTop(ctx)}
       sectionText={ctx.colors?.categories}

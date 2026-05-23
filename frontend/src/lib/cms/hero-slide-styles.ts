@@ -45,3 +45,13 @@ export function cloneHeroSlideStyle(source: EffectiveHeroSlideStyle): EffectiveH
     textColors: source.textColors ? { ...source.textColors } : undefined,
   };
 }
+
+function hasValues(obj?: Record<string, unknown> | null): boolean {
+  if (!obj) return false;
+  return Object.values(obj).some((v) => v !== undefined && v !== null && String(v).trim() !== "");
+}
+
+/** True when a slide has its own style fields saved (not only carousel defaults). */
+export function slideHasCustomStyle(slide: HeroSlide): boolean {
+  return hasValues(slide.styles as Record<string, unknown>) || hasValues(slide.textColors as Record<string, unknown>);
+}

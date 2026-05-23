@@ -59,21 +59,20 @@ function UtilityAction({
 }
 
 export function ProductDetailExtras({ product, className, align = "center" }: Props) {
-  const { inCompare, toggle, mounted } = useProductCompare(product.slug);
+  const { inCompare, toggle, mounted, count } = useProductCompare(product.slug);
   const [shareHint, setShareHint] = useState<string | null>(null);
 
   const parsed = parseProductDescription(product.description);
-  const bullets =
-    parsed.bullets.length > 0
-      ? parsed.bullets
-      : bulletsFromStylingNotes(product.stylingSuggestions);
+  const legacyBullets = bulletsFromStylingNotes(product.stylingSuggestions);
+  const bullets = parsed.bullets.length > 0 ? parsed.bullets : legacyBullets;
 
   const intro =
     parsed.intro ||
-    product.shortDescription ||
-    (bullets.length === 0 ? product.description : "");
+    product.shortDescription?.trim() ||
+    (bullets.length === 0 ? product.description?.trim() : "");
 
-  const fabricRaw = product.fabricDetails?.trim() || product.material?.trim() || null;
+  const fabricRaw =
+    product.fabricDetails?.trim() || product.material?.trim() || null;
   const fabricLabel = fabricRaw
     ? /^fabric used:/i.test(fabricRaw)
       ? fabricRaw
@@ -90,9 +89,18 @@ export function ProductDetailExtras({ product, className, align = "center" }: Pr
   const hasStory = Boolean(intro || bullets.length > 0 || fabricLabel);
 
   const handleCompare = () => {
-    const { added } = toggle();
-    setShareHint(added ? `Added to compare (max ${MAX_COMPARE_ITEMS})` : "Removed from compare");
-    window.setTimeout(() => setShareHint(null), 2400);
+    const { added, slugs } = toggle();
+    if (added) {
+      const atMax = slugs.length >= MAX_COMPARE_ITEMS;
+      setShareHint(
+        atMax
+          ? `Added — list is full (${MAX_COMPARE_ITEMS}). Oldest piece was replaced.`
+          : `Added to compare (${slugs.length} of ${MAX_COMPARE_ITEMS})`,
+      );
+    } else {
+      setShareHint("Removed from compare");
+    }
+    window.setTimeout(() => setShareHint(null), 3200);
   };
 
   const handleShare = useCallback(async () => {
@@ -175,10 +183,22 @@ export function ProductDetailExtras({ product, className, align = "center" }: Pr
       >
         <UtilityAction
           icon={<ArrowLeftRight className="h-3.5 w-3.5" strokeWidth={1.25} aria-hidden />}
-          label={mounted && inCompare ? "View compare" : "Compare"}
-          href={mounted && inCompare ? "/compare" : undefined}
-          onClick={!mounted || inCompare ? undefined : handleCompare}
+          label={mounted && inCompare ? "Remove from compare" : "Add to compare"}
+          onClick={handleCompare}
         />
+        {mounted && count > 0 ? (
+          <>
+            <span className="text-ink-soft/40" aria-hidden>
+              ·
+            </span>
+            <Link
+              href="/compare"
+              className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 font-sans text-[13px] font-light text-ink transition-colors hover:bg-ivory-soft hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40"
+            >
+              View compare ({count})
+            </Link>
+          </>
+        ) : null}
         <span className="text-ink-soft/40" aria-hidden>
           ·
         </span>
@@ -240,5 +260,5 @@ export function getProductDetailAccordionFlags(product: Product) {
     !fabricInExtras && Boolean(product.fabricDetails?.trim());
   const showStyling =
     !stylingInExtras && Boolean(product.stylingSuggestions?.trim());
-  return { showFabric, showStyling, showCare: true };
+  return { showFabric, showStyling, showCare: false };
 }

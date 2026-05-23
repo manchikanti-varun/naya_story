@@ -5,9 +5,9 @@ import { StoreHeader } from "@/components/layout/StoreHeader";
 import { StorefrontLiveSync } from "@/components/store/StorefrontLiveSync";
 import { getSiteSettings } from "@/lib/server-content";
 import { getPublishedLegalPages } from "@/lib/server-legal-pages";
-import { bustLogoPath, getLogoCacheRev } from "@/lib/logo-cache";
+import { getLogoCacheRev } from "@/lib/logo-cache";
+import { resolveStoreLogoSrc } from "@/lib/image-src";
 import { NAYA_STORE_THEME_STYLE_ID, storefrontThemeCssString } from "@/lib/storefront-theme";
-import { STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
 import { storePageFlagsFromHomepage } from "@/lib/store-page-flags";
 import "../store-theme.css";
 
@@ -15,12 +15,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const [data, legalPages] = await Promise.all([getSiteSettings(), getPublishedLegalPages()]);
   const logoRev = getLogoCacheRev();
   const footer = data.settings.homepage.footer;
-  const logoPath =
-    footer?.logoUrl?.trim() &&
-    (footer.logoUrl.startsWith("/") || footer.logoUrl.startsWith("http"))
-      ? footer.logoUrl.trim()
-      : STORE_LOGO_PUBLIC_PATH;
-  const headerLogoSrc = logoPath.startsWith("/") ? bustLogoPath(logoPath, logoRev) : logoPath;
+  const headerLogoSrc = resolveStoreLogoSrc(footer?.logoUrl, logoRev);
   const themeCss = storefrontThemeCssString(data.settings.homepage.theme);
   const storePageFlags = storePageFlagsFromHomepage(data.settings.homepage);
   return (

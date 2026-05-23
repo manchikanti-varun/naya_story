@@ -7,7 +7,7 @@ import {
   toggleCompareSlug,
 } from "@/lib/product-compare";
 
-export function useProductCompare(slug: string) {
+function useCompareSync() {
   const [slugs, setSlugs] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
@@ -27,13 +27,25 @@ export function useProductCompare(slug: string) {
     };
   }, [sync]);
 
+  return { slugs, mounted, sync };
+}
+
+/** Compare list for header / compare page (no product slug). */
+export function useCompareList() {
+  const { slugs, mounted } = useCompareSync();
+  return { slugs, mounted, count: slugs.length };
+}
+
+export function useProductCompare(slug: string) {
+  const { slugs, mounted, sync } = useCompareSync();
+
   const inCompare = mounted && isInCompareList(slug);
 
   const toggle = useCallback(() => {
     const result = toggleCompareSlug(slug);
-    setSlugs(result.slugs);
+    sync();
     return result;
-  }, [slug]);
+  }, [slug, sync]);
 
   return { slugs, inCompare, toggle, mounted, count: slugs.length };
 }

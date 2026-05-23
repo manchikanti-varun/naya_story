@@ -1,3 +1,4 @@
+import { mergeGlobalCategories } from "./global-categories.js";
 import type {
   CategoryCard,
   HeroSlide,
@@ -855,5 +856,8 @@ export function mergeHomepageConfig(
     theme: mergeTheme(r.theme),
     sectionTextColors: mergeSectionTextColors(r.sectionTextColors, d.sectionTextColors),
   };
-  return sanitizeHomepageFromUnsplash(mergeLayoutBlocksIntoHomepage(merged, r.layoutBlocks));
+  const withLayout = sanitizeHomepageFromUnsplash(
+    mergeLayoutBlocksIntoHomepage(merged, r.layoutBlocks),
+  );
+  return mergeGlobalCategories(r.globalCategories, withLayout);
 }

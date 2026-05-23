@@ -69,10 +69,10 @@ export default {
           "100%": { transform: "scale(1)" },
         },
         "scroll-line": {
-          "0%": { transform: "scaleY(0)", transformOrigin: "top" },
-          "50%": { transform: "scaleY(1)", transformOrigin: "top" },
-          "50.1%": { transformOrigin: "bottom" },
-          "100%": { transform: "scaleY(0)", transformOrigin: "bottom" },
+          "0%": { transform: "scaleY(0)", transformOrigin: "top", opacity: "0.5" },
+          "40%": { transform: "scaleY(1)", transformOrigin: "top", opacity: "1" },
+          "60%": { transform: "scaleY(1)", transformOrigin: "bottom", opacity: "1" },
+          "100%": { transform: "scaleY(0)", transformOrigin: "bottom", opacity: "0.5" },
         },
         shimmer: {
           "0%": { transform: "translateX(-100%)" },

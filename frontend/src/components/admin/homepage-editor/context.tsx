@@ -12,7 +12,13 @@ import {
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import type { HomepageCmsMeta } from "@/types/cms-meta";
-import type { CategoryCard, HeroSlide, HomepageConfig, SectionOrderEntry } from "@/types/homepage";
+import type { CategoryCard, GlobalStoreCategory, HeroSlide, HomepageConfig, SectionOrderEntry } from "@/types/homepage";
+import {
+  applyGlobalCategories,
+  getGlobalCategories,
+  moveGlobalCategory,
+  newGlobalCategory,
+} from "@/lib/cms/global-categories";
 import {
   moveHomepageStorefrontBlock,
   withRefreshedLayoutBlocks,
@@ -21,7 +27,7 @@ import type { HomepageStorefrontBlockType } from "@/types/homepage";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 
 export function sortSlides(slides: HeroSlide[]) {
-  return [...slides].sort((a, b) => a.order - b.order);
+  return [...slides].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
 }
 
 export function sortSections(order: SectionOrderEntry[]) {
@@ -49,6 +55,9 @@ type HomepageEditorContextValue = {
   moveStorefrontBlock: (type: HomepageStorefrontBlockType, dir: -1 | 1) => void;
   updateSlide: (id: string, patch: Partial<HeroSlide>) => void;
   updateCategory: (id: string, patch: Partial<CategoryCard>) => void;
+  patchGlobalCategories: (
+    fn: (globals: GlobalStoreCategory[]) => GlobalStoreCategory[],
+  ) => void;
   updateCollectionsCategory: (
     id: string,
     patch: Partial<HomepageConfig["collectionsPage"]["categories"][number]>,
@@ -70,9 +79,10 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       settings: { homepage: HomepageConfig; cms?: HomepageCmsMeta };
     }>("/content/site", { token: token ?? undefined });
     const next = data.settings.homepage;
-    const snap = structuredClone(next);
+    const synced = applyGlobalCategories(next, getGlobalCategories(next));
+    const snap = structuredClone(synced);
     setHp(snap);
-    setCommittedHp(structuredClone(next));
+    setCommittedHp(structuredClone(synced));
     setCmsMeta(data.settings.cms ?? null);
   }, [token]);
 
@@ -136,16 +146,16 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       const slides = sortSlides([...prev.carousel.slides]);
       const j = index + dir;
       if (j < 0 || j >= slides.length) return prev;
-      const a = slides[index];
-      const b = slides[j];
-      const next = prev.carousel.slides.map((s) => {
-        if (s.id === a.id) return { ...s, order: b.order };
-        if (s.id === b.id) return { ...s, order: a.order };
-        return s;
-      });
+      const reordered = [...slides];
+      [reordered[index], reordered[j]] = [reordered[j]!, reordered[index]!];
+      const orderById = new Map(reordered.map((s, i) => [s.id, i] as const));
+      const nextSlides = prev.carousel.slides.map((s) => ({
+        ...s,
+        order: orderById.get(s.id) ?? s.order,
+      }));
       return {
         ...prev,
-        carousel: { ...prev.carousel, slides: sortSlides(next) },
+        carousel: { ...prev.carousel, slides: sortSlides(nextSlides) },
       };
     });
   }, []);
@@ -183,15 +193,31 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
   const updateCategory = useCallback((id: string, patch: Partial<CategoryCard>) => {
     setHp((prev) => {
       if (!prev) return prev;
-      return {
-        ...prev,
-        categories: {
-          ...prev.categories,
-          items: prev.categories.items.map((c) => (c.id === id ? { ...c, ...patch } : c)),
-        },
-      };
+      const globals = getGlobalCategories(prev).map((g) =>
+        g.id === id
+          ? {
+              ...g,
+              name: patch.name ?? g.name,
+              image: patch.image ?? g.image,
+              href: patch.href ?? g.href,
+              enabled: patch.enabled ?? g.enabled,
+              order: patch.order ?? g.order,
+            }
+          : g,
+      );
+      return applyGlobalCategories(prev, globals);
     });
   }, []);
+
+  const patchGlobalCategories = useCallback(
+    (fn: (globals: GlobalStoreCategory[]) => GlobalStoreCategory[]) => {
+      setHp((prev) => {
+        if (!prev) return prev;
+        return applyGlobalCategories(prev, fn(getGlobalCategories(prev)));
+      });
+    },
+    [],
+  );
 
   const updateCollectionsCategory = useCallback(
     (id: string, patch: Partial<HomepageConfig["collectionsPage"]["categories"][number]>) => {
@@ -230,6 +256,7 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       moveStorefrontBlock,
       updateSlide,
       updateCategory,
+      patchGlobalCategories,
       updateCollectionsCategory,
     }),
     [
@@ -249,6 +276,7 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       moveStorefrontBlock,
       updateSlide,
       updateCategory,
+      patchGlobalCategories,
       updateCollectionsCategory,
     ],
   );

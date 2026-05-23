@@ -6,6 +6,7 @@ import type {
   SectionOrderEntry,
 } from "@/types/homepage";
 import { defaultHomepageEditorial } from "@/lib/cms/editorial-defaults";
+import { homepageSectionEditUrl } from "@/lib/admin/homepage-edit";
 
 export type HomepageLayoutBlockMeta = {
   id: string;
@@ -77,7 +78,7 @@ const BLOCK_META: Record<
   bestsellers: {
     title: "Bestsellers grid",
     description: "Title, subtitle, and curated product IDs for the homepage rail.",
-    editHref: "/admin/content/bestsellers",
+    editHref: homepageSectionEditUrl("bestsellers"),
   },
   lookbook: {
     title: "Lookbook",
@@ -87,7 +88,7 @@ const BLOCK_META: Record<
   newIn: {
     title: "New In rail",
     description: "Homepage new arrivals strip — copy, CTA, and product picks.",
-    editHref: "/admin/content/new-in-home",
+    editHref: homepageSectionEditUrl("newIn"),
   },
   craftsmanship: {
     title: "Fabric & craft",
@@ -96,8 +97,8 @@ const BLOCK_META: Record<
   },
   categories: {
     title: "Category cards",
-    description: "Three-up category tiles with imagery and destinations.",
-    editHref: "/admin/content/categories",
+    description: "Category tiles with imagery and destinations (synced globally).",
+    editHref: homepageSectionEditUrl("categories"),
   },
   asSeenIn: {
     title: "As seen in",

@@ -16,19 +16,24 @@ import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductCarouselRail } from "@/components/shop/ProductCarouselRail";
 import { ProductDesignGallery } from "@/components/shop/ProductDesignGallery";
 import { ProductGallery } from "@/components/shop/ProductGallery";
-import { buildProductGalleryItems } from "@/lib/product-gallery";
+import {
+  buildProductGalleryItems,
+  captionsForDetailGallery,
+  PDP_DETAIL_START_INDEX,
+  splitPdpGallery,
+} from "@/lib/product-gallery";
 import { ProductStickyCartBar } from "@/components/shop/ProductStickyCartBar";
 import { LimitedStockBanner } from "@/components/shop/LimitedStockBanner";
-import { ProductDetailExtras, getProductDetailAccordionFlags } from "@/components/shop/ProductDetailExtras";
+import { ProductDetailDescription } from "@/components/shop/ProductDetailDescription";
+import { ProductDetailSidebarServices } from "@/components/shop/ProductDetailSidebarServices";
+import { getProductDetailAccordionFlags } from "@/components/shop/ProductDetailExtras";
+import { ProductPriceDisplay } from "@/components/shop/ProductPriceDisplay";
 import { ProductReviewsSection } from "@/components/shop/ProductReviewsSection";
 import { SizeGuideModal } from "@/components/shop/SizeGuideModal";
 import { getTotalProductStock, getStockForSize, isLimitedStock } from "@/lib/product-stock";
 import { Reveal } from "@/components/luxury/Reveal";
 import { MagneticButton } from "@/components/luxury/MagneticButton";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
-
-const DEFAULT_PDP_DELIVERY_AND_CARE =
-  "Complimentary shipping over ₹15,000. Dry clean only — store on a padded hanger away from direct sunlight.";
 
 type Props = {
   slug: string;
@@ -101,10 +106,11 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
     };
   }, [recentIds, product?._id]);
 
-  const galleryImages = useMemo(
-    () => (product?.images ?? []).map((s) => s.trim()).filter(Boolean),
+  const pdpSplit = useMemo(
+    () => splitPdpGallery(product?.images ?? []),
     [product?.images],
   );
+  const galleryImages = pdpSplit.all;
   const galleryItems = useMemo(
     () => buildProductGalleryItems(product?.images ?? [], product?.imageCaptions),
     [product?.images, product?.imageCaptions],
@@ -281,10 +287,11 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
             <Reveal>
               <ProductGallery
                 variant="pdp"
-                images={galleryImages}
+                images={pdpSplit.hero ? [pdpSplit.hero] : []}
+                hoverOverlaySrc={pdpSplit.hoverOverlay}
                 captions={product.imageCaptions}
                 productName={product.name}
-                activeIdx={safeActiveIdx}
+                activeIdx={0}
                 onActiveChange={setActiveIdx}
                 onOpenZoom={() => setZoomOpen(true)}
               />
@@ -313,19 +320,11 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
 
             <h1 className="lux-title-section mt-1.5">{product.name}</h1>
 
-            <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-ivory-deep/70 pb-4">
-              <span className="font-sans text-lg font-light tracking-wide text-ink">
-                ₹{product.price.toLocaleString("en-IN")}
-              </span>
-              {product.compareAtPrice && product.compareAtPrice > product.price ? (
-                <span className="font-sans text-sm text-ink-soft line-through">
-                  ₹{product.compareAtPrice.toLocaleString("en-IN")}
-                </span>
-              ) : null}
-              <span className="font-sans text-[11px] font-light text-ink-soft">Tax included</span>
-            </div>
+            <ProductDetailDescription product={product} className="mt-4" />
 
-            <div className="pdp-purchase-panel mt-4 space-y-4">
+            <ProductPriceDisplay product={product} className="mt-4" size="lg" />
+
+            <div className="pdp-purchase-panel mt-5 space-y-4">
               <div>
                 <div className="flex items-center justify-between gap-2">
                   <p className="pdp-option-label">
@@ -437,15 +436,24 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
                   Secure checkout · Complimentary exchanges
                 </p>
               </div>
+
+              <ProductDetailSidebarServices
+                product={product}
+                className="border-t border-ivory-deep/60 pt-4"
+              />
             </div>
           </Reveal>
         </div>
 
-        {galleryImages.length >= 2 ? (
+        {pdpSplit.detail.length > 0 ? (
           <Reveal delay={0.08} className="mt-12 lg:mt-14">
             <ProductDesignGallery
-              images={galleryImages}
-              captions={product.imageCaptions}
+              images={pdpSplit.detail}
+              captions={captionsForDetailGallery(
+                product.imageCaptions,
+                pdpSplit.detail.length,
+              )}
+              detailStartIndex={PDP_DETAIL_START_INDEX}
               productName={product.name}
               onSelectIndex={focusGalleryIndex}
             />
@@ -453,14 +461,8 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
         ) : null}
 
         <div className="mx-auto mt-8 flex w-full max-w-3xl flex-col items-center lg:mt-10">
-          <Reveal delay={0.1} className="w-full">
-            <ProductDetailExtras product={product} className="w-full" />
-          </Reveal>
-
           {accordionFlags &&
-          (accordionFlags.showFabric ||
-            accordionFlags.showStyling ||
-            accordionFlags.showCare) ? (
+          (accordionFlags.showFabric || accordionFlags.showStyling) ? (
             <Reveal delay={0.12} className="mt-5 w-full">
               <div className="divide-y divide-ivory-deep rounded-lux border border-ivory-deep/70 px-4 sm:px-5">
                 {accordionFlags.showFabric ? (
@@ -486,19 +488,6 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
                   >
                     <p className="pb-4 font-sans text-sm font-light leading-[1.7] text-ink-muted">
                       {product.stylingSuggestions?.trim()}
-                    </p>
-                  </AccordionRow>
-                ) : null}
-                {accordionFlags.showCare ? (
-                  <AccordionRow
-                    title="Delivery & care"
-                    open={openSection === "care"}
-                    onToggle={() =>
-                      setOpenSection(openSection === "care" ? null : "care")
-                    }
-                  >
-                    <p className="pb-4 font-sans text-sm font-light leading-[1.7] text-ink-muted">
-                      {product.pdpDeliveryAndCare?.trim() || DEFAULT_PDP_DELIVERY_AND_CARE}
                     </p>
                   </AccordionRow>
                 ) : null}
