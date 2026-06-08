@@ -42,6 +42,8 @@ export default function AdminProductsPage() {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -58,6 +60,7 @@ export default function AdminProductsPage() {
       setProducts([]);
     } finally {
       setLoading(false);
+      setSelected(new Set());
     }
   }, [token, q, category]);
 
@@ -82,6 +85,20 @@ export default function AdminProductsPage() {
     await refresh();
   }
 
+  async function bulkDelete() {
+    if (!token || selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} product${selected.size > 1 ? "s" : ""} permanently? This cannot be undone.`)) return;
+    setBulkDeleting(true);
+    try {
+      await Promise.all(
+        [...selected].map((id) => apiFetch(`/products/${id}`, { method: "DELETE", token })),
+      );
+    } finally {
+      setBulkDeleting(false);
+      await refresh();
+    }
+  }
+
   async function duplicate(p: Product) {
     if (!token) return;
     const slug = `${p.slug}-copy-${Date.now().toString(36)}`.slice(0, 120);
@@ -104,6 +121,23 @@ export default function AdminProductsPage() {
       }),
     });
     await refresh();
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selected.size === products.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(products.map((p) => p._id)));
+    }
   }
 
   return (
@@ -142,10 +176,43 @@ export default function AdminProductsPage() {
         </AdminToolbar>
       }
     >
+      {/* Bulk actions bar */}
+      {selected.size > 0 && (
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-4 py-3">
+          <span className="font-sans text-sm font-medium text-[var(--admin-ink)]">
+            {selected.size} selected
+          </span>
+          <button
+            type="button"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 font-sans text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+            disabled={bulkDeleting}
+            onClick={() => void bulkDelete()}
+          >
+            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+            {bulkDeleting ? "Deleting…" : `Delete ${selected.size}`}
+          </button>
+          <button
+            type="button"
+            className="font-sans text-xs text-[var(--admin-muted)] underline-offset-4 hover:underline"
+            onClick={() => setSelected(new Set())}
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       <AdminTable>
         <table className="admin-table">
           <thead>
             <tr>
+              <th className="w-10">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-[var(--admin-border-strong)]"
+                  checked={products.length > 0 && selected.size === products.length}
+                  onChange={toggleSelectAll}
+                />
+              </th>
               <th>Product</th>
               <th>Category</th>
               <th>Collection</th>
@@ -159,7 +226,7 @@ export default function AdminProductsPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="py-10 text-center text-[var(--admin-muted)]">
+                <td colSpan={9} className="py-10 text-center text-[var(--admin-muted)]">
                   Loading catalog…
                 </td>
               </tr>
@@ -169,7 +236,15 @@ export default function AdminProductsPage() {
                 const thumb = p.images[0];
                 const status = statusLabel(p);
                 return (
-                  <tr key={p._id}>
+                  <tr key={p._id} className={selected.has(p._id) ? "bg-[var(--admin-accent)]/5" : undefined}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-[var(--admin-border-strong)]"
+                        checked={selected.has(p._id)}
+                        onChange={() => toggleSelect(p._id)}
+                      />
+                    </td>
                     <td>
                       <div className="flex items-center gap-3">
                         <div className="relative h-12 w-10 overflow-hidden rounded-lg bg-stone-100">
@@ -198,7 +273,7 @@ export default function AdminProductsPage() {
                         <Link href={`/admin/preview/product/${p.slug}`} className={rowActionClass} title="Preview">
                           <Eye className="h-4 w-4" strokeWidth={1.5} />
                         </Link>
-                        <Link href={`/admin/products/${p._id}`} className={rowActionClass} title="Edit">
+                        <Link href={`/admin/products/${p.slug}`} className={rowActionClass} title="Edit">
                           <Pencil className="h-4 w-4" strokeWidth={1.5} />
                         </Link>
                         <button type="button" className={rowActionClass} title="Duplicate" onClick={() => void duplicate(p)}>
@@ -228,8 +303,14 @@ export default function AdminProductsPage() {
             const thumb = p.images[0];
             const status = statusLabel(p);
             return (
-              <AdminCard key={p._id} padding="md">
+              <AdminCard key={p._id} padding="md" className={selected.has(p._id) ? "ring-2 ring-[var(--admin-accent)]" : undefined}>
                 <div className="flex gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--admin-border-strong)]"
+                    checked={selected.has(p._id)}
+                    onChange={() => toggleSelect(p._id)}
+                  />
                   <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl bg-stone-100">
                     {thumb ? (
                       <Image src={thumb} alt="" fill className="object-cover" sizes="64px" unoptimized />
@@ -259,7 +340,7 @@ export default function AdminProductsPage() {
                     Preview
                   </Link>
                   <Link
-                    href={`/admin/products/${p._id}`}
+                    href={`/admin/products/${p.slug}`}
                     className="inline-flex flex-1 items-center justify-center gap-1 rounded-full bg-[#1c1917] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white"
                   >
                     <Pencil className="h-3.5 w-3.5" />

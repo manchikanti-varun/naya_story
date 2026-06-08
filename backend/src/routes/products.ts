@@ -316,6 +316,7 @@ export function createProductsRouter(secret: string) {
         "fabricDetails", "stylingSuggestions", "pdpPrintDisclaimer", "pdpDeliveryRange",
         "pdpFreeShippingNote", "pdpDeliveryAndCare", "featured", "bestseller", "trending",
         "newIn", "newInOrder", "newInHoverImage", "newInVisible", "storefrontVisible",
+        "lowStockDisplay",
       ];
       const rawBody = req.body as Record<string, unknown>;
       const sanitized: Record<string, unknown> = {};

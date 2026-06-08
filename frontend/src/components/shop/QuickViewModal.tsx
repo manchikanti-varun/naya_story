@@ -10,6 +10,7 @@ import { useCart } from "@/context/cart-context";
 import type { Product } from "@/types";
 import { cn } from "@/lib/cn";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
+import { getTotalProductStock, isLimitedStock } from "@/lib/product-stock";
 
 type Props = {
   product: Product;
@@ -142,10 +143,32 @@ export function QuickViewModal({ product, open, onClose }: Props) {
                 </Link>
 
                 <div className="mt-6 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[#d39c3f]" />
-                  <p className="font-sans text-sm text-[#b38743]">
-                    {selected && selected.stock > 0 ? "Low stock" : "Out of stock"}
-                  </p>
+                  {(() => {
+                    const totalStock = getTotalProductStock(product);
+                    const showLimited = isLimitedStock(totalStock, product.lowStockDisplay);
+                    if (totalStock <= 0) {
+                      return (
+                        <>
+                          <span className="h-2 w-2 rounded-full bg-red-500" />
+                          <p className="font-sans text-sm text-red-600">Out of stock</p>
+                        </>
+                      );
+                    }
+                    if (showLimited) {
+                      return (
+                        <>
+                          <span className="h-2 w-2 rounded-full bg-[#d39c3f]" />
+                          <p className="font-sans text-sm text-[#b38743]">Low stock</p>
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <p className="font-sans text-sm text-emerald-700">In stock</p>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="mt-6">

@@ -21,3 +21,17 @@ export async function getProductsByIds(ids: string[]): Promise<import("@/types")
   const data = (await res.json()) as { products: import("@/types").Product[] };
   return data.products ?? [];
 }
+
+export async function getBestsellerProducts(limit = 8): Promise<import("@/types").Product[]> {
+  const res = await fetchApi(`/api/products?bestseller=true&limit=${limit}&sort=popular`);
+  if (!res.ok) return [];
+  const data = (await res.json()) as { products: import("@/types").Product[] };
+  return data.products ?? [];
+}
+
+export async function getNewInProducts(limit = 8): Promise<import("@/types").Product[]> {
+  const res = await fetchApi(`/api/products?newIn=true&limit=${limit}&sort=new_in`);
+  if (!res.ok) return [];
+  const data = (await res.json()) as { products: import("@/types").Product[] };
+  return data.products ?? [];
+}

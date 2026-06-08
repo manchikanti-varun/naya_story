@@ -168,7 +168,7 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
     () => (product ? getTotalProductStock(product) : 0),
     [product],
   );
-  const showLimitedStock = isLimitedStock(totalStock);
+  const showLimitedStock = isLimitedStock(totalStock, product?.lowStockDisplay);
   const accordionFlags = useMemo(
     () => (product ? getProductDetailAccordionFlags(product) : null),
     [product],

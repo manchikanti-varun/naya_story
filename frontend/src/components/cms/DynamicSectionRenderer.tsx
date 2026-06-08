@@ -24,25 +24,16 @@ export function DynamicSectionRenderer({
   const blocks = blocksProp ?? buildStorefrontRenderBlocks(homepage);
   const colors = homepage.sectionTextColors;
 
-  const byId = useMemo(
-    () => new Map(products.map((p) => [p._id, p] as const)),
+  // Products are pre-fetched by flag: bestsellers first, then new-in
+  // Split them based on their flags
+  const bestList = useMemo(
+    () => products.filter((p) => p.bestseller),
     [products],
   );
 
-  const bestList = useMemo(
-    () =>
-      homepage.bestsellers.productIds
-        .map((id) => byId.get(id))
-        .filter((p): p is Product => Boolean(p)),
-    [byId, homepage.bestsellers.productIds],
-  );
-
   const newList = useMemo(
-    () =>
-      homepage.newIn.productIds
-        .map((id) => byId.get(id))
-        .filter((p): p is Product => Boolean(p)),
-    [byId, homepage.newIn.productIds],
+    () => products.filter((p) => p.newIn),
+    [products],
   );
 
   const commerceIndex = { value: 0 };

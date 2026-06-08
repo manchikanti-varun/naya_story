@@ -4,11 +4,11 @@ import { use } from "react";
 import { ProductEditor } from "@/components/admin/ProductEditor";
 import { useAuth } from "@/context/auth-context";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ slug: string }> };
 
 export default function AdminEditProductPage({ params }: Props) {
-  const { id } = use(params);
+  const { slug } = use(params);
   const { token } = useAuth();
   if (!token) return null;
-  return <ProductEditor productId={id} token={token} />;
+  return <ProductEditor productSlug={slug} token={token} />;
 }

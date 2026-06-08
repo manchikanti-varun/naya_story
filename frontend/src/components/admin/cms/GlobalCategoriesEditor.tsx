@@ -56,8 +56,8 @@ export function GlobalCategoriesEditor({
   return (
     <div className="space-y-4">
       <p className="font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
-        Categories are shared globally. Homepage cards and Collections catalog tabs stay in sync
-        when you save.
+        Categories are auto-created when you add a new category to a product. You can add images,
+        reorder, or hide categories here. Homepage cards and Collections tabs stay in sync.
       </p>
 
       {sorted.length === 0 ? (

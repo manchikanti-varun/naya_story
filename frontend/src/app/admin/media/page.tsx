@@ -24,6 +24,45 @@ export default function AdminMediaPage() {
   const [category, setCategory] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ url: "", name: "", tags: "", category: "general" });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  if (!token) {
+    return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading media library…</p>;
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selected.size === items.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(items.map((i) => i._id)));
+    }
+  }
+
+  async function bulkDelete() {
+    if (!token || selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} media asset${selected.size > 1 ? "s" : ""} permanently?`)) return;
+    setBulkDeleting(true);
+    try {
+      await Promise.all(
+        [...selected].map((id) => apiFetch(`/media/${id}`, { method: "DELETE", token })),
+      );
+      publishStorefrontSettingsChanged();
+    } finally {
+      setBulkDeleting(false);
+      setSelected(new Set());
+      await load();
+    }
+  }
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -175,41 +214,88 @@ export default function AdminMediaPage() {
       {items.length === 0 ? (
         <AdminEmptyState title="No assets yet" description="Add your first image URL above." />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((item) => (
-            <AdminCard key={item._id} padding="none" className="overflow-hidden">
-              <div className="relative aspect-[4/3] bg-[var(--admin-surface-raised)]">
-                <Image src={item.url} alt={item.name} fill className="object-cover" sizes="280px" unoptimized />
-              </div>
-              <div className="space-y-2 p-4">
-                <p className="truncate font-medium text-[var(--admin-ink)]">{item.name}</p>
-                <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-faint)]">
-                  {item.category ?? "general"}
-                </p>
-                {item.tags?.length ? (
-                  <p className="text-xs text-[var(--admin-muted)]">{item.tags.join(" · ")}</p>
-                ) : null}
-                <div className="flex items-center justify-between pt-1">
-                  <AdminButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => void navigator.clipboard.writeText(item.url)}
-                  >
-                    Copy URL
-                  </AdminButton>
-                  <button
-                    type="button"
-                    className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
-                    title="Delete"
-                    onClick={() => void remove(item._id)}
-                  >
-                    <Trash2 className="h-4 w-4" strokeWidth={1.5} />
-                  </button>
+        <>
+          {/* Bulk actions bar */}
+          {selected.size > 0 && (
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-4 py-3">
+              <span className="font-sans text-sm font-medium text-[var(--admin-ink)]">
+                {selected.size} selected
+              </span>
+              <button
+                type="button"
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 font-sans text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+                disabled={bulkDeleting}
+                onClick={() => void bulkDelete()}
+              >
+                <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                {bulkDeleting ? "Deleting…" : `Delete ${selected.size}`}
+              </button>
+              <button
+                type="button"
+                className="font-sans text-xs text-[var(--admin-muted)] underline-offset-4 hover:underline"
+                onClick={() => setSelected(new Set())}
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
+          <div className="mb-3 flex items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-2 font-sans text-xs text-[var(--admin-muted)]">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-[var(--admin-border-strong)]"
+                checked={items.length > 0 && selected.size === items.length}
+                onChange={toggleSelectAll}
+              />
+              Select all
+            </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {items.map((item) => (
+              <AdminCard key={item._id} padding="none" className={`overflow-hidden ${selected.has(item._id) ? "ring-2 ring-[var(--admin-accent)]" : ""}`}>
+                <div className="relative aspect-[4/3] bg-[var(--admin-surface-raised)]">
+                  <Image src={item.url} alt={item.name} fill className="object-cover" sizes="280px" unoptimized />
+                  <div className="absolute left-2 top-2">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-white bg-white/80 shadow"
+                      checked={selected.has(item._id)}
+                      onChange={() => toggleSelect(item._id)}
+                    />
+                  </div>
                 </div>
-              </div>
-            </AdminCard>
-          ))}
-        </div>
+                <div className="space-y-2 p-4">
+                  <p className="truncate font-medium text-[var(--admin-ink)]">{item.name}</p>
+                  <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-faint)]">
+                    {item.category ?? "general"}
+                  </p>
+                  {item.tags?.length ? (
+                    <p className="text-xs text-[var(--admin-muted)]">{item.tags.join(" · ")}</p>
+                  ) : null}
+                  <div className="flex items-center justify-between pt-1">
+                    <AdminButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void navigator.clipboard.writeText(item.url)}
+                    >
+                      Copy URL
+                    </AdminButton>
+                    <button
+                      type="button"
+                      className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
+                      title="Delete"
+                      onClick={() => void remove(item._id)}
+                    >
+                      <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                    </button>
+                  </div>
+                </div>
+              </AdminCard>
+            ))}
+          </div>
+        </>
       )}
     </AdminPageLayout>
   );

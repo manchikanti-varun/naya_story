@@ -91,23 +91,13 @@ export function ContentEditorBestsellersPanel() {
             }
           />
         </AdminField>
-        {token ? (
-          <div className="md:col-span-2">
-            <ProductIdListField
-              token={token}
-              label="Bestseller rail — products"
-              hint={`Pin up to ${BESTSELLERS_RAIL_MAX} — the homepage shows the first ${BESTSELLERS_HOMEPAGE_VISIBLE}, then “View all”. Order = rail order.`}
-              maxItems={BESTSELLERS_RAIL_MAX}
-              value={hp.bestsellers.productIds}
-              onChange={(productIds) =>
-                setHp({
-                  ...hp,
-                  bestsellers: { ...hp.bestsellers, productIds },
-                })
-              }
-            />
-          </div>
-        ) : null}
+        <div className="md:col-span-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-4">
+          <p className="font-sans text-sm font-medium text-[var(--admin-ink)]">How it works</p>
+          <p className="mt-1 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
+            Products marked as <strong className="font-medium text-[var(--admin-ink)]">Bestseller</strong> in their
+            Shop display tab automatically appear here. Up to 8 show on the homepage. No manual pinning needed.
+          </p>
+        </div>
       </CmsFormGrid>
     </div>
   );
@@ -187,23 +177,13 @@ export function ContentEditorNewInHomePanel() {
             onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, ctaHref: e.target.value } })}
           />
         </AdminField>
-        {token ? (
-          <div className="md:col-span-2">
-            <ProductIdListField
-              token={token}
-              label="New In rail — featured picks (optional)"
-              hint="If set, these appear in the homepage New In rail (up to 8). The full New In page can still show the wider catalog."
-              maxItems={8}
-              value={hp.newIn.productIds}
-              onChange={(productIds) =>
-                setHp({
-                  ...hp,
-                  newIn: { ...hp.newIn, productIds },
-                })
-              }
-            />
-          </div>
-        ) : null}
+        <div className="md:col-span-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-4">
+          <p className="font-sans text-sm font-medium text-[var(--admin-ink)]">How it works</p>
+          <p className="mt-1 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
+            Products marked as <strong className="font-medium text-[var(--admin-ink)]">New In</strong> in their
+            Shop display tab automatically appear here. Up to 8 show on the homepage. No manual pinning needed.
+          </p>
+        </div>
       </CmsFormGrid>
     </div>
   );

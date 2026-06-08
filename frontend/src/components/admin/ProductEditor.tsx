@@ -85,22 +85,24 @@ const emptyProduct = (): Partial<Product> & {
   newInHoverImage: "",
   newInVisible: true,
   storefrontVisible: true,
+  lowStockDisplay: "hide" as const,
 });
 
 export function ProductEditor({
-  productId,
+  productSlug,
   token,
 }: {
-  productId: string | null;
+  productSlug: string | null;
   token: string;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<TabId>("general");
-  const [loading, setLoading] = useState(Boolean(productId));
+  const [loading, setLoading] = useState(Boolean(productSlug));
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [form, setForm] = useState(emptyProduct);
   const [existingCategories, setExistingCategories] = useState<string[]>([]);
+  const [productId, setProductId] = useState<string | null>(null);
 
   // Fetch existing categories from all products for the combobox
   useEffect(() => {
@@ -126,7 +128,7 @@ export function ProductEditor({
   }, [token]);
 
   useEffect(() => {
-    if (!productId) {
+    if (!productSlug) {
       setLoading(false);
       setForm(emptyProduct());
       return;
@@ -134,9 +136,10 @@ export function ProductEditor({
     let cancelled = false;
     void (async () => {
       try {
-        const data = await apiFetch<{ products: Product[] }>(`/products?ids=${productId}`, { token });
-        const p = data.products[0];
+        const data = await apiFetch<{ product: Product }>(`/products/slug/${productSlug}`, { token });
+        const p = data.product;
         if (!p || cancelled) return;
+        setProductId(p._id);
         setForm({
           ...p,
           description: consolidateProductDescription(p),
@@ -154,7 +157,7 @@ export function ProductEditor({
     return () => {
       cancelled = true;
     };
-  }, [productId, token]);
+  }, [productSlug, token]);
 
   const payload = useMemo(() => {
     const images = form.images.map((s) => s.trim()).filter(Boolean);
@@ -225,6 +228,10 @@ export function ProductEditor({
           router.push("/admin/products");
           return;
         }
+        // If slug changed, update the URL
+        if (form.slug && form.slug !== productSlug) {
+          router.replace(`/admin/products/${form.slug}`);
+        }
         setMsg("Saved.");
       } else {
         const res = await apiFetch<{ product: Product }>("/products", {
@@ -233,12 +240,13 @@ export function ProductEditor({
           body: JSON.stringify(body),
         });
         publishStorefrontSettingsChanged();
+        setProductId(res.product._id);
         if (goToList) {
           router.push("/admin/products");
           return;
         }
         setMsg("Created — you can keep editing or return to the product list.");
-        router.replace(`/admin/products/${res.product._id}`);
+        router.replace(`/admin/products/${res.product.slug}`);
       }
     } catch (e) {
       setMsg((e as Error).message ?? "Save failed");
@@ -251,7 +259,7 @@ export function ProductEditor({
     return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading product…</p>;
   }
 
-  const title = productId ? form.name?.trim() || "Edit product" : "New product";
+  const title = productSlug ? form.name?.trim() || "Edit product" : "New product";
 
   return (
     <AdminPageLayout
@@ -263,11 +271,11 @@ export function ProductEditor({
           <Link href="/admin/products" className="admin-back-link">
             ← Products
           </Link>
-          {productId ? <span className="block font-mono text-sm text-[var(--admin-muted)]">/{form.slug}</span> : null}
+          {productSlug ? <span className="block font-mono text-sm text-[var(--admin-muted)]">/{form.slug}</span> : null}
         </span>
       }
       actions={
-        productId ? (
+        productSlug ? (
           <Link href={`/admin/preview/product/${form.slug}`} className="admin-btn admin-btn--secondary admin-btn--sm">
             Preview
           </Link>
@@ -333,8 +341,14 @@ export function ProductEditor({
 
         {tab === "commerce" ? (
           <div className="space-y-6">
+            <p className="text-xs leading-relaxed text-[var(--admin-muted)]">
+              <strong className="font-medium text-[var(--admin-ink)]">Price</strong> — what the customer pays.{" "}
+              <strong className="font-medium text-[var(--admin-ink)]">Compare at</strong> — original/MRP price shown crossed out (leave blank if no discount).{" "}
+              <strong className="font-medium text-[var(--admin-ink)]">Tax %</strong> — GST rate added at checkout.{" "}
+              <strong className="font-medium text-[var(--admin-ink)]">Discount %</strong> — auto-calculated off the selling price (used for badge display).
+            </p>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Price (₹)">
+              <Field label="Selling price (₹)">
                 <input
                   type="number"
                   className={inputClass}
@@ -342,10 +356,11 @@ export function ProductEditor({
                   onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
                 />
               </Field>
-              <Field label="Compare at">
+              <Field label="Compare at (MRP)">
                 <input
                   type="number"
                   className={inputClass}
+                  placeholder="Optional"
                   value={form.compareAtPrice ?? ""}
                   onChange={(e) =>
                     setForm((f) => ({
@@ -374,7 +389,12 @@ export function ProductEditor({
             </div>
 
             <div>
-              <p className="admin-label mb-3">Sizes &amp; stock</p>
+              <p className="admin-label mb-1">Sizes &amp; stock</p>
+              <p className="mb-3 text-xs text-[var(--admin-muted)]">
+                Each row is a variant the customer can buy.{" "}
+                <strong className="font-medium text-[var(--admin-ink)]">SKU</strong> — unique code for your internal tracking.{" "}
+                <strong className="font-medium text-[var(--admin-ink)]">Stock</strong> — how many units are available to sell.
+              </p>
               <div className="space-y-3">
                 {form.variants.map((v, i) => (
                   <div
@@ -473,28 +493,64 @@ export function ProductEditor({
         {tab === "shop" ? (
           <div className="space-y-6">
             <div>
-              <p className="admin-label mb-3">Visibility &amp; badges</p>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <p className="admin-label mb-1">Visibility</p>
+              <p className="mb-3 text-xs text-[var(--admin-muted)]">
+                Controls where this product appears on the storefront.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-1">
                 {(
                   [
-                    ["storefrontVisible", "Show on shop", form.storefrontVisible !== false],
-                    ["featured", "Featured", Boolean(form.featured)],
-                    ["bestseller", "Bestseller", Boolean(form.bestseller)],
-                    ["newIn", "New In badge", Boolean(form.newIn)],
-                    ["trending", "Trending", Boolean(form.trending)],
-                    ["newInVisible", "Show in New In rail", form.newInVisible !== false],
+                    ["storefrontVisible", "Visible on store", "Product appears in collections, search, and has a live page. Turn off to hide without deleting.", form.storefrontVisible !== false],
+                    ["newInVisible", "Show in New In page", "Appears on the /new-in page grid. Separate from the homepage New In rail.", form.newInVisible !== false],
                   ] as const
-                ).map(([key, label, checked]) => (
+                ).map(([key, label, hint, checked]) => (
                   <label
                     key={key}
-                    className="flex cursor-pointer items-center gap-3 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] px-3 py-2.5"
+                    className="flex cursor-pointer items-start gap-3 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] px-3 py-3"
                   >
                     <input
                       type="checkbox"
+                      className="mt-0.5"
                       checked={checked}
                       onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.checked }))}
                     />
-                    <span className="text-sm text-[var(--admin-ink)]">{label}</span>
+                    <div>
+                      <span className="text-sm font-medium text-[var(--admin-ink)]">{label}</span>
+                      <span className="mt-0.5 block text-[11px] text-[var(--admin-muted)]">{hint}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="admin-label mb-1">Homepage badges &amp; rails</p>
+              <p className="mb-3 text-xs text-[var(--admin-muted)]">
+                Toggling these auto-pins the product to the matching homepage rail. No extra CMS step needed.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["featured", "Featured", "Prioritized in default sort order across collections.", Boolean(form.featured)],
+                    ["bestseller", "Bestseller", "Shows in the Bestsellers rail on homepage.", Boolean(form.bestseller)],
+                    ["newIn", "New In", "Shows in the New In rail on homepage.", Boolean(form.newIn)],
+                    ["trending", "Trending", "Can be used for a trending badge or filter.", Boolean(form.trending)],
+                  ] as const
+                ).map(([key, label, hint, checked]) => (
+                  <label
+                    key={key}
+                    className="flex cursor-pointer items-start gap-3 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] px-3 py-3"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={checked}
+                      onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.checked }))}
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-[var(--admin-ink)]">{label}</span>
+                      <span className="mt-0.5 block text-[11px] text-[var(--admin-muted)]">{hint}</span>
+                    </div>
                   </label>
                 ))}
               </div>
@@ -508,6 +564,27 @@ export function ProductEditor({
                 onChange={(e) => setForm((f) => ({ ...f, newInOrder: Number(e.target.value) || 0 }))}
               />
             </Field>
+
+            <div>
+              <p className="admin-label mb-1">Low stock banner</p>
+              <p className="mb-3 text-xs text-[var(--admin-muted)]">
+                Shows &quot;Only X left — Hurry!&quot; urgency banner on the product page.
+              </p>
+              <label className="flex cursor-pointer items-start gap-3 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] px-3 py-3">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={form.lowStockDisplay === "show"}
+                  onChange={(e) => setForm((f) => ({ ...f, lowStockDisplay: e.target.checked ? "show" : "hide" }))}
+                />
+                <div>
+                  <span className="text-sm font-medium text-[var(--admin-ink)]">Show low stock banner</span>
+                  <span className="mt-0.5 block text-[11px] text-[var(--admin-muted)]">
+                    Displays the &quot;Only X left&quot; urgency message to customers.
+                  </span>
+                </div>
+              </label>
+            </div>
 
             <div className="border-t border-[var(--admin-border)] pt-6">
               <p className="admin-label mb-1">Product page (storefront)</p>

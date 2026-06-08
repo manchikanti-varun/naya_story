@@ -7,8 +7,16 @@ export function getTotalProductStock(product: Product): number {
   return product.variants.reduce((sum, v) => sum + Math.max(0, v.stock ?? 0), 0);
 }
 
-export function isLimitedStock(totalStock: number): boolean {
-  return totalStock > 0 && totalStock < LIMITED_STOCK_THRESHOLD;
+/**
+ * Determines if limited-stock banner should show.
+ * Only shows when admin explicitly sets lowStockDisplay to "show".
+ */
+export function isLimitedStock(
+  totalStock: number,
+  lowStockDisplay?: "show" | "hide",
+): boolean {
+  if (totalStock <= 0) return false;
+  return lowStockDisplay === "show";
 }
 
 /** Progress fill for the limited-stock bar (0–100) */

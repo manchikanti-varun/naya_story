@@ -50,6 +50,8 @@ const ProductSchema = new mongoose.Schema(
     newInVisible: { type: Boolean, default: true },
     /** When false, product is hidden from storefront lists and slug page (admins can still preview). */
     storefrontVisible: { type: Boolean, default: true },
+    /** Admin override for limited-stock banner: "show" (show banner), "hide" (default, no banner). */
+    lowStockDisplay: { type: String, enum: ["show", "hide"], default: "hide" },
   },
   { timestamps: true },
 );

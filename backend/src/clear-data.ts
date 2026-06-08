@@ -27,7 +27,8 @@ async function clearData() {
     RefreshToken.deleteMany({}),
     ProcessedWebhook.deleteMany({}),
     HomepageRevision.deleteMany({}),
-    MediaAsset.deleteMany({}),
+    // Keep logo assets, delete everything else
+    MediaAsset.deleteMany({ category: { $ne: "logo" }, name: { $not: /logo/i } }),
   ]);
 
   const blankHome = blankStorefrontHomepage();
@@ -35,8 +36,8 @@ async function clearData() {
     {},
     {
       $set: {
-        homepage: blankHome,
-        homepageDraft: blankHome,
+        homepage: { ...blankHome, globalCategories: [] },
+        homepageDraft: { ...blankHome, globalCategories: [] },
         banners: [],
       },
     },

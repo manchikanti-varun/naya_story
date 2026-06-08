@@ -45,6 +45,8 @@ export type Product = {
   newInVisible?: boolean;
   /** false = hidden from storefront */
   storefrontVisible?: boolean;
+  /** Admin override for limited-stock banner: "show" | "hide" */
+  lowStockDisplay?: "show" | "hide";
 };
 
 export type MediaAsset = {
