@@ -299,27 +299,13 @@ export function ContentEditorNewInPagePanel({ embedded = false }: { embedded?: b
           />
         </AdminField>
       </CmsFormGrid>
-      {token ? (
-        <ProductIdListField
-          token={token}
-          label="Curated products"
-          hint="Up to 60 items. Order matches storefront masonry."
-          maxItems={60}
-          value={hp.newInPage?.productIds ?? []}
-          onChange={(productIds) =>
-            setHp({
-              ...hp,
-              newInPage: {
-                ...hp.newInPage,
-                useCuratedOrder: hp.newInPage?.useCuratedOrder ?? false,
-                heading: hp.newInPage?.heading ?? "New In",
-                subheading: hp.newInPage?.subheading ?? "",
-                productIds,
-              },
-            })
-          }
-        />
-      ) : null}
+      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-4">
+          <p className="font-sans text-sm font-medium text-[var(--admin-ink)]">How it works</p>
+          <p className="mt-1 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
+            Products marked as <strong className="font-medium text-[var(--admin-ink)]">New In</strong> in their
+            Shop display tab automatically appear on this page. No manual pinning needed.
+          </p>
+        </div>
     </CmsPageEditorShell>
   );
 }
@@ -371,16 +357,30 @@ export function ContentEditorCategoriesPanel() {
           />
         </AdminField>
       </CmsFormGrid>
-      <GlobalCategoriesEditor
-        categories={globals}
-        token={token}
-        onChange={(next) => patchGlobalCategories(() => next)}
-        onAdd={() =>
-          patchGlobalCategories((list) => [...list, newGlobalCategory(list.length)])
-        }
-        onRemove={(id) => patchGlobalCategories((list) => list.filter((c) => c.id !== id))}
-        onMove={(index, dir) => patchGlobalCategories((list) => moveGlobalCategory(list, index, dir))}
-      />
+      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-4">
+        <p className="font-sans text-sm font-medium text-[var(--admin-ink)]">How it works</p>
+        <p className="mt-1 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
+          Categories are <strong className="font-medium text-[var(--admin-ink)]">auto-synced from your products</strong>.
+          When you create a product with a category (e.g. &quot;Dresses&quot;), it automatically appears here as a card
+          and as a tab on the Collections page. Add images to category cards from the list below.
+        </p>
+      </div>
+      {globals.length > 0 ? (
+        <GlobalCategoriesEditor
+          categories={globals}
+          token={token}
+          onChange={(next) => patchGlobalCategories(() => next)}
+          onAdd={() =>
+            patchGlobalCategories((list) => [...list, newGlobalCategory(list.length)])
+          }
+          onRemove={(id) => patchGlobalCategories((list) => list.filter((c) => c.id !== id))}
+          onMove={(index, dir) => patchGlobalCategories((list) => moveGlobalCategory(list, index, dir))}
+        />
+      ) : (
+        <p className="rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-8 text-center font-sans text-sm text-[var(--admin-muted)]">
+          No categories yet. Create a product with a category to see it here automatically.
+        </p>
+      )}
     </div>
   );
 

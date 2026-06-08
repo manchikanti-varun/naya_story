@@ -68,7 +68,16 @@ function systemCollectionTabs(hp: HomepageConfig) {
       enabled: true,
       order: 1,
     });
-  return [all, bestselling];
+  const newIn =
+    existing.find((t) => t.type === "newIn") ??
+    ({
+      id: "new-in",
+      label: "New In",
+      type: "newIn" as const,
+      enabled: true,
+      order: 2,
+    });
+  return [all, bestselling, newIn];
 }
 
 export function applyGlobalCategories(
@@ -95,7 +104,7 @@ export function applyGlobalCategories(
       order: g.order,
     }));
 
-  const [allTab, bestTab] = systemCollectionTabs(hp);
+  const [allTab, bestTab, newInTab] = systemCollectionTabs(hp);
   const catalogTabs = sorted
     .filter((g) => g.enabled && g.collections)
     .map((g, i) => ({
@@ -104,7 +113,7 @@ export function applyGlobalCategories(
       type: "category" as const,
       value: g.slug,
       enabled: true,
-      order: 2 + i,
+      order: 3 + i,
     }));
 
   return {
@@ -119,6 +128,7 @@ export function applyGlobalCategories(
       categories: [
         { ...allTab, order: 0 },
         { ...bestTab, order: 1 },
+        { ...newInTab, order: 2 },
         ...catalogTabs,
       ],
     },
@@ -126,7 +136,15 @@ export function applyGlobalCategories(
 }
 
 export function mergeGlobalCategories(raw: unknown, hp: HomepageConfig): HomepageConfig {
-  if (!Array.isArray(raw) || raw.length === 0) {
+  if (raw === undefined || raw === null) {
+    // No globalCategories field at all — use whatever is in hp (could be defaults or migrated)
+    return applyGlobalCategories(hp, getGlobalCategories(hp));
+  }
+  if (Array.isArray(raw) && raw.length === 0) {
+    // Explicitly set to empty — respect it, no categories
+    return applyGlobalCategories(hp, []);
+  }
+  if (!Array.isArray(raw)) {
     return applyGlobalCategories(hp, getGlobalCategories(hp));
   }
   const globals = raw

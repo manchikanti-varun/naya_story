@@ -28,6 +28,8 @@ type Props = {
   token?: string | null;
   onUpdate: (patch: Partial<HeroSlide>) => void;
   onMove: (dir: -1 | 1) => void;
+  onClear: () => void;
+  onRemove: () => void;
 };
 
 function SlideSection({
@@ -70,6 +72,8 @@ export function HeroSlideEditorFields({
   token,
   onUpdate,
   onMove,
+  onClear,
+  onRemove,
 }: Props) {
   const [tab, setTab] = useState<SlideTab>("content");
   const customStyle = slideHasCustomStyle(slide);
@@ -144,6 +148,31 @@ export function HeroSlideEditorFields({
             />
             Enabled
           </label>
+          <AdminButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (confirm("Clear all content from this slide? It will be disabled and emptied.")) onClear();
+            }}
+            aria-label="Clear slide"
+            title="Clear slide content"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-amber-600" strokeWidth={1.75} />
+          </AdminButton>
+          <AdminButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (confirm("Delete this slide permanently?")) onRemove();
+            }}
+            aria-label="Delete slide"
+            title="Delete slide"
+            className="text-red-600 hover:bg-red-50"
+          >
+            <span className="text-xs font-semibold">✕</span>
+          </AdminButton>
         </div>
       </header>
 

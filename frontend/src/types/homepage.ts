@@ -288,7 +288,7 @@ export type HomepageConfig = {
     categories: Array<{
       id: string;
       label: string;
-      type: "all" | "bestselling" | "category";
+      type: "all" | "bestselling" | "newIn" | "category";
       value?: string;
       enabled: boolean;
       order: number;

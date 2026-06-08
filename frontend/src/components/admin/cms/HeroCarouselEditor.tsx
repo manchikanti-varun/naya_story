@@ -13,7 +13,7 @@ import { AdminField, AdminInput } from "@/components/admin/ui/AdminField";
 import { cn } from "@/lib/cn";
 
 export function HeroCarouselEditor() {
-  const { hp, setHp, moveSlide, updateSlide, token } = useHomepageEditor();
+  const { hp, setHp, moveSlide, updateSlide, removeSlide, clearSlide, addSlide, duplicateSlide, token } = useHomepageEditor();
   const slides = hp ? sortSlides(hp.carousel.slides) : [];
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
 
@@ -89,6 +89,25 @@ export function HeroCarouselEditor() {
             {!s.enabled ? " · off" : null}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => {
+            const newId = addSlide();
+            setActiveSlideId(newId);
+          }}
+          className="rounded-full border border-dashed border-[var(--admin-border)] px-3 py-1.5 font-sans text-xs text-[var(--admin-muted)] transition hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent)]"
+        >
+          + Add slide
+        </button>
+        {activeSlide ? (
+          <button
+            type="button"
+            onClick={() => duplicateSlide(activeSlide.id)}
+            className="rounded-full border border-[var(--admin-border)] px-3 py-1.5 font-sans text-xs text-[var(--admin-muted)] transition hover:border-[var(--admin-accent)] hover:text-[var(--admin-accent)]"
+          >
+            Duplicate
+          </button>
+        ) : null}
       </div>
 
       {activeSlide ? (
@@ -103,6 +122,11 @@ export function HeroCarouselEditor() {
           carouselTextColors={hp.sectionTextColors?.hero}
           onUpdate={(patch) => updateSlide(activeSlide.id, patch)}
           onMove={(dir) => moveSlide(safeIndex, dir)}
+          onClear={() => clearSlide(activeSlide.id)}
+          onRemove={() => {
+            removeSlide(activeSlide.id);
+            setActiveSlideId(null);
+          }}
         />
       ) : (
         <p className="rounded-[var(--admin-radius-sm)] border border-dashed border-[var(--admin-border)] px-4 py-8 text-center font-sans text-sm text-[var(--admin-muted)]">

@@ -60,14 +60,14 @@ const emptyProduct = (): Partial<Product> & {
   images: string[];
   variants: ProductVariant[];
 } => ({
-  name: "Untitled piece",
-  slug: `piece-${Date.now()}`,
-  description: "Describe fabric, mood, and gesture. Start lines with > for bullet points.",
-  price: 8900,
+  name: "",
+  slug: "",
+  description: "",
+  price: 0,
   compareAtPrice: undefined,
   taxRate: 0,
   discountPercent: 0,
-  category: "dresses",
+  category: "",
   collection: "",
   images: [""],
   imageCaptions: [],
@@ -498,42 +498,32 @@ export function ProductEditor({
                 Controls where this product appears on the storefront.
               </p>
               <div className="grid gap-2 sm:grid-cols-1">
-                {(
-                  [
-                    ["storefrontVisible", "Visible on store", "Product appears in collections, search, and has a live page. Turn off to hide without deleting.", form.storefrontVisible !== false],
-                    ["newInVisible", "Show in New In page", "Appears on the /new-in page grid. Separate from the homepage New In rail.", form.newInVisible !== false],
-                  ] as const
-                ).map(([key, label, hint, checked]) => (
-                  <label
-                    key={key}
-                    className="flex cursor-pointer items-start gap-3 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] px-3 py-3"
-                  >
-                    <input
-                      type="checkbox"
-                      className="mt-0.5"
-                      checked={checked}
-                      onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.checked }))}
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-[var(--admin-ink)]">{label}</span>
-                      <span className="mt-0.5 block text-[11px] text-[var(--admin-muted)]">{hint}</span>
-                    </div>
-                  </label>
-                ))}
+                <label className="flex cursor-pointer items-start gap-3 rounded-[var(--admin-radius-sm)] border border-[var(--admin-border)] px-3 py-3">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={form.storefrontVisible !== false}
+                    onChange={(e) => setForm((f) => ({ ...f, storefrontVisible: e.target.checked }))}
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-[var(--admin-ink)]">Visible on store</span>
+                    <span className="mt-0.5 block text-[11px] text-[var(--admin-muted)]">Product appears in collections, search, and has a live page. Turn off to hide without deleting.</span>
+                  </div>
+                </label>
               </div>
             </div>
 
             <div>
-              <p className="admin-label mb-1">Homepage badges &amp; rails</p>
+              <p className="admin-label mb-1">Badges &amp; rails</p>
               <p className="mb-3 text-xs text-[var(--admin-muted)]">
-                Toggling these auto-pins the product to the matching homepage rail. No extra CMS step needed.
+                Toggling these auto-shows the product in the matching sections. No extra CMS step needed.
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {(
                   [
                     ["featured", "Featured", "Prioritized in default sort order across collections.", Boolean(form.featured)],
                     ["bestseller", "Bestseller", "Shows in the Bestsellers rail on homepage.", Boolean(form.bestseller)],
-                    ["newIn", "New In", "Shows in the New In rail on homepage.", Boolean(form.newIn)],
+                    ["newIn", "New In", "Shows in New In rail on homepage + /new-in page.", Boolean(form.newIn)],
                     ["trending", "Trending", "Can be used for a trending badge or filter.", Boolean(form.trending)],
                   ] as const
                 ).map(([key, label, hint, checked]) => (
@@ -545,7 +535,12 @@ export function ProductEditor({
                       type="checkbox"
                       className="mt-0.5"
                       checked={checked}
-                      onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.checked }))}
+                      onChange={(e) => setForm((f) => ({
+                        ...f,
+                        [key]: e.target.checked,
+                        // When New In is toggled, also sync newInVisible
+                        ...(key === "newIn" ? { newInVisible: e.target.checked } : {}),
+                      }))}
                     />
                     <div>
                       <span className="text-sm font-medium text-[var(--admin-ink)]">{label}</span>

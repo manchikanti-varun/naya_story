@@ -67,14 +67,22 @@ export function CollectionsExplorer() {
           if (activeTab.type === "all") {
             qs.delete("category");
             qs.delete("bestseller");
+            qs.delete("newIn");
           }
           if (activeTab.type === "bestselling") {
             qs.set("bestseller", "true");
             qs.delete("category");
+            qs.delete("newIn");
+          }
+          if (activeTab.type === "newIn") {
+            qs.set("newIn", "true");
+            qs.delete("category");
+            qs.delete("bestseller");
           }
           if (activeTab.type === "category") {
             qs.set("category", activeTab.value ?? "");
             qs.delete("bestseller");
+            qs.delete("newIn");
           }
         }
         const defaultSort = config.filters?.defaultSort ?? "newest";

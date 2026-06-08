@@ -116,86 +116,16 @@ function mergeSectionTextColors(
 /** Demo stock photos removed — add images via Admin → Media / section editors. */
 const IMG = (_id?: string, _w?: number) => "";
 
-const defaultSlides: HeroSlide[] = [
-  {
-    id: "all",
-    enabled: true,
-    order: 0,
-    desktopImage: IMG("photo-1490481651871-ab68de25d43d"),
-    mobileImage: "",
-    heading: "The full collection",
-    subheading: "Every silhouette, one quiet narrative.",
-    ctaLabel: "Explore collection",
-    ctaHref: "/collections",
-  },
-  {
-    id: "new",
-    enabled: true,
-    order: 1,
-    desktopImage: IMG("photo-1515886657613-9f3515b0c78f"),
-    mobileImage: "",
-    heading: "New in",
-    subheading: "Fresh arrivals — limited, considered, slow.",
-    ctaLabel: "Shop now",
-    ctaHref: "/collections?collection=new-arrivals",
-  },
-  {
-    id: "bestselling",
-    enabled: true,
-    order: 2,
-    desktopImage: IMG("photo-1548624313-0396c75e4b1a"),
-    mobileImage: "",
-    heading: "Best selling",
-    subheading: "Pieces our clients return to, season after season.",
-    ctaLabel: "View bestsellers",
-    ctaHref: "/collections?tag=bestseller",
-  },
-  {
-    id: "featured",
-    enabled: true,
-    order: 3,
-    desktopImage: IMG("photo-1469334031218-e382a71b716b"),
-    mobileImage: "",
-    heading: "Featured collection",
-    subheading: "An elevated edit — cinematic and wearable.",
-    ctaLabel: "Explore edit",
-    ctaHref: "/collections?collection=summer-edit",
-  },
-];
+const defaultSlides: HeroSlide[] = [];
 
-const defaultCategories: CategoryCard[] = [
-  {
-    id: "c1",
-    name: "Dresses",
-    image: IMG("photo-1496747611175-2532220b8043", 1200),
-    href: "/collections?category=dresses",
-    enabled: true,
-    order: 0,
-  },
-  {
-    id: "c2",
-    name: "Co-ords",
-    image: IMG("photo-1539008835657-9e8e9680c956", 1200),
-    href: "/collections?category=tops",
-    enabled: true,
-    order: 1,
-  },
-  {
-    id: "c3",
-    name: "Essentials",
-    image: IMG("photo-1509631179647-0177331693ae", 1200),
-    href: "/collections?category=outerwear",
-    enabled: true,
-    order: 2,
-  },
-];
+const defaultCategories: CategoryCard[] = [];
 
 export function defaultHomepageConfig(): HomepageConfig {
   return {
     theme: {},
-    heroTitle: "Naya Story",
-    heroSubtitle: "Timeless silhouettes for modern femininity.",
-    heroImage: IMG("photo-1521572163474-6864f9cf17ab"),
+    heroTitle: "",
+    heroSubtitle: "",
+    heroImage: "",
     announcements: [],
     topPromoBar: {
       enabled: false,
@@ -206,7 +136,7 @@ export function defaultHomepageConfig(): HomepageConfig {
     },
     carousel: {
       autoplayMs: 12000,
-      slides: defaultSlides.map((s) => ({ ...s })),
+      slides: [],
     },
     sectionsOrder: [
       { id: "bestsellers", enabled: true, order: 0 },
@@ -217,44 +147,43 @@ export function defaultHomepageConfig(): HomepageConfig {
     editorial: defaultHomepageEditorial(),
     bestsellers: {
       enabled: true,
-      title: "Our Bestsellers",
-      subtitle: "Most loved pieces from the collection.",
+      title: "",
+      subtitle: "",
       productIds: [],
     },
     newIn: {
       enabled: true,
-      title: "New In",
-      subtitle: "The latest silhouettes to arrive in studio.",
+      title: "",
+      subtitle: "",
       productIds: [],
-      ctaLabel: "View all new arrivals",
-      ctaHref: "/collections?collection=new-arrivals",
+      ctaLabel: "",
+      ctaHref: "/new-in",
     },
     newInPage: {
       enabled: true,
       useCuratedOrder: false,
-      heading: "New In",
+      heading: "",
       subheading: "",
       productIds: [],
     },
     categories: {
       enabled: true,
-      title: "Shop by category",
-      subtitle: "Three moods — three wardrobes.",
-      items: defaultCategories.map((c) => ({ ...c })),
+      title: "",
+      subtitle: "",
+      items: [],
     },
     newsletter: {
       enabled: true,
-      title: "Notes from Naya Story",
-      description:
-        "Receive updates on new collections and exclusive releases.",
+      title: "",
+      description: "",
       placeholder: "Email address",
       buttonLabel: "Subscribe",
     },
     collectionsPage: {
       enabled: true,
-      kicker: "Naya Story",
-      title: "Collections",
-      subtitle: "Explore curated silhouettes from Naya Story.",
+      kicker: "",
+      title: "",
+      subtitle: "",
       paginationLimit: 16,
       usePinnedProducts: false,
       pinnedProductIds: [],
@@ -274,20 +203,11 @@ export function defaultHomepageConfig(): HomepageConfig {
           order: 1,
         },
         {
-          id: "dresses",
-          label: "Dresses",
-          type: "category",
-          value: "dresses",
+          id: "new-in",
+          label: "New In",
+          type: "newIn",
           enabled: true,
           order: 2,
-        },
-        {
-          id: "tops",
-          label: "Tops",
-          type: "category",
-          value: "tops",
-          enabled: true,
-          order: 3,
         },
       ],
       filters: {
@@ -296,14 +216,9 @@ export function defaultHomepageConfig(): HomepageConfig {
         showPrice: true,
         showAvailability: true,
         showSort: true,
-        sizeOptions: ["XS", "S", "M", "L", "XL"],
-        colorOptions: ["Ivory", "Sand", "Noir", "Rose"],
-        priceBands: [
-          { id: "0-5000", label: "Under ₹5,000", min: 0, max: 5000, enabled: true },
-          { id: "5000-10000", label: "₹5,000 – ₹10,000", min: 5000, max: 10000, enabled: true },
-          { id: "10000-25000", label: "₹10,000 – ₹25,000", min: 10000, max: 25000, enabled: true },
-          { id: "25000-50000", label: "₹25,000 – ₹50,000", min: 25000, max: 50000, enabled: true },
-        ],
+        sizeOptions: [],
+        colorOptions: [],
+        priceBands: [],
         sortOptions: [
           { value: "newest", label: "Newest", enabled: true },
           { value: "popular", label: "Bestselling", enabled: true },
@@ -313,8 +228,8 @@ export function defaultHomepageConfig(): HomepageConfig {
         defaultSort: "newest",
       },
       messages: {
-        loading: "Curating pieces…",
-        empty: "No garments matched — soften your filters.",
+        loading: "Loading…",
+        empty: "No products found.",
         mobileFiltersLabel: "Filters & Sort",
         mobileDrawerTitle: "Refine",
         availabilityInStock: "In stock",
@@ -323,148 +238,57 @@ export function defaultHomepageConfig(): HomepageConfig {
       },
     },
     ourStoryPage: {
-      enabled: true,
-      title: "Our Story",
-      subtitle: "Designed for modern femininity, rooted in timeless elegance.",
-      heroImage: IMG("photo-1529139574466-a303027c1d8b"),
-      ctaLabel: "Explore the Collection",
+      enabled: false,
+      title: "",
+      subtitle: "",
+      heroImage: "",
+      ctaLabel: "",
       ctaHref: "/collections",
-      sections: [
-        {
-          id: "philosophy",
-          enabled: true,
-          order: 0,
-          heading: "Our philosophy",
-          body: "Naya Story is built on an intentional rhythm - fewer pieces, deeper meaning. We design for women who value softness, clarity, and timeless presence.",
-          secondaryBody:
-            "Each silhouette is composed to move with the body, balancing elegance with ease from morning to evening.",
-          image: IMG("photo-1483985988355-763728e1935b", 1400),
-          imageAlt: "Model in neutral tailored look",
-        },
-        {
-          id: "founder",
-          enabled: true,
-          order: 1,
-          heading: "The vision behind Naya Story",
-          body: "What began as sketches in a quiet studio became a contemporary wardrobe shaped by craft, femininity, and emotional detail.",
-          secondaryBody:
-            "Our founder believes luxury should feel intimate - a garment that remembers your movement and reveals confidence without effort.",
-          image: IMG("photo-1515886657613-9f3515b0c78f", 1400),
-          imageAlt: "Founder portrait mood",
-        },
-        {
-          id: "editorial",
-          enabled: true,
-          order: 2,
-          heading: "Moments, textures, movement",
-          body: "From drape to daylight, every frame tells the Naya Story mood - calm, cinematic, and deeply feminine.",
-          gallery: [
-            IMG("photo-1512436991641-6745cdb1723f", 1200),
-            IMG("photo-1496747611175-843222e1935b", 1200),
-            IMG("photo-1524504388940-b1c1722653e1", 1200),
-            IMG("photo-1487412720507-e7ab37603c6f", 1200),
-          ],
-        },
-        {
-          id: "craft",
-          enabled: true,
-          order: 3,
-          heading: "Crafted with intention",
-          body: "We source tactile fabrics, refine every line, and fit each pattern for longevity - because true luxury is felt over time.",
-          secondaryBody:
-            "Tailoring, finishing, and proportion are treated as rituals. Nothing is rushed, and nothing is added without purpose.",
-          image: IMG("photo-1445205170230-053b83016050", 1400),
-          imageAlt: "Fabric and tailoring detail",
-        },
-        {
-          id: "manifesto",
-          enabled: true,
-          order: 4,
-          heading: "Manifesto",
-          body: "Elegance is not about being noticed, but remembered.",
-          quote: "Elegance is not about being noticed, but remembered.",
-        },
-        {
-          id: "closing",
-          enabled: true,
-          order: 5,
-          heading: "A wardrobe for becoming",
-          body: "Naya Story is a world of quiet confidence, where modern design meets timeless emotion.",
-          image: IMG("photo-1469334031218-e382a71b716b", 1800),
-          imageAlt: "Closing campaign moment",
-        },
-      ],
+      sections: [],
     },
     footer: {
       logoUrl: "/naya_logo.png",
-      logoAlt: "Naya Story",
-      brandDescription:
-        "Naya Story creates timeless silhouettes for modern femininity.",
-      supportingText:
-        "Designed with intention, elegance, and everyday luxury.",
+      logoAlt: "",
+      brandDescription: "",
+      supportingText: "",
       legalTitle: "Legal",
       legalLinks: [
-        {
-          label: "Terms & Conditions",
-          href: "/policies/terms",
-          enabled: true,
-          order: 0,
-        },
-        {
-          label: "Privacy Policy",
-          href: "/policies/privacy",
-          enabled: true,
-          order: 1,
-        },
-        {
-          label: "Refund & Cancellation",
-          href: "/policies/refund-cancellation",
-          enabled: true,
-          order: 2,
-        },
-        {
-          label: "Shipping & Delivery",
-          href: "/policies/shipping",
-          enabled: true,
-          order: 3,
-        },
+        { label: "Terms & Conditions", href: "/policies/terms", enabled: true, order: 0 },
+        { label: "Privacy Policy", href: "/policies/privacy", enabled: true, order: 1 },
+        { label: "Refund & Cancellation", href: "/policies/refund-cancellation", enabled: true, order: 2 },
+        { label: "Shipping & Delivery", href: "/policies/shipping", enabled: true, order: 3 },
       ],
       contactTitle: "Contact",
-      email: "hello@nayastory.com",
-      phone: "+91 00000 00000",
-      location: "Mumbai, India",
+      email: "",
+      phone: "",
+      location: "",
       socialLinks: [
-        {
-          platform: "instagram",
-          href: "https://instagram.com",
-          enabled: true,
-          order: 0,
-        },
-        {
-          platform: "pinterest",
-          href: "https://pinterest.com",
-          enabled: true,
-          order: 1,
-        },
-        {
-          platform: "facebook",
-          href: "https://facebook.com",
-          enabled: true,
-          order: 2,
-        },
+        { platform: "instagram", href: "", enabled: true, order: 0 },
+        { platform: "pinterest", href: "", enabled: true, order: 1 },
+        { platform: "facebook", href: "", enabled: true, order: 2 },
       ],
       ctaLinks: [],
-      copyrightText: "© 2026 Naya Story. All rights reserved.",
+      copyrightText: "",
     },
   };
 }
 
 function mergeSlides(raw: unknown): HeroSlide[] {
-  if (!Array.isArray(raw) || raw.length === 0) return defaultSlides.map((s) => ({ ...s }));
+  if (!Array.isArray(raw) || raw.length === 0) return [];
   const list = raw
     .filter((s): s is Record<string, unknown> => Boolean(s) && typeof s === "object")
     .map((s, i) => {
-      const base = defaultSlides[i % defaultSlides.length];
+      const base = defaultSlides[i % Math.max(defaultSlides.length, 1)] ?? {
+        id: `slide-${i}`,
+        enabled: true,
+        order: i,
+        desktopImage: "",
+        mobileImage: "",
+        heading: "",
+        subheading: "",
+        ctaLabel: "",
+        ctaHref: "/collections",
+      };
       return {
         id: String(s.id ?? base.id),
         enabled: s.enabled !== false,

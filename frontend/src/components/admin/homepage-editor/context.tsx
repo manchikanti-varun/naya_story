@@ -54,6 +54,10 @@ type HomepageEditorContextValue = {
   moveSection: (index: number, dir: -1 | 1) => void;
   moveStorefrontBlock: (type: HomepageStorefrontBlockType, dir: -1 | 1) => void;
   updateSlide: (id: string, patch: Partial<HeroSlide>) => void;
+  removeSlide: (id: string) => void;
+  clearSlide: (id: string) => void;
+  addSlide: () => string;
+  duplicateSlide: (id: string) => void;
   updateCategory: (id: string, patch: Partial<CategoryCard>) => void;
   patchGlobalCategories: (
     fn: (globals: GlobalStoreCategory[]) => GlobalStoreCategory[],
@@ -190,6 +194,92 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const removeSlide = useCallback((id: string) => {
+    setHp((prev) => {
+      if (!prev) return prev;
+      const remaining = prev.carousel.slides.filter((s) => s.id !== id);
+      return withRefreshedLayoutBlocks({
+        ...prev,
+        carousel: { ...prev.carousel, slides: remaining },
+      });
+    });
+  }, []);
+
+  const clearSlide = useCallback((id: string) => {
+    setHp((prev) => {
+      if (!prev) return prev;
+      return withRefreshedLayoutBlocks({
+        ...prev,
+        carousel: {
+          ...prev.carousel,
+          slides: prev.carousel.slides.map((s) =>
+            s.id === id
+              ? {
+                  ...s,
+                  heading: "",
+                  subheading: "",
+                  ctaLabel: "",
+                  ctaHref: "",
+                  desktopImage: "",
+                  mobileImage: "",
+                  kicker: "",
+                  metaLabel: "",
+                  enabled: false,
+                  styles: {},
+                  textColors: {},
+                }
+              : s,
+          ),
+        },
+      });
+    });
+  }, []);
+
+  const addSlide = useCallback((): string => {
+    const newId = `slide-${Date.now().toString(36)}`;
+    setHp((prev) => {
+      if (!prev) return prev;
+      const maxOrder = prev.carousel.slides.length > 0
+        ? Math.max(...prev.carousel.slides.map((s) => s.order))
+        : -1;
+      const newSlide: HeroSlide = {
+        id: newId,
+        enabled: true,
+        order: maxOrder + 1,
+        desktopImage: "",
+        mobileImage: "",
+        heading: "",
+        subheading: "",
+        ctaLabel: "",
+        ctaHref: "/collections",
+      };
+      return withRefreshedLayoutBlocks({
+        ...prev,
+        carousel: { ...prev.carousel, slides: [...prev.carousel.slides, newSlide] },
+      });
+    });
+    return newId;
+  }, []);
+
+  const duplicateSlide = useCallback((id: string) => {
+    setHp((prev) => {
+      if (!prev) return prev;
+      const source = prev.carousel.slides.find((s) => s.id === id);
+      if (!source) return prev;
+      const maxOrder = Math.max(...prev.carousel.slides.map((s) => s.order));
+      const copy: HeroSlide = {
+        ...source,
+        id: `slide-${Date.now().toString(36)}`,
+        order: maxOrder + 1,
+        heading: source.heading ? `${source.heading} (copy)` : "",
+      };
+      return withRefreshedLayoutBlocks({
+        ...prev,
+        carousel: { ...prev.carousel, slides: [...prev.carousel.slides, copy] },
+      });
+    });
+  }, []);
+
   const updateCategory = useCallback((id: string, patch: Partial<CategoryCard>) => {
     setHp((prev) => {
       if (!prev) return prev;
@@ -255,6 +345,10 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       moveSection,
       moveStorefrontBlock,
       updateSlide,
+      removeSlide,
+      clearSlide,
+      addSlide,
+      duplicateSlide,
       updateCategory,
       patchGlobalCategories,
       updateCollectionsCategory,
@@ -275,6 +369,10 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       moveSection,
       moveStorefrontBlock,
       updateSlide,
+      removeSlide,
+      clearSlide,
+      addSlide,
+      duplicateSlide,
       updateCategory,
       patchGlobalCategories,
       updateCollectionsCategory,
