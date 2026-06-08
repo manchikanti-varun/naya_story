@@ -11,6 +11,7 @@ import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 import { AdminTabs } from "@/components/admin/ui/AdminTabs";
 import { AdminStickySaveBar } from "@/components/admin/ui/AdminStickySaveBar";
+import { AdminCombobox } from "@/components/admin/ui/AdminCombobox";
 import { cn } from "@/lib/cn";
 import { consolidateProductDescription } from "@/lib/product-description";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
@@ -99,6 +100,30 @@ export function ProductEditor({
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [form, setForm] = useState(emptyProduct);
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
+
+  // Fetch existing categories from all products for the combobox
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await apiFetch<{ products: { category: string }[] }>(
+          "/products?limit=500",
+          { token },
+        );
+        if (cancelled) return;
+        const cats = [...new Set(
+          (data.products ?? [])
+            .map((p) => p.category)
+            .filter(Boolean),
+        )].sort();
+        setExistingCategories(cats);
+      } catch {
+        // non-critical, field still works as free text
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
 
   useEffect(() => {
     if (!productId) {
@@ -274,14 +299,23 @@ export function ProductEditor({
               <input className={inputClass} value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} />
             </Field>
             <Field label="Category">
-              <input className={inputClass} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} />
+              <AdminCombobox
+                value={form.category}
+                options={existingCategories}
+                onChange={(val) => setForm((f) => ({ ...f, category: val }))}
+                placeholder="Type to search or add new category…"
+              />
             </Field>
             <Field label="Collection label">
               <input
                 className={inputClass}
                 value={form.collection ?? ""}
+                placeholder="e.g. summer-edit, festive-2025"
                 onChange={(e) => setForm((f) => ({ ...f, collection: e.target.value }))}
               />
+              <span className="mt-1 block text-[11px] text-[var(--admin-muted)]">
+                Groups products into themed sets (e.g. &quot;Summer Edit&quot;). Used for /collections?collection=slug filtering.
+              </span>
             </Field>
             <Field label="Description" className="md:col-span-2">
               <textarea
