@@ -1,6 +1,5 @@
 "use client";
 
-import { ProductIdListField } from "@/components/admin/ProductIdListField";
 import { HeroCarouselEditor } from "@/components/admin/cms/HeroCarouselEditor";
 import { CmsLayoutTabLink } from "@/components/admin/cms/CmsLayoutTabLink";
 import { CmsSectionEditorShell } from "@/components/admin/cms/CmsSectionEditorShell";
@@ -702,29 +701,6 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
       </div>
 
       </CmsFieldGroup>
-
-      {token ? (
-        <div className="admin-cms-group">
-          <div className="admin-cms-group-header">
-            <CmsSectionHeading>Product grid</CmsSectionHeading>
-          </div>
-          <div className="admin-cms-group-body space-y-4">
-          <CmsVisibilityToggle
-            label='Pin products on the "All" tab (first page)'
-            checked={cp.usePinnedProducts === true}
-            onChange={(usePinnedProducts) => patchCollections({ usePinnedProducts })}
-          />
-          <ProductIdListField
-            token={token}
-            label="Pinned products (order = top of grid)"
-            hint="Only when the shopper opens Collections on the All tab, page 1. Remaining slots fill from the catalog."
-            maxItems={24}
-            value={cp.pinnedProductIds ?? []}
-            onChange={(pinnedProductIds) => patchCollections({ pinnedProductIds })}
-          />
-          </div>
-        </div>
-      ) : null}
 
       <CmsFieldGroup title="Collection tabs">
         <p className="mt-2 font-sans text-xs text-slate-500">

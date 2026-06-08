@@ -14,7 +14,7 @@ import { cn } from "@/lib/cn";
 
 export function HeroCarouselEditor() {
   const { hp, setHp, moveSlide, updateSlide, removeSlide, clearSlide, addSlide, duplicateSlide, token } = useHomepageEditor();
-  const slides = hp ? sortSlides(hp.carousel.slides) : [];
+  const slides = hp ? sortSlides(hp.carousel.slides ?? []) : [];
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function HeroCarouselEditor() {
     }
   }, [slides, activeSlideId]);
 
-  if (!hp) return null;
+  if (!hp) return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading carousel editor…</p>;
 
   const activeIndex = slides.findIndex((s) => s.id === activeSlideId);
   const safeIndex = activeIndex >= 0 ? activeIndex : 0;
