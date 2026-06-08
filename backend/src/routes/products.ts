@@ -13,6 +13,58 @@ import { mergeHomepageConfig } from "../lib/homepage-defaults.js";
 import { loadPdpSuggestedProducts } from "../lib/pdp-suggestions.js";
 import { mergeStorefrontSettings } from "../lib/storefront-settings.js";
 import { SiteSettings } from "../models/SiteSettings.js";
+import { escapeRegex } from "../lib/sanitize-input.js";
+import {
+  getGlobalCategories,
+  applyGlobalCategories,
+  slugifyCategoryName,
+  hrefFromCategorySlug,
+} from "../lib/global-categories.js";
+
+/**
+ * Auto-sync: when a product is created/updated, ensure its category exists
+ * in the global categories list so it shows on homepage + collections page.
+ */
+async function ensureCategoryExists(categoryName: string): Promise<void> {
+  if (!categoryName?.trim()) return;
+  const slug = slugifyCategoryName(categoryName);
+  if (!slug) return;
+
+  const doc = await SiteSettings.findOne().lean() as { homepage?: Record<string, unknown> } | null;
+  const hp = mergeHomepageConfig((doc?.homepage ?? {}) as Parameters<typeof mergeHomepageConfig>[0]);
+  const globals = getGlobalCategories(hp);
+
+  // Already exists — nothing to do
+  if (globals.some((g) => g.slug === slug)) return;
+
+  // Add new category
+  const maxOrder = globals.length > 0 ? Math.max(...globals.map((g) => g.order)) : -1;
+  const newCat = {
+    id: `cat-${slug}`,
+    name: categoryName.trim(),
+    slug,
+    image: "",
+    href: hrefFromCategorySlug(slug),
+    enabled: true,
+    order: maxOrder + 1,
+    homepage: true,
+    collections: true,
+  };
+
+  const updated = applyGlobalCategories(hp, [...globals, newCat]);
+
+  await SiteSettings.updateOne(
+    {},
+    {
+      $set: {
+        "homepage.globalCategories": updated.globalCategories,
+        "homepage.categories": updated.categories,
+        "homepage.collectionsPage.categories": updated.collectionsPage?.categories,
+      },
+    },
+    { upsert: true },
+  );
+}
 
 async function requestIsAdmin(req: Request, secret: string): Promise<boolean> {
   const header = req.headers.authorization;
@@ -100,7 +152,11 @@ export function createProductsRouter(secret: string) {
     if (q?.trim()) filter.$text = { $search: q.trim() };
 
     if (size) filter["variants.size"] = size;
-    if (color) filter["variants.color"] = new RegExp(`^${color}$`, "i");
+    if (color) {
+      // Escape regex special characters to prevent ReDoS attacks
+      const escapedColor = escapeRegex(color);
+      filter["variants.color"] = new RegExp(`^${escapedColor}$`, "i");
+    }
 
     if (minPrice || maxPrice) {
       filter.price = {};
@@ -186,6 +242,10 @@ export function createProductsRouter(secret: string) {
       try {
         const body = sanitizeProductMedia(req.body as Record<string, unknown>);
         const doc = await Product.create(body);
+        // Auto-add category to global categories if it doesn't exist yet
+        if (typeof body.category === "string") {
+          await ensureCategoryExists(body.category).catch(() => {});
+        }
         res.status(201).json({ product: sanitizeProductMedia(doc.toObject() as Record<string, unknown>) });
       } catch (e) {
         res.status(400).json({ message: (e as Error).message });
@@ -195,11 +255,29 @@ export function createProductsRouter(secret: string) {
 
   r.patch("/:id", ...(requireAdmin(secret) as RequestHandler[]), async (req, res) => {
     try {
-      const body = sanitizeProductMedia(req.body as Record<string, unknown>);
+      // Whitelist allowed fields to prevent MongoDB operator injection
+      const allowedFields = [
+        "name", "slug", "shortDescription", "description", "price", "compareAtPrice",
+        "taxRate", "discountPercent", "category", "subcategory", "collection", "tags",
+        "images", "imageCaptions", "hoverImage", "variants", "material", "fitType",
+        "fabricDetails", "stylingSuggestions", "pdpPrintDisclaimer", "pdpDeliveryRange",
+        "pdpFreeShippingNote", "pdpDeliveryAndCare", "featured", "bestseller", "trending",
+        "newIn", "newInOrder", "newInHoverImage", "newInVisible", "storefrontVisible",
+      ];
+      const rawBody = req.body as Record<string, unknown>;
+      const sanitized: Record<string, unknown> = {};
+      for (const key of allowedFields) {
+        if (key in rawBody) sanitized[key] = rawBody[key];
+      }
+      const body = sanitizeProductMedia(sanitized);
       const doc = await Product.findByIdAndUpdate(req.params.id, body, {
         new: true,
       });
       if (!doc) return res.status(404).json({ message: "Not found" });
+      // Auto-add category to global categories if it doesn't exist yet
+      if (typeof body.category === "string") {
+        await ensureCategoryExists(body.category).catch(() => {});
+      }
       res.json({ product: sanitizeProductMedia(doc.toObject() as Record<string, unknown>) });
     } catch (e) {
       res.status(400).json({ message: (e as Error).message });
@@ -211,6 +289,28 @@ export function createProductsRouter(secret: string) {
     await Product.findByIdAndDelete(id);
     await removeProductFromHomepagePins(id);
     res.json({ ok: true });
+  });
+
+  /**
+   * POST /products/sync-categories
+   * Scans all products and ensures every unique category value exists in globalCategories.
+   * Call this once to fix existing products whose categories weren't auto-synced.
+   */
+  r.post("/sync-categories", ...(requireAdmin(secret) as RequestHandler[]), async (_req, res) => {
+    const allCategories = await Product.distinct("category") as string[];
+    let added = 0;
+    for (const cat of allCategories) {
+      if (!cat?.trim()) continue;
+      const slug = slugifyCategoryName(cat);
+      if (!slug) continue;
+      const doc = await SiteSettings.findOne().lean() as { homepage?: Record<string, unknown> } | null;
+      const hp = mergeHomepageConfig((doc?.homepage ?? {}) as Parameters<typeof mergeHomepageConfig>[0]);
+      const globals = getGlobalCategories(hp);
+      if (globals.some((g) => g.slug === slug)) continue;
+      await ensureCategoryExists(cat);
+      added++;
+    }
+    res.json({ ok: true, message: `Synced ${added} new categories`, total: allCategories.length });
   });
 
   return r;

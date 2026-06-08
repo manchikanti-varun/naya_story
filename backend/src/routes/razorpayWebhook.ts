@@ -42,7 +42,11 @@ export async function razorpayWebhookHandler(req: Request, res: Response): Promi
   }
 
   const expected = crypto.createHmac("sha256", secret).update(raw).digest("hex");
-  if (expected !== sig) {
+  // Use timing-safe comparison to prevent timing attacks on signature verification
+  if (
+    expected.length !== sig.length ||
+    !crypto.timingSafeEqual(Buffer.from(expected, "utf8"), Buffer.from(sig, "utf8"))
+  ) {
     res.status(400).json({ message: "Invalid Razorpay webhook signature" });
     return;
   }

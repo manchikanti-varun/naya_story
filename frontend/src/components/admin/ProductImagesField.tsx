@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ChevronDown, ChevronUp, Images, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { CloudinaryImageUpload } from "@/components/admin/CloudinaryImageUpload";
+import { BulkImageUpload } from "@/components/admin/BulkImageUpload";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminField, AdminInput, AdminSelect } from "@/components/admin/ui/AdminField";
@@ -79,53 +80,80 @@ export function ProductImagesField({ images: imagesProp, captions: captionsProp,
 
   return (
     <div className="space-y-4">
-      <CloudinaryImageUpload
+      {/* Bulk upload — drag & drop multiple images */}
+      <BulkImageUpload
         token={token}
         category="product"
-        label="Upload photo"
-        hint={`Up to ${MAX_IMAGES} images. Saved to Media library.`}
         disabled={atMax}
-        onUploaded={(url) => addUrl(url)}
+        maxFiles={MAX_IMAGES - images.length}
+        onUploaded={(urls) => {
+          const newImages = [...images];
+          const newCaptions = [...captions];
+          for (const url of urls) {
+            if (newImages.length >= MAX_IMAGES) break;
+            if (newImages.includes(url)) continue;
+            newImages.push(url);
+            newCaptions.push("");
+          }
+          emit(newImages, newCaptions);
+        }}
       />
-      <AdminField label="Add by URL">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <AdminInput
-            type="url"
-            placeholder="https://…"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addUrlFromDraft();
-              }
-            }}
-            className="flex-1"
+
+      {/* Single upload fallback */}
+      <details className="group">
+        <summary className="cursor-pointer font-sans text-xs text-[var(--admin-muted)] hover:text-[var(--admin-ink)]">
+          Or upload a single image / add by URL
+        </summary>
+        <div className="mt-3 space-y-3">
+          <CloudinaryImageUpload
+            token={token}
+            category="product"
+            label="Upload single photo"
+            hint={`Up to ${MAX_IMAGES} images total. Saved to Media library.`}
+            disabled={atMax}
+            onUploaded={(url) => addUrl(url)}
           />
-          {token ? (
-            <AdminButton
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={atMax}
-              onClick={() => setPickerOpen(true)}
-            >
-              <Images className="h-4 w-4" strokeWidth={1.5} />
-              Library
-            </AdminButton>
-          ) : null}
-          <AdminButton
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={!draft.trim() || atMax}
-            onClick={addUrlFromDraft}
-          >
-            <Plus className="h-4 w-4" strokeWidth={1.5} />
-            Add image
-          </AdminButton>
+          <AdminField label="Add by URL">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <AdminInput
+                type="url"
+                placeholder="https://…"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addUrlFromDraft();
+                  }
+                }}
+                className="flex-1"
+              />
+              {token ? (
+                <AdminButton
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={atMax}
+                  onClick={() => setPickerOpen(true)}
+                >
+                  <Images className="h-4 w-4" strokeWidth={1.5} />
+                  Library
+                </AdminButton>
+              ) : null}
+              <AdminButton
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={!draft.trim() || atMax}
+                onClick={addUrlFromDraft}
+              >
+                <Plus className="h-4 w-4" strokeWidth={1.5} />
+                Add image
+              </AdminButton>
+            </div>
+          </AdminField>
         </div>
-      </AdminField>
+      </details>
 
       {token ? (
         <MediaLibraryPicker

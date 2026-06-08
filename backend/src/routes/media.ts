@@ -10,7 +10,7 @@ import {
   isCloudinaryConfigured,
   uploadImageBuffer,
 } from "../lib/cloudinary.js";
-import { mediaUploadMulter, multerErrorMessage } from "../lib/media-upload-multer.js";
+import { mediaUploadMulter, mediaBulkUploadMulter, multerErrorMessage, MAX_BULK_FILES } from "../lib/media-upload-multer.js";
 
 function assertSecureMediaUrl(url: string): void {
   let u: URL;
@@ -113,6 +113,107 @@ export function createMediaRouter(secret: string) {
     }),
   );
 
+  /* ─── Bulk upload (up to 10 files) ─── */
+
+  const runBulkUpload: RequestHandler = (req, res, next) => {
+    mediaBulkUploadMulter.array("files", MAX_BULK_FILES)(req, res, (err) => {
+      if (err) {
+        res.status(400).json({ message: multerErrorMessage(err) });
+        return;
+      }
+      next();
+    });
+  };
+
+  r.post(
+    "/upload-bulk",
+    runBulkUpload,
+    asyncHandler(async (req, res) => {
+      const files = req.files as Express.Multer.File[] | undefined;
+      if (!files?.length) {
+        throw new HttpError(400, "No image files provided (field name: files)");
+      }
+
+      const category =
+        typeof req.body?.category === "string" && req.body.category.trim()
+          ? req.body.category.trim()
+          : "general";
+      const saveToLibrary = req.body?.saveToLibrary !== "false" && req.body?.saveToLibrary !== false;
+
+      type UploadResult = {
+        url: string;
+        publicId: string;
+        width?: number;
+        height?: number;
+        originalName: string;
+        error?: undefined;
+      };
+      type UploadError = {
+        originalName: string;
+        error: string;
+        url?: undefined;
+      };
+
+      const results: (UploadResult | UploadError)[] = [];
+
+      // Upload files concurrently (max 3 at a time to avoid overwhelming Cloudinary)
+      const concurrency = 3;
+      for (let i = 0; i < files.length; i += concurrency) {
+        const batch = files.slice(i, i + concurrency);
+        const batchResults = await Promise.allSettled(
+          batch.map(async (file) => {
+            const uploaded = await uploadImageBuffer(file.buffer, {
+              folder: category,
+              mimetype: file.mimetype,
+            });
+            assertSecureMediaUrl(uploaded.url);
+
+            if (saveToLibrary) {
+              const name = file.originalname?.replace(/\.[^.]+$/, "") || "Uploaded image";
+              await MediaAsset.create({
+                url: uploaded.url,
+                name,
+                tags: [],
+                category,
+              });
+            }
+
+            return {
+              url: uploaded.url,
+              publicId: uploaded.publicId,
+              width: uploaded.width,
+              height: uploaded.height,
+              originalName: file.originalname ?? "unknown",
+            } satisfies UploadResult;
+          }),
+        );
+
+        for (let j = 0; j < batchResults.length; j++) {
+          const result = batchResults[j]!;
+          if (result.status === "fulfilled") {
+            results.push(result.value);
+          } else {
+            results.push({
+              originalName: batch[j]!.originalname ?? "unknown",
+              error: result.reason instanceof Error ? result.reason.message : "Upload failed",
+            });
+          }
+        }
+      }
+
+      const succeeded = results.filter((r): r is UploadResult => !r.error);
+      const failed = results.filter((r): r is UploadError => Boolean(r.error));
+
+      res.status(failed.length === results.length ? 502 : 201).json({
+        uploaded: succeeded,
+        failed,
+        total: files.length,
+        successCount: succeeded.length,
+        failCount: failed.length,
+      });
+    }),
+  );
+
   r.get("/", async (req, res) => {
     const { q, category, limit } = req.query as Record<string, string | undefined>;
     const filter: Record<string, unknown> = {};
@@ -149,7 +250,22 @@ export function createMediaRouter(secret: string) {
   );
 
   r.patch("/:id", async (req, res) => {
-    const doc = await MediaAsset.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Whitelist allowed fields to prevent MongoDB operator injection
+    const allowedFields = ["url", "name", "tags", "category"];
+    const rawBody = req.body as Record<string, unknown>;
+    const sanitized: Record<string, unknown> = {};
+    for (const key of allowedFields) {
+      if (key in rawBody) sanitized[key] = rawBody[key];
+    }
+    if (sanitized.url) {
+      try {
+        assertSecureMediaUrl(String(sanitized.url));
+      } catch (e) {
+        if (e instanceof HttpError) return res.status(e.status).json({ message: e.message });
+        return res.status(400).json({ message: "Invalid URL" });
+      }
+    }
+    const doc = await MediaAsset.findByIdAndUpdate(req.params.id, sanitized, { new: true });
     if (!doc) return res.status(404).json({ message: "Not found" });
     res.json({ item: doc });
   });

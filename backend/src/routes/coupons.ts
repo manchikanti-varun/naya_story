@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
+import rateLimit from "express-rate-limit";
 import { Coupon } from "../models/Coupon.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { resolveCoupon } from "../lib/coupon-utils.js";
@@ -8,9 +9,19 @@ import { resolveCoupon } from "../lib/coupon-utils.js";
 export function createCouponsRouter(secret: string) {
   const r = Router();
 
+  // Rate limit coupon validation to prevent brute-forcing codes (30 per 15 min per IP)
+  const couponValidateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Too many coupon validation attempts. Please try again later." },
+  });
+
   r.post(
     "/validate",
-    body("code").trim().notEmpty(),
+    couponValidateLimiter,
+    body("code").trim().notEmpty().isLength({ max: 50 }),
     body("subtotal").isNumeric(),
     async (req, res) => {
       const errors = validationResult(req);
@@ -54,7 +65,15 @@ export function createCouponsRouter(secret: string) {
   );
 
   r.patch("/:id", ...(requireAdmin(secret) as RequestHandler[]), async (req, res) => {
-    const doc = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Whitelist allowed fields to prevent MongoDB operator injection
+    const allowedFields = ["code", "type", "value", "expiresAt", "usageLimit", "active"];
+    const rawBody = req.body as Record<string, unknown>;
+    const sanitized: Record<string, unknown> = {};
+    for (const key of allowedFields) {
+      if (key in rawBody) sanitized[key] = rawBody[key];
+    }
+    if (sanitized.code) sanitized.code = String(sanitized.code).toUpperCase();
+    const doc = await Coupon.findByIdAndUpdate(req.params.id, sanitized, { new: true });
     if (!doc) return res.status(404).json({ message: "Not found" });
     res.json({ coupon: doc });
   });

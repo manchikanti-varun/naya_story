@@ -1,6 +1,7 @@
 import type { RequestHandler } from "express";
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
+import rateLimit from "express-rate-limit";
 import type { LeanOrder, LeanProduct } from "../lean.js";
 import { verifyAccessToken } from "../lib/accessJwt.js";
 import { Order } from "../models/Order.js";
@@ -16,13 +17,30 @@ function orderNumber() {
 export function createOrdersRouter(secret: string) {
   const r = Router();
 
+  // Rate limit order creation to prevent abuse (20 orders per 15 min per IP)
+  const orderCreateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Too many orders. Please try again later." },
+  });
+
   r.post(
     "/",
-    body("items").isArray({ min: 1 }),
+    orderCreateLimiter,
+    body("items").isArray({ min: 1, max: 50 }),
     body("shippingAddress").isObject(),
+    body("shippingAddress.line1").trim().notEmpty().isLength({ max: 200 }),
+    body("shippingAddress.city").trim().notEmpty().isLength({ max: 100 }),
+    body("shippingAddress.state").trim().notEmpty().isLength({ max: 100 }),
+    body("shippingAddress.postalCode").trim().notEmpty().isLength({ max: 20 }),
+    body("shippingAddress.country").trim().notEmpty().isLength({ max: 100 }),
     body("items.*.productId").notEmpty(),
     body("items.*.sku").notEmpty(),
-    body("items.*.quantity").isInt({ min: 1 }),
+    body("items.*.quantity").isInt({ min: 1, max: 50 }),
+    body("guestEmail").optional().isEmail().normalizeEmail(),
+    body("couponCode").optional().trim().isLength({ max: 50 }),
     async (req, res) => {
       const errors = validationResult(req);
       if (!errors.isEmpty())

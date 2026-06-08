@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
         value: "camera=(), microphone=(), geolocation=()",
       },
     ];
-    if (process.env.VERCEL) {
+    if (process.env.VERCEL || process.env.NODE_ENV === "production") {
       security.push({
         key: "Strict-Transport-Security",
         value: "max-age=63072000; includeSubDomains; preload",

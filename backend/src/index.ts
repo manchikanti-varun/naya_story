@@ -23,6 +23,7 @@ import { stripeWebhookHandler } from "./routes/stripeWebhook.js";
 import { assertSafeProductionConfig } from "./lib/env.js";
 import { errorHandler } from "./middleware/httpError.js";
 import { requestIdMiddleware } from "./middleware/requestId.js";
+import { sanitizeBodyMiddleware } from "./middleware/sanitizeBody.js";
 
 const PORT = Number(process.env.PORT) || 4000;
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/naya-studio";
@@ -42,6 +43,11 @@ async function main() {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
+      contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
+      hsts: process.env.NODE_ENV === "production"
+        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+        : false,
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
     }),
   );
   app.use(cors(createCorsOptions(CLIENT_ORIGIN)));
@@ -54,6 +60,14 @@ async function main() {
     }),
   );
   app.use(cookieParser());
+
+  // Security: prevent browsers from caching authenticated API responses
+  app.use((_req, res, next) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    next();
+  });
 
   /** Stripe webhooks require the raw body for signature verification. */
   app.post(
@@ -78,6 +92,7 @@ async function main() {
   );
 
   app.use(express.json({ limit: "4mb" }));
+  app.use(sanitizeBodyMiddleware);
   app.use(passport.initialize());
 
   app.get("/api/health", (_req, res) => res.json({ ok: true }));

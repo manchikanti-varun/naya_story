@@ -67,3 +67,67 @@ export async function uploadMediaToCloudinary(
 
   return data as MediaUploadResult;
 }
+
+/* ─── Bulk Upload ─── */
+
+export type BulkUploadItem = {
+  url: string;
+  publicId: string;
+  width?: number;
+  height?: number;
+  originalName: string;
+};
+
+export type BulkUploadError = {
+  originalName: string;
+  error: string;
+};
+
+export type BulkUploadResponse = {
+  uploaded: BulkUploadItem[];
+  failed: BulkUploadError[];
+  total: number;
+  successCount: number;
+  failCount: number;
+};
+
+/**
+ * Upload multiple images at once. The backend processes them in parallel batches.
+ * Max 10 files per request.
+ */
+export async function uploadMediaBulk(
+  files: File[],
+  options: {
+    token: string;
+    category?: string;
+    saveToLibrary?: boolean;
+  },
+): Promise<BulkUploadResponse> {
+  const fd = new FormData();
+  for (const file of files) {
+    fd.append("files", file);
+  }
+  if (options.category) fd.append("category", options.category);
+  if (options.saveToLibrary === false) fd.append("saveToLibrary", "false");
+
+  const res = await fetch(`${API_BASE}/media/upload-bulk`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${options.token}` },
+    body: fd,
+  });
+
+  const text = await res.text();
+  let data: unknown = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  if (!res.ok) {
+    const body = (typeof data === "object" && data !== null ? data : {}) as { message?: string };
+    throw new ApiError(body.message ?? `Bulk upload failed (${res.status})`, res.status);
+  }
+
+  return data as BulkUploadResponse;
+}

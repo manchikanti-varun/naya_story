@@ -41,4 +41,16 @@ export function assertSafeProductionConfig(): void {
     );
     process.exit(1);
   }
+
+  // Warn (don't block) about missing webhook secrets in production
+  if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_WEBHOOK_SECRET) {
+    console.warn(
+      "[env] STRIPE_SECRET_KEY is set but STRIPE_WEBHOOK_SECRET is missing. Stripe webhooks cannot verify signatures.",
+    );
+  }
+  if (process.env.RAZORPAY_KEY_ID && !process.env.RAZORPAY_WEBHOOK_SECRET) {
+    console.warn(
+      "[env] RAZORPAY_KEY_ID is set but RAZORPAY_WEBHOOK_SECRET is missing. Razorpay webhooks cannot verify signatures.",
+    );
+  }
 }
