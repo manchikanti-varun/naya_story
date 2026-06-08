@@ -66,6 +66,53 @@ async function ensureCategoryExists(categoryName: string): Promise<void> {
   );
 }
 
+/**
+ * Auto-sync: when a product is marked newIn or bestseller, ensure its ID
+ * is pinned to the homepage rail so it shows up without manual CMS work.
+ */
+async function ensureHomepagePins(
+  productId: string,
+  flags: { newIn?: boolean; bestseller?: boolean },
+): Promise<void> {
+  if (!productId) return;
+  const id = String(productId);
+
+  const doc = await SiteSettings.findOne().lean() as { homepage?: Record<string, unknown> } | null;
+  const hp = mergeHomepageConfig((doc?.homepage ?? {}) as Parameters<typeof mergeHomepageConfig>[0]);
+
+  const updates: Record<string, unknown> = {};
+
+  // Auto-pin to New In rail
+  if (flags.newIn === true) {
+    const existing = hp.newIn?.productIds ?? [];
+    if (!existing.includes(id)) {
+      updates["homepage.newIn.productIds"] = [...existing, id];
+    }
+  } else if (flags.newIn === false) {
+    const existing = hp.newIn?.productIds ?? [];
+    if (existing.includes(id)) {
+      updates["homepage.newIn.productIds"] = existing.filter((x: string) => x !== id);
+    }
+  }
+
+  // Auto-pin to Bestsellers rail
+  if (flags.bestseller === true) {
+    const existing = hp.bestsellers?.productIds ?? [];
+    if (!existing.includes(id)) {
+      updates["homepage.bestsellers.productIds"] = [...existing, id];
+    }
+  } else if (flags.bestseller === false) {
+    const existing = hp.bestsellers?.productIds ?? [];
+    if (existing.includes(id)) {
+      updates["homepage.bestsellers.productIds"] = existing.filter((x: string) => x !== id);
+    }
+  }
+
+  if (Object.keys(updates).length === 0) return;
+
+  await SiteSettings.updateOne({}, { $set: updates }, { upsert: true });
+}
+
 async function requestIsAdmin(req: Request, secret: string): Promise<boolean> {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) return false;
@@ -242,10 +289,16 @@ export function createProductsRouter(secret: string) {
       try {
         const body = sanitizeProductMedia(req.body as Record<string, unknown>);
         const doc = await Product.create(body);
+        const productId = String(doc._id);
         // Auto-add category to global categories if it doesn't exist yet
         if (typeof body.category === "string") {
           await ensureCategoryExists(body.category).catch(() => {});
         }
+        // Auto-pin to homepage rails based on flags
+        await ensureHomepagePins(productId, {
+          newIn: body.newIn === true ? true : undefined,
+          bestseller: body.bestseller === true ? true : undefined,
+        }).catch(() => {});
         res.status(201).json({ product: sanitizeProductMedia(doc.toObject() as Record<string, unknown>) });
       } catch (e) {
         res.status(400).json({ message: (e as Error).message });
@@ -274,9 +327,17 @@ export function createProductsRouter(secret: string) {
         new: true,
       });
       if (!doc) return res.status(404).json({ message: "Not found" });
+      const productId = String(doc._id);
       // Auto-add category to global categories if it doesn't exist yet
       if (typeof body.category === "string") {
         await ensureCategoryExists(body.category).catch(() => {});
+      }
+      // Auto-pin/unpin from homepage rails based on flags
+      if ("newIn" in body || "bestseller" in body) {
+        await ensureHomepagePins(productId, {
+          newIn: "newIn" in body ? (body.newIn === true ? true : false) : undefined,
+          bestseller: "bestseller" in body ? (body.bestseller === true ? true : false) : undefined,
+        }).catch(() => {});
       }
       res.json({ product: sanitizeProductMedia(doc.toObject() as Record<string, unknown>) });
     } catch (e) {
@@ -311,6 +372,45 @@ export function createProductsRouter(secret: string) {
       added++;
     }
     res.json({ ok: true, message: `Synced ${added} new categories`, total: allCategories.length });
+  });
+
+  /**
+   * POST /products/sync-homepage-pins
+   * Scans all products and pins newIn/bestseller products to homepage rails.
+   * Call this once to fix existing products that weren't auto-synced.
+   */
+  r.post("/sync-homepage-pins", ...(requireAdmin(secret) as RequestHandler[]), async (_req, res) => {
+    const newInProducts = await Product.find({ newIn: true }).select("_id").lean();
+    const bestsellerProducts = await Product.find({ bestseller: true }).select("_id").lean();
+
+    const doc = await SiteSettings.findOne().lean() as { homepage?: Record<string, unknown> } | null;
+    const hp = mergeHomepageConfig((doc?.homepage ?? {}) as Parameters<typeof mergeHomepageConfig>[0]);
+
+    const existingNewIn = new Set(hp.newIn?.productIds ?? []);
+    const existingBest = new Set(hp.bestsellers?.productIds ?? []);
+
+    const newInIds = newInProducts.map((p) => String((p as { _id: unknown })._id));
+    const bestIds = bestsellerProducts.map((p) => String((p as { _id: unknown })._id));
+
+    const mergedNewIn = [...new Set([...existingNewIn, ...newInIds])];
+    const mergedBest = [...new Set([...existingBest, ...bestIds])];
+
+    await SiteSettings.updateOne(
+      {},
+      {
+        $set: {
+          "homepage.newIn.productIds": mergedNewIn,
+          "homepage.bestsellers.productIds": mergedBest,
+        },
+      },
+      { upsert: true },
+    );
+
+    res.json({
+      ok: true,
+      newInAdded: mergedNewIn.length - existingNewIn.size,
+      bestsellersAdded: mergedBest.length - existingBest.size,
+    });
   });
 
   return r;
