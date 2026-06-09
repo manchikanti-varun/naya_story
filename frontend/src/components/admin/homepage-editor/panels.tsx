@@ -712,7 +712,7 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
         </p>
         <div className="mt-4 space-y-5">
           {cp.categories
-            .filter((cat) => cat.type === "all" || cat.type === "bestselling")
+            .filter((cat) => cat.type === "all" || cat.type === "bestselling" || cat.type === "newIn")
             .sort((a, b) => a.order - b.order)
             .map((cat) => (
               <div key={cat.id} className="rounded-2xl border border-slate-100 p-4">

@@ -12,6 +12,7 @@ import {
 } from "@/lib/homepage-layout-blocks";
 import { getSectionMeta } from "@/lib/cms/section-meta";
 import { CmsBlockCard } from "@/components/admin/cms/CmsBlockCard";
+import { CmsEditorProvider } from "@/components/admin/cms/CmsEditorContext";
 import { AdminDrawer } from "@/components/admin/ui/AdminDrawer";
 import { AdminSection } from "@/components/admin/ui/AdminSection";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
@@ -166,7 +167,9 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
         description={drawerMeta?.description}
         size={editSection === "hero" ? "xl" : "lg"}
       >
-        <div key={editSection ?? "none"}>{drawerContent}</div>
+        <CmsEditorProvider compact>
+          <div key={editSection ?? "none"}>{drawerContent}</div>
+        </CmsEditorProvider>
       </AdminDrawer>
     </>
   );
