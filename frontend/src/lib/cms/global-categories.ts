@@ -57,7 +57,9 @@ function migrateFromLegacyItems(items: CategoryCard[]): GlobalStoreCategory[] {
 /** Resolve global list from config (migrates legacy `categories.items` when needed). */
 export function getGlobalCategories(hp: HomepageConfig): GlobalStoreCategory[] {
   if (Array.isArray(hp.globalCategories) && hp.globalCategories.length > 0) {
-    return [...hp.globalCategories].sort((a, b) => a.order - b.order);
+    // Ensure orders are sequential (fixes duplicate order values from bad syncs)
+    const sorted = [...hp.globalCategories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    return sorted.map((g, i) => ({ ...g, order: i }));
   }
   return migrateFromLegacyItems(hp.categories?.items ?? []);
 }
@@ -82,7 +84,16 @@ function systemCollectionTabs(hp: HomepageConfig) {
       enabled: true,
       order: 1,
     });
-  return [all, bestselling];
+  const newIn =
+    existing.find((t) => t.type === "newIn") ??
+    ({
+      id: "new-in",
+      label: "New In",
+      type: "newIn" as const,
+      enabled: true,
+      order: 2,
+    });
+  return [all, bestselling, newIn];
 }
 
 /** Apply global categories to homepage cards + collections catalog tabs. */
@@ -103,7 +114,7 @@ export function applyGlobalCategories(
     .filter((g) => g.enabled && g.homepage)
     .map(categoryCardFromGlobal);
 
-  const [allTab, bestTab] = systemCollectionTabs(hp);
+  const [allTab, bestTab, newInTab] = systemCollectionTabs(hp);
   const catalogTabs = sorted
     .filter((g) => g.enabled && g.collections)
     .map((g, i) => ({
@@ -112,7 +123,7 @@ export function applyGlobalCategories(
       type: "category" as const,
       value: g.slug,
       enabled: true,
-      order: 2 + i,
+      order: 3 + i,
     }));
 
   return {
@@ -127,14 +138,15 @@ export function applyGlobalCategories(
       categories: [
         { ...allTab, order: 0 },
         { ...bestTab, order: 1 },
-        ...catalogTabs.map((t, i) => ({ ...t, order: 2 + i })),
+        { ...newInTab, order: 2 },
+        ...catalogTabs.map((t, i) => ({ ...t, order: 3 + i })),
       ],
     },
   };
 }
 
 export function newGlobalCategory(order: number): GlobalStoreCategory {
-  const id = `cat-${Date.now()}`;
+  const id = `cat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const slug = `category-${order + 1}`;
   return {
     id,
@@ -154,9 +166,10 @@ export function moveGlobalCategory(
   index: number,
   dir: -1 | 1,
 ): GlobalStoreCategory[] {
+  // Normalize: sort by order, then reassign sequential orders to avoid duplicates
+  const sorted = [...globals].sort((a, b) => a.order - b.order);
   const j = index + dir;
-  if (j < 0 || j >= globals.length) return globals;
-  const next = [...globals].sort((a, b) => a.order - b.order);
-  [next[index], next[j]] = [next[j]!, next[index]!];
-  return next.map((g, i) => ({ ...g, order: i }));
+  if (j < 0 || j >= sorted.length) return globals;
+  [sorted[index], sorted[j]] = [sorted[j]!, sorted[index]!];
+  return sorted.map((g, i) => ({ ...g, order: i }));
 }

@@ -337,11 +337,15 @@ export function ContentEditorCategoriesPanel() {
         const existingSlugs = new Set(list.map((c) => c.name.toLowerCase()));
         const newOnes = productCategories
           .filter((cat) => !existingSlugs.has(cat.toLowerCase()))
-          .map((cat, i) => ({
-            ...newGlobalCategory(list.length + i),
-            name: cat,
-            slug: cat.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
-          }));
+          .map((cat, i) => {
+            const slug = cat.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+            return {
+              ...newGlobalCategory(list.length + i),
+              id: `cat-${slug}`,
+              name: cat,
+              slug,
+            };
+          });
         return [...list, ...newOnes];
       });
     } catch {
