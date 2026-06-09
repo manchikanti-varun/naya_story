@@ -203,7 +203,7 @@ export const productService = {
 
   async deleteProduct(id: string) {
     await productRepository.deleteById(id);
-    await removeProductFromHomepagePins(id);
+    await removeProductFromHomepagePins(id).catch(() => {});
   },
 
   async ensureCategoryExists(categoryName: string): Promise<void> {
