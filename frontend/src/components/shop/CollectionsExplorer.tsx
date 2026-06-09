@@ -306,7 +306,7 @@ export function CollectionsExplorer() {
           </div>
 
           {hasDesktopFilters ? (
-            <div className="lux-collection-filter-bar hidden md:block">
+            <div className="lux-collection-filter-bar sticky top-0 z-20 bg-ivory py-3 hidden md:block">
               <div className="mb-3 flex items-center justify-between gap-4">
                 <p className="font-sans text-[10px] font-medium uppercase tracking-[0.24em] text-ink-soft">
                   Refine
