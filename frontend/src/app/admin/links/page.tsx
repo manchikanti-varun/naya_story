@@ -125,8 +125,8 @@ export default function AdminLinksPage() {
 
   const categoryLinks: LinkItem[] = categories.map((c) => ({
     label: c.name,
-    path: `/collections?category=${encodeURIComponent(c.slug)}`,
-    description: `${c.name} category filter`,
+    path: `/collections?tab=cat-${encodeURIComponent(c.slug)}`,
+    description: `${c.name} category tab`,
   }));
 
   const productLinks: LinkItem[] = products.map((p) => ({

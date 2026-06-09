@@ -23,7 +23,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const navCategories = globalCategories
     .filter((g) => g.enabled && g.collections)
     .sort((a, b) => a.order - b.order)
-    .map((g) => ({ name: g.name, slug: g.slug, href: g.href }));
+    .map((g) => ({ name: g.name, slug: g.slug, href: `/collections?tab=${encodeURIComponent(g.id)}` }));
   return (
     <div className="store-app">
       <StorefrontLiveSync />

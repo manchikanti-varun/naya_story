@@ -130,7 +130,7 @@ export function StoreNavLinks({
                     <ChevronRight className="h-3 w-3 text-ink-soft/60" strokeWidth={1.5} />
                   </Link>
                   <Link
-                    href="/new-in"
+                    href="/collections?tab=new-in"
                     className="flex items-center justify-between rounded-md px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:bg-ivory-soft hover:text-gold"
                   >
                     <span>New In</span>

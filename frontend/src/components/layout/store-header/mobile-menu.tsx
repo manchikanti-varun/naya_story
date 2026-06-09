@@ -131,7 +131,7 @@ export function MobileMenu({ open, onClose, onOpenCart, storePageFlags, navCateg
                                 Bestselling
                               </Link>
                               <Link
-                                href="/new-in"
+                                href="/collections?tab=new-in"
                                 onClick={onClose}
                                 className="block py-2.5 font-sans text-base font-light text-ink-muted transition-colors hover:text-gold"
                               >
