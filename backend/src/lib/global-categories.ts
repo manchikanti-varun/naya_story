@@ -159,6 +159,9 @@ export function mergeGlobalCategories(raw: unknown, hp: HomepageConfig): Homepag
       order: typeof c.order === "number" ? c.order : i,
       homepage: c.homepage !== false,
       collections: c.collections !== false,
+      pinnedProductIds: Array.isArray(c.pinnedProductIds)
+        ? (c.pinnedProductIds as unknown[]).map(String).filter(Boolean)
+        : undefined,
     }));
   return applyGlobalCategories(hp, globals);
 }

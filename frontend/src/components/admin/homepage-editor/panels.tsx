@@ -885,20 +885,50 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
             ))}
         </div>
         {cp.categories.filter((c) => c.type === "category").length > 0 ? (
-          <ul className="mt-5 space-y-2 rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+          <div className="mt-5 space-y-3">
             <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Synced catalog tabs
+              Category tabs
             </p>
             {cp.categories
               .filter((c) => c.type === "category")
               .sort((a, b) => a.order - b.order)
-              .map((c) => (
-                <li key={c.id} className="flex justify-between gap-2 font-sans text-sm text-slate-700">
-                  <span>{c.label}</span>
-                  <span className="font-mono text-xs text-slate-400">{c.value}</span>
-                </li>
+              .map((cat) => (
+                <div key={cat.id} className="rounded-2xl border border-slate-100 p-4">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
+                      {cat.label || cat.value}
+                    </span>
+                    <label className="flex items-center gap-2 text-xs text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={cat.enabled}
+                        onChange={(e) =>
+                          updateCollectionsCategory(cat.id, { enabled: e.target.checked })
+                        }
+                      />
+                      Enabled
+                    </label>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <input
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                      placeholder="Label"
+                      value={cat.label}
+                      onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                      placeholder="Order"
+                      value={cat.order}
+                      onChange={(e) =>
+                        updateCollectionsCategory(cat.id, { order: Number(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
+                </div>
               ))}
-          </ul>
+          </div>
         ) : null}
       </CmsFieldGroup>
 
