@@ -41,6 +41,7 @@ export const DEFAULT_COLLECTIONS_PAGE: CollectionsPageConfig = {
       { value: "popular", label: "Bestselling", enabled: true },
       { value: "price_asc", label: "Price low–high", enabled: true },
       { value: "price_desc", label: "Price high–low", enabled: true },
+      { value: "manual", label: "Curated", enabled: true },
     ],
     defaultSort: "newest",
   },

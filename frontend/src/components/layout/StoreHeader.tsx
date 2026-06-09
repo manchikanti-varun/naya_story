@@ -48,6 +48,7 @@ export function StoreHeader({
   logoSrc,
   logoAlt,
   storePageFlags,
+  navCategories,
 }: {
   topPromoBar?: TopPromoBarConfig | null;
   topPromoTextColors?: SectionTextColors | null;
@@ -55,6 +56,7 @@ export function StoreHeader({
   logoSrc?: string;
   logoAlt?: string | null;
   storePageFlags?: StorePageFlags;
+  navCategories?: Array<{ name: string; slug: string; href: string }>;
 }) {
   const pathname = usePathname();
   const { openCart, lines } = useCart();
@@ -222,7 +224,7 @@ export function StoreHeader({
                     />
                   }
                 >
-                  <StoreNavLinks storePageFlags={storePageFlags} />
+                  <StoreNavLinks storePageFlags={storePageFlags} navCategories={navCategories} />
                 </Suspense>
               </div>
             </div>
@@ -334,6 +336,7 @@ export function StoreHeader({
           openCart();
         }}
         storePageFlags={storePageFlags}
+        navCategories={navCategories}
       />
     </>
   );

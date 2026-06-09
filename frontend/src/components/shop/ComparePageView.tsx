@@ -187,7 +187,123 @@ export function ComparePageView() {
           variant="minimal"
         />
       ) : products.length > 0 ? (
-        <div className="mt-10 overflow-x-auto">
+        <>
+          {/* Mobile: card-based layout */}
+          <div className="mt-8 space-y-6 md:hidden">
+            {products.map((p) => {
+              const r = ratings[p._id];
+              const { label: stockLabel, tone: stockTone } = getStockLabel(p);
+              return (
+                <div
+                  key={p._id}
+                  className="rounded-xl border border-ivory-deep bg-white/60 p-4"
+                >
+                  <div className="flex items-start gap-4">
+                    <Link href={`/products/${p.slug}`} className="shrink-0">
+                      <div
+                        className={cn(
+                          "relative aspect-[3/4] w-20 overflow-hidden rounded-lg bg-ivory-soft",
+                          storefrontImageShellClass,
+                        )}
+                      >
+                        {p.images[0] ? (
+                          <Image
+                            src={p.images[0]}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="80px"
+                            {...storefrontImageProps}
+                          />
+                        ) : null}
+                      </div>
+                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <Link href={`/products/${p.slug}`} className="min-w-0">
+                          <h3 className="truncate font-display text-base text-ink hover:text-gold">
+                            {p.name}
+                          </h3>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => remove(p.slug)}
+                          className="shrink-0 rounded-full p-1 text-ink-soft hover:text-ink"
+                          aria-label={`Remove ${p.name}`}
+                        >
+                          <X className="h-4 w-4" strokeWidth={1.25} />
+                        </button>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="font-sans text-sm font-medium text-ink">
+                          {formatInr(p.price)}
+                        </span>
+                        {p.compareAtPrice && p.compareAtPrice > p.price ? (
+                          <span className="text-xs text-ink-soft line-through">
+                            {formatInr(p.compareAtPrice)}
+                          </span>
+                        ) : null}
+                      </div>
+                      {r ? (
+                        <div className="mt-1.5">
+                          <StarRating value={r.average} count={r.count} />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 font-sans text-xs">
+                    <div>
+                      <span className="text-ink-soft">Category</span>
+                      <p className="mt-0.5 capitalize text-ink">{p.category}</p>
+                    </div>
+                    <div>
+                      <span className="text-ink-soft">Material</span>
+                      <p className="mt-0.5 text-ink">{p.material ?? "—"}</p>
+                    </div>
+                    <div>
+                      <span className="text-ink-soft">Fit</span>
+                      <p className="mt-0.5 text-ink">{p.fitType ?? "—"}</p>
+                    </div>
+                    <div>
+                      <span className="text-ink-soft">Collection</span>
+                      <p className="mt-0.5 capitalize text-ink">{p.collection || "—"}</p>
+                    </div>
+                    <div>
+                      <span className="text-ink-soft">Sizes</span>
+                      <p className="mt-0.5 text-ink">{getAvailableSizes(p)}</p>
+                    </div>
+                    <div>
+                      <span className="text-ink-soft">Colors</span>
+                      <p className="mt-0.5 capitalize text-ink">{getAvailableColors(p)}</p>
+                    </div>
+                    <div>
+                      <span className="text-ink-soft">Availability</span>
+                      <p className={cn("mt-0.5 font-medium", stockToneClasses[stockTone])}>
+                        {stockLabel}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-ink-soft">Discount</span>
+                      <p className={cn("mt-0.5", getDiscountLabel(p) !== "—" && "text-emerald-700 font-medium")}>
+                        {getDiscountLabel(p)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/products/${p.slug}`}
+                    className="mt-4 block w-full rounded-md border border-ivory-deep bg-transparent py-2.5 text-center font-sans text-[10px] uppercase tracking-[0.2em] text-ink transition hover:border-gold/50 hover:text-gold"
+                  >
+                    View details
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: table layout */}
+          <div className="mt-10 hidden overflow-x-auto md:block">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
               <tr className="border-b border-ivory-deep">
@@ -369,6 +485,7 @@ export function ComparePageView() {
             </tbody>
           </table>
         </div>
+        </>
       ) : null}
     </div>
   );

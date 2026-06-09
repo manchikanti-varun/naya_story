@@ -9,6 +9,7 @@ import { getLogoCacheRev } from "@/lib/logo-cache";
 import { resolveStoreLogoSrc } from "@/lib/image-src";
 import { NAYA_STORE_THEME_STYLE_ID, storefrontThemeCssString } from "@/lib/storefront-theme";
 import { storePageFlagsFromHomepage } from "@/lib/store-page-flags";
+import { getGlobalCategories } from "@/lib/cms/global-categories";
 import "../store-theme.css";
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +19,11 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   const headerLogoSrc = resolveStoreLogoSrc(footer?.logoUrl, logoRev);
   const themeCss = storefrontThemeCssString(data.settings.homepage.theme);
   const storePageFlags = storePageFlagsFromHomepage(data.settings.homepage);
+  const globalCategories = getGlobalCategories(data.settings.homepage);
+  const navCategories = globalCategories
+    .filter((g) => g.enabled && g.collections)
+    .sort((a, b) => a.order - b.order)
+    .map((g) => ({ name: g.name, slug: g.slug, href: g.href }));
   return (
     <div className="store-app">
       <StorefrontLiveSync />
@@ -39,6 +45,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         logoSrc={headerLogoSrc}
         logoAlt={footer?.logoAlt}
         storePageFlags={storePageFlags}
+        navCategories={navCategories}
       />
       <main className="min-h-screen overflow-x-hidden bg-ivory pt-[calc(var(--store-nav-pad)+var(--store-promo-bar-h))] lux-grain">
         {children}

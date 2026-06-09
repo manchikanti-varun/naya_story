@@ -52,6 +52,8 @@ const ProductSchema = new mongoose.Schema(
     storefrontVisible: { type: Boolean, default: true },
     /** Admin override for limited-stock banner: "show" (show banner), "hide" (default, no banner). */
     lowStockDisplay: { type: String, enum: ["show", "hide"], default: "hide" },
+    /** Global display order for manual sorting (lower = first). 0 means unset (uses default sort). */
+    displayOrder: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
@@ -60,6 +62,7 @@ ProductSchema.index({ name: "text", description: "text", shortDescription: "text
 ProductSchema.index({ storefrontVisible: 1, category: 1, createdAt: -1 });
 ProductSchema.index({ storefrontVisible: 1, bestseller: -1, featured: -1 });
 ProductSchema.index({ storefrontVisible: 1, newIn: -1, newInOrder: 1 });
+ProductSchema.index({ storefrontVisible: 1, displayOrder: 1, createdAt: -1 });
 ProductSchema.index({ "variants.sku": 1 });
 ProductSchema.index({ category: 1, price: 1 });
 ProductSchema.index({ tags: 1 });

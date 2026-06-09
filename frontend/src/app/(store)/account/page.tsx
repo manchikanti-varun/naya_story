@@ -7,7 +7,7 @@ export default function AccountHomePage() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-10 rounded-[32px] border border-ivory-deep bg-white/70 p-10 backdrop-blur">
+    <div className="space-y-10 rounded-[32px] border border-ivory-deep bg-white/70 p-6 md:p-10 backdrop-blur">
       <div>
         <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">Your account</p>
         <h1 className="mt-4 font-display text-4xl text-ink">Welcome, {user?.name.split(" ")[0]}.</h1>

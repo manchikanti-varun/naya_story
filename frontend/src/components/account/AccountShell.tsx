@@ -32,7 +32,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="mx-auto flex max-w-[1400px] flex-col gap-12 px-6 py-16 md:flex-row md:gap-16 md:px-10 md:py-24">
+    <div className="mx-auto flex max-w-[1400px] flex-col gap-8 px-4 py-10 md:flex-row md:gap-16 md:px-10 md:py-24">
       <aside className="store-elevated-card w-full shrink-0 p-6 md:w-64">
         <p className="font-display text-2xl text-ink">{user.name}</p>
         <p className="mt-2 font-sans text-xs uppercase tracking-[0.22em] text-ink-soft">

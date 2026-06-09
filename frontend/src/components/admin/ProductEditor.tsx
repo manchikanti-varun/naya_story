@@ -86,6 +86,7 @@ const emptyProduct = (): Partial<Product> & {
   newInVisible: true,
   storefrontVisible: true,
   lowStockDisplay: "hide" as const,
+  displayOrder: 0,
 });
 
 export function ProductEditor({
@@ -193,6 +194,7 @@ export function ProductEditor({
       taxRate: Number(form.taxRate) || 0,
       discountPercent: Number(form.discountPercent) || 0,
       newInOrder: Number(form.newInOrder) || 0,
+      displayOrder: Number(form.displayOrder) || 0,
     };
   }, [form]);
 
@@ -612,6 +614,18 @@ export function ProductEditor({
                 value={form.newInOrder ?? 0}
                 onChange={(e) => setForm((f) => ({ ...f, newInOrder: Number(e.target.value) || 0 }))}
               />
+            </Field>
+
+            <Field label="Display order (lower = first, 0 = default)">
+              <input
+                type="number"
+                className={cn(inputClass, "max-w-[8rem]")}
+                value={form.displayOrder ?? 0}
+                onChange={(e) => setForm((f) => ({ ...f, displayOrder: Number(e.target.value) || 0 }))}
+              />
+              <p className="mt-1 text-[11px] text-[var(--admin-muted)]">
+                Controls product position across all listings. Products with lower values appear first.
+              </p>
             </Field>
 
             <div>

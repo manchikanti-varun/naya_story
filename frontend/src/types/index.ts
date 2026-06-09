@@ -47,6 +47,8 @@ export type Product = {
   storefrontVisible?: boolean;
   /** Admin override for limited-stock banner: "show" | "hide" */
   lowStockDisplay?: "show" | "hide";
+  /** Global display order for manual sorting (lower = first). */
+  displayOrder?: number;
 };
 
 export type MediaAsset = {

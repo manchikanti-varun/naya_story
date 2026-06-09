@@ -23,7 +23,7 @@ export default function WishlistPage() {
   }, [token]);
 
   return (
-    <div className="space-y-10 rounded-[32px] border border-ivory-deep bg-white/70 p-10 backdrop-blur">
+    <div className="space-y-10 rounded-[32px] border border-ivory-deep bg-white/70 p-5 md:p-10 backdrop-blur">
       <div>
         <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">Wishlist</p>
         <h1 className="mt-4 font-display text-4xl text-ink">Saved reverie</h1>

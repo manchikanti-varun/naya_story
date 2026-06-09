@@ -24,7 +24,7 @@ const ALLOWED_PRODUCT_FIELDS = [
   "fabricDetails", "stylingSuggestions", "pdpPrintDisclaimer", "pdpDeliveryRange",
   "pdpFreeShippingNote", "pdpDeliveryAndCare", "featured", "bestseller", "trending",
   "newIn", "newInOrder", "newInHoverImage", "newInVisible", "storefrontVisible",
-  "lowStockDisplay",
+  "lowStockDisplay", "displayOrder",
 ];
 
 function sanitizeProductBody(raw: Record<string, unknown>): Record<string, unknown> {
@@ -102,12 +102,13 @@ export const productService = {
     if (inStock === "true") filter["variants.stock"] = { $gt: 0 };
 
     // Sort
-    let sortSpec: Record<string, 1 | -1> = { featured: -1, createdAt: -1 };
+    let sortSpec: Record<string, 1 | -1> = { displayOrder: 1, featured: -1, createdAt: -1 };
     if (sort === "price_asc") sortSpec = { price: 1 };
     if (sort === "price_desc") sortSpec = { price: -1 };
     if (sort === "newest") sortSpec = { createdAt: -1 };
     if (sort === "popular") sortSpec = { bestseller: -1, featured: -1, createdAt: -1 };
     if (sort === "new_in") sortSpec = { newInOrder: 1, createdAt: -1 };
+    if (sort === "manual") sortSpec = { displayOrder: 1, createdAt: -1 };
 
     const lim = Math.min(Number(limit) || 24, 500);
     const currentPage = Math.max(Number(page) || 1, 1);

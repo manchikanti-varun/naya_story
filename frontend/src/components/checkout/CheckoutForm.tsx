@@ -106,7 +106,7 @@ export function CheckoutForm() {
   }
 
   return (
-    <div className="mx-auto grid max-w-[1200px] gap-16 px-6 py-16 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:px-10 md:py-24">
+    <div className="mx-auto grid max-w-[1200px] gap-10 px-4 py-10 md:gap-16 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:px-10 md:py-24">
       <div>
         <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">Checkout</p>
         <h1 className="mt-4 font-display text-4xl text-ink">Quiet completion</h1>

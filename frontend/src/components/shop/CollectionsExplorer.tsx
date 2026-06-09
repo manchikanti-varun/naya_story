@@ -60,6 +60,9 @@ export function CollectionsExplorer() {
         const config = normalizeCollectionsPage(settings.settings.homepage.collectionsPage);
         if (!cancelled) setCollectionsConfig(config);
 
+        // Extract global categories for per-category pinned product ordering
+        const globalCategories = settings.settings.homepage.globalCategories ?? [];
+
         const qs = new URLSearchParams(queryString);
         const tabs = (config.categories ?? []).filter((c) => c.enabled).sort((a, b) => a.order - b.order);
         const activeTab = tabs.find((tab) => tab.id === (qs.get("tab") ?? "all")) ?? tabs[0];
@@ -95,8 +98,10 @@ export function CollectionsExplorer() {
         let list = data.products ?? [];
         const pageNum = Math.max(Number(qs.get("page") ?? "1") || 1, 1);
         const lim = config.paginationLimit ?? 16;
-        const tabAll =
-          activeTab?.type === "all" &&
+
+        // Determine pinned product IDs based on active tab
+        let pins: string[] = [];
+        const isFirstPageNoFilters =
           pageNum === 1 &&
           !qs.get("size") &&
           !qs.get("color") &&
@@ -105,8 +110,27 @@ export function CollectionsExplorer() {
           (qs.get("sort") ?? defaultSort) === defaultSort &&
           qs.get("inStock") !== "true";
 
-        const pins = (config.pinnedProductIds ?? []).filter(Boolean);
-        if (tabAll && config.usePinnedProducts && pins.length > 0) {
+        if (isFirstPageNoFilters) {
+          if (activeTab?.type === "all" && config.usePinnedProducts) {
+            pins = (config.pinnedProductIds ?? []).filter(Boolean);
+          } else if (activeTab?.type === "category" && activeTab.value) {
+            // Find the matching global category and use its pinned IDs
+            const matchedCat = globalCategories.find(
+              (g) => g.slug?.toLowerCase() === activeTab.value?.toLowerCase(),
+            );
+            pins = (matchedCat?.pinnedProductIds ?? []).filter(Boolean);
+          } else if (activeTab?.type === "bestselling") {
+            // Use homepage bestseller pinned IDs
+            const bestPins = settings.settings.homepage.bestsellers?.productIds ?? [];
+            pins = bestPins.filter(Boolean);
+          } else if (activeTab?.type === "newIn") {
+            // Use homepage new-in pinned IDs
+            const newInPins = settings.settings.homepage.newIn?.productIds ?? [];
+            pins = newInPins.filter(Boolean);
+          }
+        }
+
+        if (pins.length > 0) {
           const pinRes = await apiFetch<{ products: Product[] }>(
             `/products?ids=${pins.map((id) => encodeURIComponent(id)).join(",")}`,
           );

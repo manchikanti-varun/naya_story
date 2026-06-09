@@ -311,11 +311,11 @@ export type HomepageConfig = {
         enabled: boolean;
       }>;
       sortOptions: Array<{
-        value: "newest" | "popular" | "price_asc" | "price_desc";
+        value: "newest" | "popular" | "price_asc" | "price_desc" | "manual";
         label: string;
         enabled: boolean;
       }>;
-      defaultSort: "newest" | "popular" | "price_asc" | "price_desc";
+      defaultSort: "newest" | "popular" | "price_asc" | "price_desc" | "manual";
     };
     messages?: {
       loading: string;

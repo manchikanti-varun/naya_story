@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
-import { useEffect } from "react";
+import { ChevronDown, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { SITE_NAME } from "@/lib/constants";
 import { buildStorePrimaryNav } from "@/lib/store-nav";
+import { cn } from "@/lib/cn";
 import type { StorePageFlags } from "@/lib/store-page-flags";
 
 const MOBILE_EXTRA = [
@@ -20,11 +21,13 @@ type Props = {
   onClose: () => void;
   onOpenCart: () => void;
   storePageFlags?: StorePageFlags;
+  navCategories?: Array<{ name: string; slug: string; href: string }>;
 };
 
-export function MobileMenu({ open, onClose, onOpenCart, storePageFlags }: Props) {
+export function MobileMenu({ open, onClose, onOpenCart, storePageFlags, navCategories }: Props) {
   const navItems = buildStorePrimaryNav(storePageFlags);
   const { user } = useAuth();
+  const [collectionsExpanded, setCollectionsExpanded] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -74,26 +77,91 @@ export function MobileMenu({ open, onClose, onOpenCart, storePageFlags }: Props)
             </div>
 
             <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-8 pb-16 pt-10">
-              {navItems.map((item, i) => (
-                <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0, x: 16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{
-                    delay: 0.05 + i * 0.04,
-                    duration: 0.5,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={onClose}
-                    className="block border-b border-transparent py-4 font-display text-2xl font-light tracking-[0.02em] text-black transition-colors duration-500 hover:border-ivory-deep/30 hover:text-gold"
+              {navItems.map((item, i) => {
+                const isCollections = item.href === "/collections" && navCategories && navCategories.length > 0;
+
+                if (isCollections) {
+                  return (
+                    <motion.div
+                      key={item.label}
+                      initial={{ opacity: 0, x: 16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        delay: 0.05 + i * 0.04,
+                        duration: 0.5,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setCollectionsExpanded((v) => !v)}
+                        className="flex w-full items-center justify-between border-b border-transparent py-4 font-display text-2xl font-light tracking-[0.02em] text-black transition-colors duration-500 hover:border-ivory-deep/30 hover:text-gold"
+                      >
+                        <span>{item.label}</span>
+                        <ChevronDown
+                          className={cn(
+                            "h-5 w-5 text-ink-soft transition-transform duration-300",
+                            collectionsExpanded && "rotate-180",
+                          )}
+                          strokeWidth={1.25}
+                        />
+                      </button>
+                      <AnimatePresence>
+                        {collectionsExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <div className="space-y-0.5 pb-3 pl-4 pt-1">
+                              <Link
+                                href="/collections"
+                                onClick={onClose}
+                                className="block py-2.5 font-sans text-base font-light text-ink-muted transition-colors hover:text-gold"
+                              >
+                                All Collections
+                              </Link>
+                              {navCategories!.map((cat) => (
+                                <Link
+                                  key={cat.slug}
+                                  href={cat.href}
+                                  onClick={onClose}
+                                  className="block py-2.5 font-sans text-base font-light text-ink-muted transition-colors hover:text-gold"
+                                >
+                                  {cat.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                }
+
+                return (
+                  <motion.div
+                    key={item.label}
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      delay: 0.05 + i * 0.04,
+                      duration: 0.5,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
                   >
-                    {item.label}
-                  </Link>
-                </motion.div>
-              ))}
+                    <Link
+                      href={item.href}
+                      onClick={onClose}
+                      className="block border-b border-transparent py-4 font-display text-2xl font-light tracking-[0.02em] text-black transition-colors duration-500 hover:border-ivory-deep/30 hover:text-gold"
+                    >
+                      {item.label}
+                    </Link>
+                  </motion.div>
+                );
+              })}
               {MOBILE_EXTRA.map((item, i) => (
                 <motion.div
                   key={item.label}

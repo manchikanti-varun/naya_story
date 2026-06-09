@@ -29,7 +29,7 @@ export default function OrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="rounded-[32px] border border-ivory-deep bg-white/70 p-10 backdrop-blur">
+      <div className="rounded-[32px] border border-ivory-deep bg-white/70 p-5 md:p-10 backdrop-blur">
         <p className="font-sans text-sm text-ink-muted">Pulling your timeline…</p>
       </div>
     );
@@ -40,7 +40,7 @@ export default function OrderDetailPage() {
     : [{ status: order.status, at: order.createdAt }];
 
   return (
-    <div className="space-y-10 rounded-[32px] border border-ivory-deep bg-white/70 p-10 backdrop-blur">
+    <div className="space-y-10 rounded-[32px] border border-ivory-deep bg-white/70 p-5 md:p-10 backdrop-blur">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="font-sans text-[10px] uppercase tracking-[0.34em] text-gold">Order</p>
