@@ -7,6 +7,7 @@ import {
   ImageIcon,
   LayoutDashboard,
   LayoutGrid,
+  Link2,
   Megaphone,
   MessageSquare,
   Navigation2,
@@ -128,6 +129,12 @@ export const adminNavGroups: AdminNavGroup[] = [
         label: "Legal Pages",
         icon: Shield,
         keywords: ["terms", "privacy", "refund", "shipping", "policies"],
+      },
+      {
+        href: "/admin/links",
+        label: "Store Links",
+        icon: Link2,
+        keywords: ["links", "urls", "redirect", "routes", "copy", "reference"],
       },
     ],
   },
@@ -270,6 +277,7 @@ export function isNavActive(pathname: string | null, href: string): boolean {
   if (path === "/admin/coupons") return pathname === "/admin/coupons";
   if (path === "/admin/inventory") return pathname === "/admin/inventory";
   if (path === "/admin/reviews") return pathname === "/admin/reviews";
+  if (path === "/admin/links") return pathname === "/admin/links";
 
   return pathname === path || pathname.startsWith(`${path}/`);
 }

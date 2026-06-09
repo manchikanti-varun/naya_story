@@ -13,6 +13,7 @@ import {
   CmsStorePagePublishToggle,
 } from "@/components/admin/cms/CmsFormHelpers";
 import { CmsImageUrlField } from "@/components/admin/cms/CmsImageUrlField";
+import { ProductPinEditor } from "@/components/admin/cms/ProductPinEditor";
 import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
 import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
 import { AdminField, AdminInput, AdminSelect, AdminTextarea } from "@/components/admin/ui/AdminField";
@@ -469,7 +470,7 @@ export function ContentEditorCategoriesPanel() {
 }
 
 export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?: boolean }) {
-  const { hp, setHp, token, updateCollectionsCategory } = useHomepageEditor();
+  const { hp, setHp, token, updateCollectionsCategory, patchGlobalCategories } = useHomepageEditor();
   if (!hp) return null;
 
   const cp = hp.collectionsPage;
@@ -821,6 +822,57 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
               ))}
           </ul>
         ) : null}
+      </CmsFieldGroup>
+
+      {/* Product ordering per tab */}
+      <CmsFieldGroup title="Product ordering">
+        <p className="mt-2 font-sans text-xs text-[var(--admin-muted)]">
+          Set the display order for each tab. This order applies everywhere &mdash; homepage rails, collections page, and the new-in page.
+        </p>
+        <div className="mt-5 space-y-6">
+          {/* Bestselling order */}
+          <ProductPinEditor
+            token={token}
+            pinnedIds={hp.bestsellers.productIds ?? []}
+            onChange={(productIds) =>
+              setHp({ ...hp, bestsellers: { ...hp.bestsellers, productIds } })
+            }
+            max={BESTSELLERS_RAIL_MAX}
+            label="Bestselling order"
+            hint="Controls order in homepage bestsellers rail + collections Bestselling tab."
+          />
+
+          {/* New In order */}
+          <ProductPinEditor
+            token={token}
+            pinnedIds={hp.newIn.productIds ?? []}
+            onChange={(productIds) =>
+              setHp({ ...hp, newIn: { ...hp.newIn, productIds } })
+            }
+            max={20}
+            label="New In order"
+            hint="Controls order in homepage new-in rail + collections New In tab + /new-in page."
+          />
+
+          {/* Per-category order */}
+          {getGlobalCategories(hp)
+            .filter((g) => g.enabled && g.collections)
+            .map((cat) => (
+              <ProductPinEditor
+                key={cat.id}
+                token={token}
+                pinnedIds={cat.pinnedProductIds ?? []}
+                onChange={(productIds) =>
+                  patchGlobalCategories((list) =>
+                    list.map((c) => c.id === cat.id ? { ...c, pinnedProductIds: productIds } : c)
+                  )
+                }
+                max={20}
+                label={`${cat.name} order`}
+                hint={`Controls display order for the ${cat.name} tab on collections page.`}
+              />
+            ))}
+        </div>
       </CmsFieldGroup>
     </CmsPageEditorShell>
   );
