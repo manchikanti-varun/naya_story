@@ -286,7 +286,7 @@ export function CollectionsExplorer() {
           }
         />
 
-        <section className="mt-10 space-y-5">
+        <section className="mt-10 space-y-2">
           <div className="lux-collection-categories">
             <div className="lux-scroll-x gap-2 pb-1">
               {categories.map((cat) => (
