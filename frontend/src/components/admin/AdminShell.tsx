@@ -141,6 +141,11 @@ export function AdminShell({
 
   return (
     <div className="flex min-h-screen lg:h-[100dvh] lg:max-h-[100dvh] lg:overflow-hidden">
+      {/* Skip to content — accessibility */}
+      <a href="#admin-main-content" className="admin-skip-link">
+        Skip to content
+      </a>
+
       {sidebarOpen ? (
         <button
           type="button"
@@ -213,12 +218,12 @@ export function AdminShell({
               <AdminCommandPalette />
             </div>
           </div>
-          <div className="border-t border-[var(--admin-border)] px-4 py-2 lg:hidden">
+          <div className="px-4 py-1.5 lg:hidden">
             <AdminBreadcrumbs />
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-x-auto overflow-y-auto px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+        <main id="admin-main-content" className="min-h-0 flex-1 overflow-x-auto overflow-y-auto px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
           {children}
         </main>
       </div>

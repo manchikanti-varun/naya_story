@@ -5,7 +5,7 @@ export default function WebsiteThemePage() {
   return (
     <AdminPageLayout
       title="Theme Studio"
-      description="Global brand colors map to CSS variables on the public site. Section-level design overrides live in each homepage section under Design."
+      description="Brand colors applied across the storefront."
     >
       <ContentEditorThemePanel />
     </AdminPageLayout>

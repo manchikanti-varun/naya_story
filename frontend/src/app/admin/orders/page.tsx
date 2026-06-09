@@ -5,8 +5,6 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
   RefreshCw,
   Search,
   X,
@@ -28,8 +26,11 @@ import { AdminCard } from "@/components/admin/ui/AdminCard";
 import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
 import { AdminInput } from "@/components/admin/ui/AdminField";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
+import { AdminPagination } from "@/components/admin/ui/AdminPagination";
+import { AdminMetricsSkeleton } from "@/components/admin/ui/AdminSkeleton";
 import { AdminTable } from "@/components/admin/ui/AdminTable";
 import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
+import { OrderDetailDrawer } from "@/components/admin/OrderDetailDrawer";
 import { cn } from "@/lib/cn";
 
 const PAGE_SIZE = 20;
@@ -94,6 +95,7 @@ export default function AdminOrdersPage() {
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -406,9 +408,9 @@ export default function AdminOrdersPage() {
                 ) : null}
                 {!loading &&
                   pageRows.map((o) => (
-                    <tr key={o._id}>
+                    <tr key={o._id} className="cursor-pointer" onClick={() => setSelectedOrder(o)}>
                       <td>
-                        <p className="font-medium tabular-nums text-[var(--admin-ink)]">{o.orderNumber}</p>
+                        <p className="font-medium tabular-nums text-[var(--admin-accent)] underline-offset-2 hover:underline">{o.orderNumber}</p>
                         <p className="mt-0.5 max-w-[14rem] truncate font-sans text-[11px] text-[var(--admin-muted)]">
                           {orderItemsPreview(o)}
                         </p>
@@ -438,7 +440,7 @@ export default function AdminOrdersPage() {
                         ) : null}
                       </td>
                       <td className="tabular-nums text-[var(--admin-muted)]">{orderItemCount(o)}</td>
-                      <td>
+                      <td onClick={(e) => e.stopPropagation()}>
                         <select
                           className="admin-input w-full min-w-[9rem] py-1.5 text-xs"
                           value={o.status}
@@ -464,7 +466,7 @@ export default function AdminOrdersPage() {
                           {formatOrderStatus(o.status)}
                         </AdminBadge>
                       </td>
-                      <td>
+                      <td onClick={(e) => e.stopPropagation()}>
                         <InlineTracking order={o} token={token!} onSaved={refresh} />
                       </td>
                       <td className="text-right font-medium tabular-nums">
@@ -478,38 +480,19 @@ export default function AdminOrdersPage() {
           </AdminCard>
 
           {!loading && sorted.length > PAGE_SIZE ? (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--admin-border)] pt-4">
-              <p className="font-sans text-xs text-[var(--admin-muted)]">
-                Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, sorted.length)} of{" "}
-                {sorted.length}
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={safePage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded-lg p-2 text-[var(--admin-muted)] hover:bg-black/[0.04] disabled:opacity-30"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
-                </button>
-                <span className="px-2 font-mono text-xs text-[var(--admin-muted)]">
-                  {safePage} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  disabled={safePage >= totalPages}
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="rounded-lg p-2 text-[var(--admin-muted)] hover:bg-black/[0.04] disabled:opacity-30"
-                  aria-label="Next page"
-                >
-                  <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
-                </button>
-              </div>
-            </div>
+            <AdminPagination
+              page={safePage}
+              totalPages={totalPages}
+              totalItems={sorted.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+            />
           ) : null}
         </>
       )}
+
+      {/* Order Detail Drawer */}
+      <OrderDetailDrawer order={selectedOrder} onClose={() => setSelectedOrder(null)} />
     </AdminPageLayout>
   );
 }

@@ -13,10 +13,15 @@ import {
 } from "recharts";
 import {
   ArrowRight,
+  ArrowUpRight,
   CircleDollarSign,
   ClipboardList,
+  ImageIcon,
   Package,
+  Percent,
+  Plus,
   ShoppingBag,
+  TrendingUp,
   Users,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -26,8 +31,11 @@ import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
 import { AdminMetricCard } from "@/components/admin/ui/AdminMetricCard";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
+import { AdminQuickActions, type QuickAction } from "@/components/admin/ui/AdminQuickActions";
+import { AdminMetricsSkeleton } from "@/components/admin/ui/AdminSkeleton";
 import { AdminTable } from "@/components/admin/ui/AdminTable";
 import { formatOrderStatus, orderStatusTone } from "@/lib/admin/order-utils";
+
 type Overview = {
   revenue: number;
   ordersCount: number;
@@ -49,6 +57,33 @@ type Overview = {
   }[];
   outOfStockCount: number;
 };
+
+const quickActions: QuickAction[] = [
+  {
+    label: "Add product",
+    href: "/admin/products/new",
+    icon: Plus,
+    description: "Create a new catalog item",
+  },
+  {
+    label: "Create coupon",
+    href: "/admin/coupons",
+    icon: Percent,
+    description: "Set up a discount code",
+  },
+  {
+    label: "Upload media",
+    href: "/admin/media",
+    icon: ImageIcon,
+    description: "Add images to library",
+  },
+  {
+    label: "View analytics",
+    href: "/admin/analytics",
+    icon: TrendingUp,
+    description: "Revenue & performance",
+  },
+];
 
 export default function AdminDashboardPage() {
   const { token } = useAuth();
@@ -73,7 +108,11 @@ export default function AdminDashboardPage() {
   }, [load]);
 
   if (loading && !data) {
-    return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading overview…</p>;
+    return (
+      <AdminPageLayout title="Dashboard" description="Sales, orders, and stock at a glance.">
+        <AdminMetricsSkeleton />
+      </AdminPageLayout>
+    );
   }
 
   if (!data) {
@@ -89,11 +128,21 @@ export default function AdminDashboardPage() {
     );
   }
 
-  const stockAttention =
-    (data.outOfStockCount ?? 0) > 0 || (data.lowStock?.length ?? 0) > 0;
+  const aov = data.ordersCount === 0 ? 0 : Math.round(data.revenue / data.ordersCount);
+  const stockAttention = (data.outOfStockCount ?? 0) > 0 || (data.lowStock?.length ?? 0) > 0;
 
   return (
-    <AdminPageLayout title="Dashboard" description="Sales, orders, and stock at a glance.">
+    <AdminPageLayout
+      title="Dashboard"
+      description="Sales, orders, and stock at a glance."
+      actions={
+        <Link href="/admin/products/new" className="admin-btn admin-btn--md admin-btn--primary">
+          <Plus className="h-4 w-4" strokeWidth={1.75} />
+          New product
+        </Link>
+      }
+    >
+      {/* KPI Metrics */}
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <AdminMetricCard
           label="Lifetime revenue"
@@ -118,11 +167,36 @@ export default function AdminDashboardPage() {
           value={String(data.pendingOrdersCount)}
           icon={ClipboardList}
           href="/admin/orders"
-          hint="Pending, confirmed, or packed"
+          hint="Pending · confirmed · packed"
           accent={data.pendingOrdersCount > 0}
         />
       </section>
 
+      {/* Secondary metrics row */}
+      <section className="grid gap-4 sm:grid-cols-3">
+        <AdminCard padding="md">
+          <p className="admin-metric-label">Avg. order value</p>
+          <p className="admin-metric-value mt-2 text-xl tabular-nums text-[var(--admin-ink)]">
+            ₹{aov.toLocaleString("en-IN")}
+          </p>
+        </AdminCard>
+        <AdminCard padding="md">
+          <p className="admin-metric-label">Low stock items</p>
+          <p className="admin-metric-value mt-2 text-xl tabular-nums text-[var(--admin-ink)]">
+            {data.lowStock?.length ?? 0}
+          </p>
+          <p className="mt-1 font-sans text-[11px] text-[var(--admin-muted)]">Variants under 5 units</p>
+        </AdminCard>
+        <AdminCard padding="md">
+          <p className="admin-metric-label">Out of stock</p>
+          <p className="admin-metric-value mt-2 text-xl tabular-nums text-[var(--admin-ink)]">
+            {data.outOfStockCount ?? 0}
+          </p>
+          <p className="mt-1 font-sans text-[11px] text-[var(--admin-muted)]">Products fully depleted</p>
+        </AdminCard>
+      </section>
+
+      {/* Inventory alert */}
       {stockAttention ? (
         <AdminCard
           elevated
@@ -141,7 +215,7 @@ export default function AdminDashboardPage() {
             </div>
             <Link
               href="/admin/inventory"
-              className="inline-flex items-center justify-center gap-1.5 self-start rounded-full bg-[var(--admin-ink)] px-4 py-2.5 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white hover:opacity-90 sm:self-auto"
+              className="admin-btn admin-btn--md admin-btn--primary self-start sm:self-auto"
             >
               Review inventory
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
@@ -150,11 +224,21 @@ export default function AdminDashboardPage() {
         </AdminCard>
       ) : null}
 
+      {/* Charts and Recent Orders */}
       <div className="grid gap-6 lg:grid-cols-5">
         <AdminCard elevated className="lg:col-span-3" padding="md">
-          <div className="mb-4">
-            <h2 className="font-sans text-lg font-semibold text-[var(--admin-ink)]">Revenue trend</h2>
-            <p className="mt-1 font-sans text-xs text-[var(--admin-muted)]">Paid orders, last 30 days</p>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-sans text-base font-semibold text-[var(--admin-ink)]">Revenue trend</h2>
+              <p className="mt-0.5 font-sans text-xs text-[var(--admin-muted)]">Paid orders, last 30 days</p>
+            </div>
+            <Link
+              href="/admin/analytics"
+              className="inline-flex items-center gap-1 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-accent)] hover:underline"
+            >
+              Details
+              <ArrowUpRight className="h-3 w-3" strokeWidth={2} />
+            </Link>
           </div>
           <RevenueTrendChart data={data.salesTrend} />
         </AdminCard>
@@ -162,55 +246,56 @@ export default function AdminDashboardPage() {
         <AdminCard elevated className="lg:col-span-2" padding="md">
           <div className="mb-4 flex items-start justify-between gap-2">
             <div>
-              <h2 className="font-sans text-lg font-semibold text-[var(--admin-ink)]">Recent orders</h2>
-              <p className="mt-1 font-sans text-xs text-[var(--admin-muted)]">Latest 8 orders</p>
+              <h2 className="font-sans text-base font-semibold text-[var(--admin-ink)]">Recent orders</h2>
+              <p className="mt-0.5 font-sans text-xs text-[var(--admin-muted)]">Latest 8 orders</p>
             </div>
             <Link
               href="/admin/orders"
-              className="shrink-0 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-accent)] hover:underline"
+              className="inline-flex items-center gap-1 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--admin-accent)] hover:underline"
             >
               View all
+              <ArrowUpRight className="h-3 w-3" strokeWidth={2} />
             </Link>
           </div>
           {data.recentOrders.length === 0 ? (
             <p className="py-8 text-center font-sans text-sm text-[var(--admin-muted)]">No orders yet.</p>
           ) : (
-            <AdminTable>
-              <table className="admin-table text-sm">
-                <thead>
-                  <tr>
-                    <th>Order</th>
-                    <th>Status</th>
-                    <th className="text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.recentOrders.map((o) => (
-                    <tr key={o._id}>
-                      <td>
-                        <p className="font-medium tabular-nums">{o.orderNumber}</p>
-                        <p className="mt-0.5 truncate font-sans text-[10px] text-[var(--admin-faint)]">
-                          {o.guestEmail ??
-                            new Date(o.createdAt).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                            })}
-                        </p>
-                      </td>
-                      <td>
-                        <AdminBadge tone={orderStatusTone(o.status)}>{formatOrderStatus(o.status)}</AdminBadge>
-                      </td>
-                      <td className="text-right font-medium tabular-nums">
-                        ₹{o.total.toLocaleString("en-IN")}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </AdminTable>
+            <div className="space-y-2">
+              {data.recentOrders.map((o) => (
+                <div
+                  key={o._id}
+                  className="flex items-center justify-between gap-3 rounded-[var(--admin-radius-xs)] border border-[var(--admin-border)] px-3 py-2.5 transition hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-raised)]"
+                >
+                  <div className="min-w-0">
+                    <p className="font-sans text-sm font-medium tabular-nums text-[var(--admin-ink)]">
+                      {o.orderNumber}
+                    </p>
+                    <p className="mt-0.5 truncate font-sans text-[10px] text-[var(--admin-faint)]">
+                      {o.guestEmail ??
+                        new Date(o.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <AdminBadge tone={orderStatusTone(o.status)}>{formatOrderStatus(o.status)}</AdminBadge>
+                    <span className="font-sans text-sm font-medium tabular-nums text-[var(--admin-ink)]">
+                      ₹{o.total.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </AdminCard>
       </div>
+
+      {/* Quick Actions */}
+      <section>
+        <h2 className="mb-3 font-sans text-sm font-semibold text-[var(--admin-ink)]">Quick actions</h2>
+        <AdminQuickActions actions={quickActions} />
+      </section>
     </AdminPageLayout>
   );
 }
@@ -264,6 +349,8 @@ function RevenueTrendChart({ data }: { data: { _id: string; revenue: number }[] 
               borderRadius: 12,
               border: "1px solid var(--admin-border)",
               fontSize: 12,
+              background: "rgba(255,255,255,0.95)",
+              backdropFilter: "blur(8px)",
             }}
           />
           <Area
@@ -279,4 +366,3 @@ function RevenueTrendChart({ data }: { data: { _id: string; revenue: number }[] 
     </div>
   );
 }
-

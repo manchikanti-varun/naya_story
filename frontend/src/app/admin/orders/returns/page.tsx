@@ -8,7 +8,7 @@ export default function AdminReturnsPage() {
     <AdminPageLayout
       title="Returns & exchanges"
       maxWidthClass="max-w-2xl"
-      description="Operational hub for post-purchase workflows. Full RMA automation can plug in here (carrier labels, restock, partial refunds)."
+      description="Manage returns and exchanges."
     >
       <AdminCard padding="lg" className="border-dashed">
         <Package className="h-8 w-8 text-[var(--admin-accent)]" strokeWidth={1.25} aria-hidden />

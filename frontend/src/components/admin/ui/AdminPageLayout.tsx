@@ -24,9 +24,9 @@ export function AdminPageLayout({
   maxWidthClass = "max-w-6xl",
 }: Props) {
   return (
-    <div className={cn("admin-page-shell mx-auto space-y-8", maxWidthClass, className)}>
+    <div className={cn("admin-page-shell mx-auto space-y-6", maxWidthClass, className)}>
       <header className="admin-page-header">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
             <h1 className="admin-page-title">{title}</h1>
             {description ? <div className="admin-page-desc">{description}</div> : null}
@@ -37,7 +37,7 @@ export function AdminPageLayout({
 
       {toolbar ? <div>{toolbar}</div> : null}
 
-      <div className="space-y-6">{children}</div>
+      <div className="space-y-5">{children}</div>
     </div>
   );
 }

@@ -98,7 +98,7 @@ export function StoreFooter({
     <footer className="relative overflow-hidden border-t border-ivory-deep bg-gradient-to-b from-ivory via-ivory-muted to-ivory-soft">
       <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-gradient(rgba(44,40,37,0.35)_0.45px,transparent_0.45px)] [background-size:3px_3px]" />
       <div className="lux-shell relative py-10 md:py-12">
-        <div className="grid gap-10 border-b border-ivory-deep/70 pb-8 md:grid-cols-3 md:gap-8 md:pb-10 lg:gap-12">
+        <div className="grid gap-10 pb-8 md:grid-cols-3 md:gap-8 md:pb-10 lg:gap-12">
           <div className="space-y-5 md:pr-4">
             <Link href="/" className="relative inline-block h-9 w-[168px] md:h-10 md:w-[188px]">
               <Image
@@ -168,7 +168,7 @@ export function StoreFooter({
           </div>
         </div>
 
-        <div className="mt-3 border-t border-ivory-deep/50 pt-2.5 md:mt-4 md:pt-3">
+        <div className="mt-6 pt-4 md:mt-8 md:pt-5">
           <p className="text-center font-sans text-[8px] font-light leading-none tracking-[0.12em] text-ink-soft">
             {copyright}
           </p>

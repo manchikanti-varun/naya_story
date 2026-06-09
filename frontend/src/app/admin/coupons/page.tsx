@@ -7,9 +7,12 @@ import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
+import { AdminConfirmModal } from "@/components/admin/ui/AdminModal";
 import { AdminField, AdminInput, AdminSelect } from "@/components/admin/ui/AdminField";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 import { AdminTable } from "@/components/admin/ui/AdminTable";
+import { AdminTableSkeleton } from "@/components/admin/ui/AdminSkeleton";
+import { useToast } from "@/components/admin/ui/AdminToast";
 
 type Coupon = {
   _id: string;
@@ -24,7 +27,10 @@ type Coupon = {
 
 export default function AdminCouponsPage() {
   const { token } = useAuth();
+  const toast = useToast();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [draft, setDraft] = useState({
     code: "",
     type: "percent" as "percent" | "fixed",
@@ -34,8 +40,24 @@ export default function AdminCouponsPage() {
 
   async function refresh() {
     if (!token) return;
-    const data = await apiFetch<{ coupons: Coupon[] }>("/coupons", { token });
-    setCoupons(data.coupons);
+    setLoading(true);
+    try {
+      const data = await apiFetch<{ coupons: Coupon[] }>("/coupons", { token });
+      setCoupons(data.coupons);
+    } catch {
+      setCoupons([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteCoupon(id: string) {
+    if (!token) return;
+    await apiFetch(`/coupons/${id}`, { method: "DELETE", token });
+    publishStorefrontSettingsChanged();
+    toast.success("Coupon deleted");
+    setDeleteTarget(null);
+    await refresh();
   }
 
   useEffect(() => {
@@ -45,7 +67,7 @@ export default function AdminCouponsPage() {
   return (
     <AdminPageLayout
       title="Coupons"
-      description="Discount codes apply at checkout. Toggling activation updates the storefront after save."
+      description="Discount codes for checkout."
     >
       <AdminCard padding="md">
         <h2 className="font-sans text-sm font-semibold text-[var(--admin-ink)]">Create coupon</h2>
@@ -60,6 +82,7 @@ export default function AdminCouponsPage() {
               body: JSON.stringify(draft),
             });
             publishStorefrontSettingsChanged();
+            toast.success(`Coupon ${draft.code} created`);
             setDraft({ code: "", type: "percent", value: 10, usageLimit: 500 });
             await refresh();
           }}
@@ -96,6 +119,18 @@ export default function AdminCouponsPage() {
         </form>
       </AdminCard>
 
+      <AdminConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => { if (deleteTarget) void deleteCoupon(deleteTarget); }}
+        title="Delete coupon?"
+        description="This coupon code will be permanently removed and can no longer be used at checkout."
+        confirmLabel="Delete"
+      />
+
+      {loading ? (
+        <AdminTableSkeleton rows={3} cols={5} />
+      ) : (
       <AdminCard padding="none" elevated>
         <AdminTable>
           <table className="admin-table text-sm">
@@ -105,7 +140,7 @@ export default function AdminCouponsPage() {
                 <th>Type</th>
                 <th>Value</th>
                 <th>Usage</th>
-                <th className="text-right">Status</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -127,7 +162,7 @@ export default function AdminCouponsPage() {
                       {c.usedCount}/{c.usageLimit ?? "∞"}
                     </td>
                     <td className="text-right">
-                      <div className="flex items-center justify-end gap-3">
+                      <div className="flex items-center justify-end gap-2">
                         <AdminBadge tone={c.active ? "success" : "neutral"}>
                           {c.active ? "Active" : "Inactive"}
                         </AdminBadge>
@@ -142,10 +177,19 @@ export default function AdminCouponsPage() {
                               body: JSON.stringify({ active: !c.active }),
                             });
                             publishStorefrontSettingsChanged();
+                            toast.success(c.active ? "Coupon deactivated" : "Coupon activated");
                             await refresh();
                           }}
                         >
                           {c.active ? "Deactivate" : "Activate"}
+                        </AdminButton>
+                        <AdminButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setDeleteTarget(c._id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          Delete
                         </AdminButton>
                       </div>
                     </td>
@@ -156,6 +200,7 @@ export default function AdminCouponsPage() {
           </table>
         </AdminTable>
       </AdminCard>
+      )}
     </AdminPageLayout>
   );
 }

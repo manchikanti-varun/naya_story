@@ -31,7 +31,7 @@ export default function MarketingCampaignsPage() {
     <AdminPageLayout
       title="Campaigns"
       maxWidthClass="max-w-4xl"
-      description="Coordinate offers, editorial moments, and creative assets. Saves that affect the public site broadcast to open storefront tabs automatically."
+      description="Coordinate offers and creative assets."
     >
       <div className="grid gap-4 md:grid-cols-3">
         {lanes.map(({ title, body, href, icon: Icon }) => (

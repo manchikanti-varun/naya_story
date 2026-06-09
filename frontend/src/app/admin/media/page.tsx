@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Grid, List, Plus, Search, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 import type { MediaAsset } from "@/types";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
+import { AdminConfirmModal } from "@/components/admin/ui/AdminModal";
 import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
 import { AdminField, AdminInput, AdminSelect } from "@/components/admin/ui/AdminField";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
+import { useToast } from "@/components/admin/ui/AdminToast";
 import { CloudinaryImageUpload } from "@/components/admin/CloudinaryImageUpload";
 
 const categories = ["general", "banner", "homepage", "collection", "campaign", "lookbook", "product"];
@@ -26,6 +28,10 @@ export default function AdminMediaPage() {
   const [form, setForm] = useState({ url: "", name: "", tags: "", category: "general" });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const toast = useToast();
 
   if (!token) {
     return <p className="font-sans text-sm text-[var(--admin-muted)]">Loading media library…</p>;
@@ -50,15 +56,16 @@ export default function AdminMediaPage() {
 
   async function bulkDelete() {
     if (!token || selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} media asset${selected.size > 1 ? "s" : ""} permanently?`)) return;
     setBulkDeleting(true);
     try {
       await Promise.all(
         [...selected].map((id) => apiFetch(`/media/${id}`, { method: "DELETE", token })),
       );
       publishStorefrontSettingsChanged();
+      toast.success(`${selected.size} asset${selected.size > 1 ? "s" : ""} deleted`);
     } finally {
       setBulkDeleting(false);
+      setBulkDeleteOpen(false);
       setSelected(new Set());
       await load();
     }
@@ -108,16 +115,18 @@ export default function AdminMediaPage() {
   }
 
   async function remove(id: string) {
-    if (!token || !confirm("Remove this asset from the library?")) return;
+    if (!token) return;
     await apiFetch(`/media/${id}`, { method: "DELETE", token });
     publishStorefrontSettingsChanged();
+    toast.success("Asset deleted");
+    setDeleteTarget(null);
     await load();
   }
 
   return (
     <AdminPageLayout
       title="Media library"
-      description="Upload to Cloudinary or paste HTTPS URLs. In page editors, use Library next to any image field to pick from here."
+      description="Upload and manage images for products and CMS."
     >
       <AdminCard padding="md">
         <h2 className="font-sans text-sm font-semibold text-[var(--admin-ink)]">Upload to Cloudinary</h2>
@@ -225,7 +234,7 @@ export default function AdminMediaPage() {
                 type="button"
                 className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 font-sans text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
                 disabled={bulkDeleting}
-                onClick={() => void bulkDelete()}
+                onClick={() => setBulkDeleteOpen(true)}
               >
                 <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                 {bulkDeleting ? "Deleting…" : `Delete ${selected.size}`}
@@ -240,7 +249,26 @@ export default function AdminMediaPage() {
             </div>
           )}
 
-          <div className="mb-3 flex items-center gap-3">
+          {/* Confirmation Modals */}
+          <AdminConfirmModal
+            open={bulkDeleteOpen}
+            onClose={() => setBulkDeleteOpen(false)}
+            onConfirm={() => void bulkDelete()}
+            title={`Delete ${selected.size} asset${selected.size > 1 ? "s" : ""}?`}
+            description="These files will be permanently removed from your media library."
+            confirmLabel={`Delete ${selected.size}`}
+            loading={bulkDeleting}
+          />
+          <AdminConfirmModal
+            open={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => { if (deleteTarget) void remove(deleteTarget); }}
+            title="Delete asset?"
+            description="This image will be permanently removed from your media library."
+            confirmLabel="Delete"
+          />
+
+          <div className="mb-3 flex items-center justify-between gap-3">
             <label className="flex cursor-pointer items-center gap-2 font-sans text-xs text-[var(--admin-muted)]">
               <input
                 type="checkbox"
@@ -250,35 +278,104 @@ export default function AdminMediaPage() {
               />
               Select all
             </label>
+            <div className="flex items-center gap-1 rounded-lg border border-[var(--admin-border)] p-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`rounded-md p-1.5 transition ${viewMode === "grid" ? "bg-[var(--admin-ink)] text-white" : "text-[var(--admin-muted)] hover:text-[var(--admin-ink)]"}`}
+                aria-label="Grid view"
+              >
+                <Grid className="h-4 w-4" strokeWidth={1.75} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`rounded-md p-1.5 transition ${viewMode === "list" ? "bg-[var(--admin-ink)] text-white" : "text-[var(--admin-muted)] hover:text-[var(--admin-ink)]"}`}
+                aria-label="List view"
+              >
+                <List className="h-4 w-4" strokeWidth={1.75} />
+              </button>
+            </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {items.map((item) => (
-              <AdminCard key={item._id} padding="none" className={`overflow-hidden ${selected.has(item._id) ? "ring-2 ring-[var(--admin-accent)]" : ""}`}>
-                <div className="relative aspect-[4/3] bg-[var(--admin-surface-raised)]">
-                  <Image src={item.url} alt={item.name} fill className="object-cover" sizes="280px" unoptimized />
-                  <div className="absolute left-2 top-2">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-white bg-white/80 shadow"
-                      checked={selected.has(item._id)}
-                      onChange={() => toggleSelect(item._id)}
-                    />
+          {viewMode === "grid" ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {items.map((item) => (
+                <AdminCard key={item._id} padding="none" className={`overflow-hidden ${selected.has(item._id) ? "ring-2 ring-[var(--admin-accent)]" : ""}`}>
+                  <div className="relative aspect-[4/3] bg-[var(--admin-surface-raised)]">
+                    <Image src={item.url} alt={item.name} fill className="object-cover" sizes="280px" unoptimized />
+                    <div className="absolute left-2 top-2">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-white bg-white/80 shadow"
+                        checked={selected.has(item._id)}
+                        onChange={() => toggleSelect(item._id)}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2 p-4">
-                  <p className="truncate font-medium text-[var(--admin-ink)]">{item.name}</p>
-                  <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-faint)]">
-                    {item.category ?? "general"}
-                  </p>
-                  {item.tags?.length ? (
-                    <p className="text-xs text-[var(--admin-muted)]">{item.tags.join(" · ")}</p>
-                  ) : null}
-                  <div className="flex items-center justify-between pt-1">
+                  <div className="space-y-2 p-4">
+                    <p className="truncate font-medium text-[var(--admin-ink)]">{item.name}</p>
+                    <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--admin-faint)]">
+                      {item.category ?? "general"}
+                    </p>
+                    {item.tags?.length ? (
+                      <p className="text-xs text-[var(--admin-muted)]">{item.tags.join(" · ")}</p>
+                    ) : null}
+                    <div className="flex items-center justify-between pt-1">
+                      <AdminButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(item.url);
+                          toast.success("URL copied to clipboard");
+                        }}
+                      >
+                        Copy URL
+                      </AdminButton>
+                      <button
+                        type="button"
+                        className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
+                        title="Delete"
+                        onClick={() => setDeleteTarget(item._id)}
+                      >
+                        <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  </div>
+                </AdminCard>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {items.map((item) => (
+                <div
+                  key={item._id}
+                  className={`flex items-center gap-4 rounded-[var(--admin-radius)] border border-[var(--admin-border)] bg-[var(--admin-surface)] p-3 transition hover:border-[var(--admin-border-strong)] ${selected.has(item._id) ? "ring-2 ring-[var(--admin-accent)]" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 shrink-0 rounded border-[var(--admin-border-strong)]"
+                    checked={selected.has(item._id)}
+                    onChange={() => toggleSelect(item._id)}
+                  />
+                  <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-[var(--admin-surface-raised)]">
+                    <Image src={item.url} alt={item.name} fill className="object-cover" sizes="64px" unoptimized />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-sans text-sm font-medium text-[var(--admin-ink)]">{item.name}</p>
+                    <p className="mt-0.5 font-sans text-[11px] text-[var(--admin-faint)]">
+                      {item.category ?? "general"}
+                      {item.tags?.length ? ` · ${item.tags.join(", ")}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
                     <AdminButton
                       variant="ghost"
                       size="sm"
-                      onClick={() => void navigator.clipboard.writeText(item.url)}
+                      onClick={() => {
+                        void navigator.clipboard.writeText(item.url);
+                        toast.success("URL copied");
+                      }}
                     >
                       Copy URL
                     </AdminButton>
@@ -286,15 +383,15 @@ export default function AdminMediaPage() {
                       type="button"
                       className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
                       title="Delete"
-                      onClick={() => void remove(item._id)}
+                      onClick={() => setDeleteTarget(item._id)}
                     >
                       <Trash2 className="h-4 w-4" strokeWidth={1.5} />
                     </button>
                   </div>
                 </div>
-              </AdminCard>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       )}
     </AdminPageLayout>

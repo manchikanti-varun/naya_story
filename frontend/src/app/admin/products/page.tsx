@@ -9,11 +9,13 @@ import { useAuth } from "@/context/auth-context";
 import type { Product } from "@/types";
 import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
+import { AdminConfirmModal } from "@/components/admin/ui/AdminModal";
 import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
 import { AdminInput } from "@/components/admin/ui/AdminField";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 import { AdminTable } from "@/components/admin/ui/AdminTable";
 import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
+import { useToast } from "@/components/admin/ui/AdminToast";
 
 function statusTone(status: string): "success" | "warning" | "danger" | "neutral" {
   if (status === "Active") return "success";
@@ -38,12 +40,15 @@ const rowActionClass =
 
 export default function AdminProductsPage() {
   const { token } = useAuth();
+  const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -80,21 +85,24 @@ export default function AdminProductsPage() {
   }, [products]);
 
   async function remove(id: string) {
-    if (!token || !confirm("Delete this product permanently?")) return;
+    if (!token) return;
     await apiFetch(`/products/${id}`, { method: "DELETE", token });
+    toast.success("Product deleted successfully");
+    setDeleteTarget(null);
     await refresh();
   }
 
   async function bulkDelete() {
     if (!token || selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} product${selected.size > 1 ? "s" : ""} permanently? This cannot be undone.`)) return;
     setBulkDeleting(true);
     try {
       await Promise.all(
         [...selected].map((id) => apiFetch(`/products/${id}`, { method: "DELETE", token })),
       );
+      toast.success(`${selected.size} product${selected.size > 1 ? "s" : ""} deleted`);
     } finally {
       setBulkDeleting(false);
+      setBulkDeleteOpen(false);
       await refresh();
     }
   }
@@ -120,6 +128,7 @@ export default function AdminProductsPage() {
         })),
       }),
     });
+    toast.success(`"${p.name}" duplicated`);
     await refresh();
   }
 
@@ -186,7 +195,7 @@ export default function AdminProductsPage() {
             type="button"
             className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-2 font-sans text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
             disabled={bulkDeleting}
-            onClick={() => void bulkDelete()}
+            onClick={() => setBulkDeleteOpen(true)}
           >
             <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
             {bulkDeleting ? "Deleting…" : `Delete ${selected.size}`}
@@ -200,6 +209,25 @@ export default function AdminProductsPage() {
           </button>
         </div>
       )}
+
+      {/* Confirmation Modals */}
+      <AdminConfirmModal
+        open={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={() => void bulkDelete()}
+        title={`Delete ${selected.size} product${selected.size > 1 ? "s" : ""}?`}
+        description="This action cannot be undone. All selected products will be permanently removed."
+        confirmLabel={`Delete ${selected.size}`}
+        loading={bulkDeleting}
+      />
+      <AdminConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => { if (deleteTarget) void remove(deleteTarget); }}
+        title="Delete product?"
+        description="This product will be permanently removed from your catalog."
+        confirmLabel="Delete"
+      />
 
       <AdminTable>
         <table className="admin-table">
@@ -283,7 +311,7 @@ export default function AdminProductsPage() {
                           type="button"
                           className="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
                           title="Delete"
-                          onClick={() => void remove(p._id)}
+                          onClick={() => setDeleteTarget(p._id)}
                         >
                           <Trash2 className="h-4 w-4" strokeWidth={1.5} />
                         </button>
@@ -356,7 +384,7 @@ export default function AdminProductsPage() {
                   <button
                     type="button"
                     className="inline-flex flex-1 items-center justify-center rounded-full border border-red-200 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-red-700"
-                    onClick={() => void remove(p._id)}
+                    onClick={() => setDeleteTarget(p._id)}
                   >
                     Delete
                   </button>

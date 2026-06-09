@@ -486,12 +486,12 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
 
           <ProductReviewsSection
             productName={product.name}
-            className="mt-14 w-full border-t border-ivory-deep pt-12"
+            className="mt-14 w-full pt-10"
           />
         </div>
 
         {suggested.length > 0 ? (
-          <div className="mt-12 overflow-visible border-t border-ivory-deep pt-10 md:mt-14">
+          <div className="mt-12 overflow-visible pt-10 md:mt-14">
             <ProductCarouselRail
               eyebrow="Suggested"
               title={suggestedLabel}
@@ -501,7 +501,7 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
         ) : null}
 
         {recentProducts.length > 0 ? (
-          <Reveal className="mt-14 border-t border-ivory-deep pt-12">
+          <Reveal className="mt-14 pt-10">
             <p className="lux-kicker">Recently viewed</p>
             <h2 className="lux-heading-rail mt-2">Continue browsing</h2>
             <div className="mt-8 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">

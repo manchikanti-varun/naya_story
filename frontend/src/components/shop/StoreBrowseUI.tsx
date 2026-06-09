@@ -13,13 +13,13 @@ type HeaderProps = {
 
 export function StoreBrowseHeader({ kicker, title, subtitle, meta }: HeaderProps) {
   return (
-    <header className="lux-store-browse-header border-b border-ivory-deep pb-10">
+    <header className="lux-store-browse-header pb-8">
       <div className="lux-browse-header-enter">
         <p className="lux-kicker">{kicker}</p>
         <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
             <h1 className="lux-title">{title}</h1>
-            {subtitle ? <p className="lux-copy mt-5 max-w-xl">{subtitle}</p> : null}
+            {subtitle ? <p className="lux-copy mt-3 max-w-xl">{subtitle}</p> : null}
           </div>
           {meta ? <div className="shrink-0">{meta}</div> : null}
         </div>

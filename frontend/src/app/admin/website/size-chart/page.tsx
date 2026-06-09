@@ -5,7 +5,7 @@ export default function WebsiteSizeChartPage() {
   return (
     <AdminPageLayout
       title="Size chart"
-      description="Global fit guide used on every product page and anywhere SIZE CHART is shown on the storefront."
+      description="Global size guide shown on product pages."
       maxWidthClass="max-w-4xl"
     >
       <GlobalSizeChartPanel />

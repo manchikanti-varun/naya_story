@@ -23,6 +23,7 @@ import { AdminInput } from "@/components/admin/ui/AdminField";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 import { AdminTable } from "@/components/admin/ui/AdminTable";
 import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
+import { CustomerDetailDrawer } from "@/components/admin/CustomerDetailDrawer";
 import { cn } from "@/lib/cn";
 
 type CustomerRow = {
@@ -108,6 +109,7 @@ export default function AdminCustomersPage() {
   const [tab, setTab] = useState<Tab>("registered");
   const [sortKey, setSortKey] = useState<SortKey>("lastOrderAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -176,7 +178,7 @@ export default function AdminCustomersPage() {
   return (
     <AdminPageLayout
       title="Customers"
-      description="Registered accounts and guest checkout emails with order history and lifetime value."
+      description="Registered accounts and order history."
       actions={
         <Link
           href="/admin/orders"
@@ -343,7 +345,7 @@ export default function AdminCustomersPage() {
               </thead>
               <tbody>
                 {registeredRows.map((c) => (
-                  <tr key={c._id}>
+                  <tr key={c._id} className="cursor-pointer" onClick={() => setSelectedCustomer(c)}>
                     <td>
                       <p className="font-medium text-[var(--admin-ink)]">{c.name}</p>
                       <p className="font-sans text-[11px] text-[var(--admin-faint)]">Account</p>
@@ -407,6 +409,9 @@ export default function AdminCustomersPage() {
           </table>
         </AdminTable>
       )}
+
+      {/* Customer Detail Drawer */}
+      <CustomerDetailDrawer customer={selectedCustomer} onClose={() => setSelectedCustomer(null)} />
     </AdminPageLayout>
   );
 }
