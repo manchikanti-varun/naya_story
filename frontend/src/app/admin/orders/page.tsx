@@ -1,19 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Clock,
-  Copy,
-  MapPin,
-  Package,
-  RefreshCw,
-  Search,
-  Send,
-  Truck,
-  User,
-  X,
-} from "lucide-react";
-import Image from "next/image";
+import { Clock, Copy, MapPin, Package, Search, Send, Truck, User } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
@@ -36,7 +24,6 @@ import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 import { AdminPagination } from "@/components/admin/ui/AdminPagination";
 import { AdminStepper, type StepperStep } from "@/components/admin/ui/AdminStepper";
 import { AdminTable } from "@/components/admin/ui/AdminTable";
-import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
 import { useToast } from "@/components/admin/ui/AdminToast";
 import { cn } from "@/lib/cn";
 
@@ -53,6 +40,22 @@ function matchesSearch(o: Order, q: string) {
   const n = q.trim().toLowerCase();
   if (!n) return true;
   return o.orderNumber.toLowerCase().includes(n) || (o.guestEmail?.toLowerCase().includes(n) ?? false) || (o.trackingNumber?.toLowerCase().includes(n) ?? false) || o.shippingAddress?.city?.toLowerCase().includes(n) || o.status.toLowerCase().includes(n);
+}
+
+function TableSkeleton() {
+  return (
+    <div className="space-y-3 py-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4 px-4">
+          <div className="h-4 w-24 animate-pulse rounded bg-[var(--admin-surface-sunken)]" />
+          <div className="h-4 w-16 animate-pulse rounded bg-[var(--admin-surface-sunken)]" />
+          <div className="h-4 w-32 animate-pulse rounded bg-[var(--admin-surface-sunken)]" />
+          <div className="h-4 w-16 animate-pulse rounded bg-[var(--admin-surface-sunken)]" />
+          <div className="ml-auto h-4 w-16 animate-pulse rounded bg-[var(--admin-surface-sunken)]" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function AdminOrdersPage() {
@@ -89,90 +92,73 @@ export default function AdminOrdersPage() {
     try {
       await apiFetch(`/orders/${orderId}/status`, { method: "PATCH", token, body: JSON.stringify({ status }) });
       publishStorefrontSettingsChanged();
-      toast.success(`Order updated to ${formatOrderStatus(status)}`);
+      toast.success(`Updated to ${formatOrderStatus(status)}`);
       await refresh();
-      if (selectedOrder?._id === orderId) {
-        const updated = orders.find((o) => o._id === orderId);
-        if (updated) setSelectedOrder({ ...updated, status });
-      }
     } catch (e) { toast.error((e as Error).message ?? "Update failed"); }
   }
+
+  const pendingCount = orders.filter((o) => ["pending", "confirmed", "packed"].includes(o.status)).length;
 
   return (
     <AdminPageLayout
       title="Orders"
-      description={`${orders.length} total · ${orders.filter((o) => ["pending", "confirmed", "packed"].includes(o.status)).length} need action`}
-      actions={
-        <button type="button" onClick={() => void refresh()} disabled={loading}
-          className="admin-btn admin-btn--secondary admin-btn--sm">
-          <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} strokeWidth={1.75} /> Refresh
-        </button>
-      }
+      description={pendingCount > 0 ? `${pendingCount} need fulfillment` : undefined}
       toolbar={
-        <AdminToolbar className="w-full border-0 bg-transparent p-0 shadow-none">
+        <div className="flex w-full items-center gap-3">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-faint)]" strokeWidth={1.75} />
-            <AdminInput className="!mt-0 pl-9" placeholder="Search order #, email, city…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <AdminInput className="!mt-0 pl-9" placeholder="Search orders…" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
-          <select className="admin-input w-full shrink-0 sm:w-44" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <select className="admin-input w-auto shrink-0" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter status">
             <option value="">All statuses</option>
             {ORDER_STATUSES.map((s) => <option key={s} value={s}>{formatOrderStatus(s)}</option>)}
           </select>
-        </AdminToolbar>
+        </div>
       }
     >
-      {/* Status chips */}
-      <div className="flex flex-wrap gap-1.5">
-        {["", ...ORDER_STATUSES].map((s) => (
-          <button key={s} type="button" onClick={() => setStatusFilter(s)}
-            className={cn("rounded-full px-3 py-1 font-sans text-[10px] font-semibold uppercase tracking-[0.08em] transition",
-              statusFilter === s ? "bg-[var(--admin-ink)] text-white" : "border border-[var(--admin-border)] text-[var(--admin-muted)] hover:text-[var(--admin-ink)]")}>
-            {s ? formatOrderStatus(s) : "All"}
-          </button>
-        ))}
-      </div>
-
-      {/* Orders Table */}
-      {!loading && filtered.length === 0 ? (
-        <AdminEmptyState title="No orders found" description={orders.length === 0 ? "Orders appear when customers check out." : "Try a different search."} />
+      {loading ? <TableSkeleton /> : filtered.length === 0 ? (
+        <AdminEmptyState
+          title={orders.length === 0 ? "No orders yet" : "No matching orders"}
+          description={orders.length === 0 ? "Orders will appear here when customers complete checkout." : "Try adjusting your search or filter."}
+        />
       ) : (
-        <AdminTable>
-          <table className="admin-table">
-            <thead><tr>
-              <th>Order</th><th>Date</th><th>Customer</th><th>Status</th><th className="text-right">Total</th>
-            </tr></thead>
-            <tbody>
-              {loading ? <tr><td colSpan={5} className="py-10 text-center text-[var(--admin-muted)]">Loading…</td></tr> : null}
-              {!loading && pageRows.map((o) => (
-                <tr key={o._id} className="cursor-pointer" onClick={() => setSelectedOrder(o)}>
-                  <td>
-                    <p className="font-medium text-[var(--admin-ink)]">{o.orderNumber}</p>
-                    <p className="mt-0.5 text-[11px] text-[var(--admin-faint)]">{orderItemsPreview(o)}</p>
-                  </td>
-                  <td className="whitespace-nowrap text-[var(--admin-muted)]">
-                    {new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                  </td>
-                  <td className="max-w-[10rem] truncate text-[var(--admin-muted)]">{orderCustomerLabel(o)}</td>
-                  <td><AdminBadge tone={orderStatusTone(o.status)}>{formatOrderStatus(o.status)}</AdminBadge></td>
-                  <td className="text-right font-medium tabular-nums">₹{o.total.toLocaleString("en-IN")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </AdminTable>
+        <>
+          <AdminTable>
+            <table className="admin-table">
+              <thead><tr>
+                <th>Order</th><th>Date</th><th>Customer</th><th>Status</th><th className="text-right">Total</th>
+              </tr></thead>
+              <tbody>
+                {pageRows.map((o) => (
+                  <tr key={o._id} className="cursor-pointer" onClick={() => setSelectedOrder(o)}>
+                    <td>
+                      <p className="font-medium text-[var(--admin-ink)]">{o.orderNumber}</p>
+                      <p className="mt-0.5 text-[11px] text-[var(--admin-faint)]">{orderItemCount(o)} items</p>
+                    </td>
+                    <td className="whitespace-nowrap text-[var(--admin-muted)]">
+                      {new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    </td>
+                    <td className="max-w-[10rem] truncate text-[var(--admin-muted)]">{orderCustomerLabel(o)}</td>
+                    <td><AdminBadge tone={orderStatusTone(o.status)}>{formatOrderStatus(o.status)}</AdminBadge></td>
+                    <td className="text-right font-medium tabular-nums">₹{o.total.toLocaleString("en-IN")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </AdminTable>
+          {filtered.length > PAGE_SIZE && <AdminPagination page={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />}
+        </>
       )}
 
-      {filtered.length > PAGE_SIZE && <AdminPagination page={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />}
-
       {/* Order Detail Drawer */}
-      <AdminDrawer open={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={selectedOrder?.orderNumber ?? ""}>
-        {selectedOrder && <OrderDetail order={selectedOrder} onUpdateStatus={updateStatus} onClose={() => setSelectedOrder(null)} />}
+      <AdminDrawer open={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={selectedOrder?.orderNumber ?? ""} description={selectedOrder ? `Placed ${new Date(selectedOrder.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}` : undefined}>
+        {selectedOrder && <OrderDetail order={selectedOrder} onUpdateStatus={updateStatus} />}
       </AdminDrawer>
     </AdminPageLayout>
   );
 }
 
-function OrderDetail({ order, onUpdateStatus, onClose }: { order: Order; onUpdateStatus: (id: string, s: string) => Promise<void>; onClose: () => void }) {
+function OrderDetail({ order, onUpdateStatus }: { order: Order; onUpdateStatus: (id: string, s: string) => Promise<void> }) {
   const [trackingInput, setTrackingInput] = useState(order.trackingNumber ?? "");
   const { token } = useAuth();
   const toast = useToast();
@@ -186,46 +172,44 @@ function OrderDetail({ order, onUpdateStatus, onClose }: { order: Order; onUpdat
 
   return (
     <div className="space-y-6">
-      {/* Status */}
-      <div>
-        <AdminStepper steps={ORDER_STEPS} currentStepId={order.status} cancelled={isCancelled} />
-        {nextStatus && !isCancelled && (
-          <div className="mt-4 flex items-center gap-2">
-            <AdminButton variant="primary" size="sm" onClick={() => void onUpdateStatus(order._id, nextStatus)}>
-              <Send className="h-3.5 w-3.5" strokeWidth={1.75} /> Mark {formatOrderStatus(nextStatus)}
-            </AdminButton>
-            {(order.status === "pending" || order.status === "confirmed") && (
-              <AdminButton variant="danger" size="sm" onClick={() => void onUpdateStatus(order._id, "cancelled")}>Cancel</AdminButton>
-            )}
-          </div>
+      {/* Status stepper */}
+      <AdminStepper steps={ORDER_STEPS} currentStepId={order.status} cancelled={isCancelled} />
+      {nextStatus && !isCancelled && (
+        <div className="flex items-center gap-2">
+          <AdminButton variant="primary" size="sm" onClick={() => void onUpdateStatus(order._id, nextStatus)}>
+            <Send className="h-3.5 w-3.5" strokeWidth={1.75} /> Mark {formatOrderStatus(nextStatus)}
+          </AdminButton>
+          {(order.status === "pending" || order.status === "confirmed") && (
+            <AdminButton variant="danger" size="sm" onClick={() => void onUpdateStatus(order._id, "cancelled")}>Cancel order</AdminButton>
+          )}
+        </div>
+      )}
+
+      {/* Customer & Address */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <AdminCard padding="sm">
+          <p className="mb-1.5 text-[11px] font-medium text-[var(--admin-muted)]">Customer</p>
+          <p className="text-sm font-medium text-[var(--admin-ink)]">{orderCustomerLabel(order)}</p>
+          {order.guestEmail && <p className="mt-0.5 text-xs text-[var(--admin-faint)]">{order.guestEmail}</p>}
+        </AdminCard>
+        {order.shippingAddress && (
+          <AdminCard padding="sm">
+            <p className="mb-1.5 text-[11px] font-medium text-[var(--admin-muted)]">Shipping</p>
+            <p className="text-sm text-[var(--admin-ink)]">{order.shippingAddress.line1}</p>
+            <p className="text-xs text-[var(--admin-faint)]">{[order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(", ")}</p>
+          </AdminCard>
         )}
       </div>
 
-      {/* Customer */}
-      <AdminCard padding="sm">
-        <div className="flex items-center gap-2 mb-2"><User className="h-3.5 w-3.5 text-[var(--admin-faint)]" strokeWidth={1.5} /><span className="text-xs font-medium text-[var(--admin-muted)]">Customer</span></div>
-        <p className="text-sm font-medium text-[var(--admin-ink)]">{orderCustomerLabel(order)}</p>
-        {order.guestEmail && <p className="text-xs text-[var(--admin-muted)]">{order.guestEmail}</p>}
-      </AdminCard>
-
-      {/* Address */}
-      {order.shippingAddress && (
-        <AdminCard padding="sm">
-          <div className="flex items-center gap-2 mb-2"><MapPin className="h-3.5 w-3.5 text-[var(--admin-faint)]" strokeWidth={1.5} /><span className="text-xs font-medium text-[var(--admin-muted)]">Shipping</span></div>
-          <p className="text-sm text-[var(--admin-ink)]">{order.shippingAddress.line1}</p>
-          <p className="text-xs text-[var(--admin-muted)]">{[order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(", ")}</p>
-        </AdminCard>
-      )}
-
       {/* Items */}
       <div>
-        <p className="mb-2 text-xs font-medium text-[var(--admin-muted)]">Items ({order.items.length})</p>
-        <div className="space-y-2">
+        <p className="mb-2 text-[11px] font-medium text-[var(--admin-muted)]">Items</p>
+        <div className="space-y-1.5">
           {order.items.map((item, i) => (
             <div key={i} className="flex items-center justify-between gap-3 rounded-[var(--admin-radius-xs)] border border-[var(--admin-border)] px-3 py-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-[var(--admin-ink)]">{item.name}</p>
-                <p className="text-[11px] text-[var(--admin-faint)]">{item.size} · Qty: {item.quantity}</p>
+                <p className="truncate text-sm text-[var(--admin-ink)]">{item.name}</p>
+                <p className="text-[11px] text-[var(--admin-faint)]">{[item.size, item.color].filter(Boolean).join(" · ")} × {item.quantity}</p>
               </div>
               <p className="shrink-0 text-sm font-medium tabular-nums">₹{((item.unitPrice ?? 0) * (item.quantity ?? 1)).toLocaleString("en-IN")}</p>
             </div>
@@ -238,13 +222,18 @@ function OrderDetail({ order, onUpdateStatus, onClose }: { order: Order; onUpdat
         <div className="flex justify-between"><span className="text-[var(--admin-muted)]">Subtotal</span><span className="tabular-nums">₹{order.subtotal.toLocaleString("en-IN")}</span></div>
         {order.discount > 0 && <div className="flex justify-between"><span className="text-[var(--admin-muted)]">Discount</span><span className="tabular-nums text-emerald-700">−₹{order.discount.toLocaleString("en-IN")}</span></div>}
         <div className="flex justify-between"><span className="text-[var(--admin-muted)]">Shipping</span><span className="tabular-nums">{order.shipping === 0 ? "Free" : `₹${order.shipping.toLocaleString("en-IN")}`}</span></div>
-        <div className="flex justify-between border-t border-[var(--admin-border)] pt-1.5 font-semibold"><span>Total</span><span className="tabular-nums">₹{order.total.toLocaleString("en-IN")}</span></div>
+        <div className="flex justify-between border-t border-[var(--admin-border)] pt-2 font-semibold"><span>Total</span><span className="tabular-nums">₹{order.total.toLocaleString("en-IN")}</span></div>
       </div>
 
       {/* Tracking */}
       <div>
-        <p className="mb-2 text-xs font-medium text-[var(--admin-muted)]">Tracking</p>
-        {order.trackingNumber && <p className="mb-2 font-mono text-sm text-[var(--admin-accent)]">{order.trackingNumber}</p>}
+        <p className="mb-2 text-[11px] font-medium text-[var(--admin-muted)]">Tracking</p>
+        {order.trackingNumber && (
+          <button type="button" onClick={() => { void navigator.clipboard.writeText(order.trackingNumber!); toast.success("Copied"); }}
+            className="mb-2 inline-flex items-center gap-1.5 font-mono text-sm text-[var(--admin-accent)] hover:underline" title="Click to copy">
+            {order.trackingNumber} <Copy className="h-3 w-3" strokeWidth={1.75} />
+          </button>
+        )}
         <form className="flex gap-2" onSubmit={async (e) => {
           e.preventDefault();
           if (!token || !trackingInput.trim()) return;
@@ -252,20 +241,23 @@ function OrderDetail({ order, onUpdateStatus, onClose }: { order: Order; onUpdat
           publishStorefrontSettingsChanged();
           toast.success("Tracking saved");
         }}>
-          <AdminInput className="!mt-0 flex-1" placeholder="Tracking #" value={trackingInput} onChange={(e) => setTrackingInput(e.target.value)} />
+          <AdminInput className="!mt-0 flex-1" placeholder="Add tracking number…" value={trackingInput} onChange={(e) => setTrackingInput(e.target.value)} />
           <AdminButton type="submit" variant="secondary" size="sm">Save</AdminButton>
         </form>
       </div>
 
       {/* Timeline */}
-      {order.timeline?.length ? (
+      {order.timeline && order.timeline.length > 1 ? (
         <div>
-          <p className="mb-2 text-xs font-medium text-[var(--admin-muted)]">Timeline</p>
+          <p className="mb-2 text-[11px] font-medium text-[var(--admin-muted)]">Timeline</p>
           <div className="space-y-2">
             {[...order.timeline].reverse().map((e, i) => (
-              <div key={i} className="flex items-start gap-2">
-                <div className={cn("mt-1.5 h-2 w-2 rounded-full shrink-0", i === 0 ? "bg-[var(--admin-accent)]" : "bg-[var(--admin-border-strong)]")} />
-                <div><p className="text-sm text-[var(--admin-ink)]">{formatOrderStatus(e.status)}</p><p className="text-[10px] text-[var(--admin-faint)]">{new Date(e.at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p></div>
+              <div key={i} className="flex items-start gap-2.5">
+                <div className={cn("mt-1.5 h-1.5 w-1.5 rounded-full shrink-0", i === 0 ? "bg-[var(--admin-ink)]" : "bg-[var(--admin-border-strong)]")} />
+                <div>
+                  <p className="text-sm text-[var(--admin-ink)]">{formatOrderStatus(e.status)}</p>
+                  <p className="text-[10px] text-[var(--admin-faint)]">{new Date(e.at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+                </div>
               </div>
             ))}
           </div>

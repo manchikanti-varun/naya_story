@@ -110,31 +110,31 @@
 }
 
 .admin-app .admin-page-header {
-  padding-bottom: 1rem;
+  padding-bottom: 1.5rem;
   margin-bottom: 0.5rem;
 }
 
 .admin-app .admin-page-title {
   font-family: var(--admin-font-sans);
-  font-size: 1.375rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   line-height: 1.2;
   color: var(--admin-ink);
 }
 
 @media (min-width: 768px) {
   .admin-app .admin-page-title {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 }
 
 .admin-app .admin-page-desc {
-  margin-top: 0.25rem;
+  margin-top: 0.375rem;
   max-width: 36rem;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.5;
-  color: var(--admin-faint);
+  color: var(--admin-muted);
 }
 
 .admin-app .admin-section-heading {
@@ -151,18 +151,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  border-radius: 8px;
-  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  padding: 0.375rem 0.5rem;
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--admin-faint);
 }
 
 .admin-app .admin-nav-group-label:hover {
   color: var(--admin-muted);
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .admin-app .admin-simple-link-grid {
@@ -214,10 +215,10 @@
 
 .admin-app .admin-label {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--admin-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--admin-ink);
 }
 
 .admin-app .admin-form-block {
@@ -295,7 +296,7 @@
 }
 
 .admin-app .admin-table tbody tr:hover td {
-  background: rgba(28, 25, 23, 0.02);
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .admin-app .admin-input {
@@ -918,12 +919,12 @@
 }
 
 .admin-app .admin-btn--sm {
-  padding: 0.45rem 0.85rem;
-  font-size: 0.75rem;
+  padding: 0.4375rem 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .admin-app .admin-btn--md {
-  padding: 0.55rem 1.1rem;
+  padding: 0.5625rem 1.125rem;
   font-size: 0.8125rem;
 }
 
@@ -1103,41 +1104,37 @@
 .admin-app .admin-badge {
   display: inline-flex;
   align-items: center;
-  border-radius: 9999px;
-  padding: 0.3rem 0.65rem;
-  font-size: 0.625rem;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .admin-app .admin-badge--accent {
   background: var(--admin-accent-soft);
   color: var(--admin-accent);
-  box-shadow: inset 0 0 0 1px rgba(166, 124, 50, 0.18);
 }
 
 .admin-app .admin-badge--neutral {
-  background: rgba(28, 25, 23, 0.05);
+  background: rgba(0, 0, 0, 0.04);
   color: var(--admin-muted);
 }
 
 .admin-app .admin-badge--success {
-  background: rgba(236, 253, 245, 0.95);
-  color: #065f46;
-  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
+  background: #ecfdf5;
+  color: #047857;
 }
 
 .admin-app .admin-badge--warning {
-  background: rgba(255, 251, 235, 0.95);
-  color: #92400e;
-  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.25);
+  background: #fffbeb;
+  color: #b45309;
 }
 
 .admin-app .admin-badge--danger {
-  background: rgba(254, 242, 242, 0.95);
-  color: #991b1b;
-  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.25);
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .admin-app .admin-input {
@@ -1281,15 +1278,15 @@
 .admin-app .admin-empty-state {
   border-radius: var(--admin-radius);
   border: 1px dashed var(--admin-border-strong);
-  background: var(--admin-surface-sunken);
+  background: var(--admin-surface);
 }
 
 .admin-app .admin-metric-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--admin-faint);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--admin-muted);
 }
 
 .admin-app .admin-drawer-header {

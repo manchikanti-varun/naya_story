@@ -2,13 +2,12 @@
 
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
-import { CmsEditorProvider } from "@/components/admin/cms/CmsEditorContext";
-import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { cn } from "@/lib/cn";
 
-type Size = "md" | "lg" | "xl";
+type Size = "sm" | "md" | "lg" | "xl";
 
 const WIDTH: Record<Size, string> = {
+  sm: "max-w-md",
   md: "max-w-2xl",
   lg: "max-w-3xl",
   xl: "max-w-4xl",
@@ -20,19 +19,25 @@ type Props = {
   title: string;
   description?: string;
   children: ReactNode;
+  /** Footer actions (buttons). If omitted, no footer is rendered. */
+  footer?: ReactNode;
   className?: string;
   size?: Size;
 };
 
-/** Slide-over panel for in-context CMS editing (Shopify-style). */
+/**
+ * Generic slide-over panel. Used for order details, customer profiles,
+ * media metadata, CMS section editing, etc.
+ */
 export function AdminDrawer({
   open,
   onClose,
   title,
   description,
   children,
+  footer,
   className,
-  size = "lg",
+  size = "md",
 }: Props) {
   useEffect(() => {
     if (!open) return;
@@ -53,7 +58,7 @@ export function AdminDrawer({
     <div className="fixed inset-0 z-[80]" role="presentation">
       <button
         type="button"
-        className="absolute inset-0 bg-[var(--admin-ink)]/30 backdrop-blur-[3px] transition-opacity"
+        className="absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity"
         aria-label="Close panel"
         onClick={onClose}
       />
@@ -62,39 +67,45 @@ export function AdminDrawer({
         aria-modal="true"
         aria-labelledby="admin-drawer-title"
         className={cn(
-          "admin-drawer-panel absolute right-0 top-0 flex h-full w-full flex-col border-l border-[var(--admin-border-strong)] bg-[var(--admin-surface)] shadow-2xl",
+          "admin-drawer-panel absolute right-0 top-0 flex h-full w-full flex-col border-l border-[var(--admin-border)] bg-[var(--admin-surface)]",
           WIDTH[size],
           className,
         )}
       >
-        <header className="admin-drawer-header flex shrink-0 items-start justify-between gap-4 px-6 py-5">
+        {/* Header */}
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--admin-border)] px-6 py-5">
           <div className="min-w-0">
-            <p className="admin-metric-label text-[var(--admin-accent)]">Edit section</p>
             <h2
               id="admin-drawer-title"
-              className="admin-page-title mt-1 text-lg text-[var(--admin-ink)] md:text-xl"
+              className="font-sans text-lg font-semibold text-[var(--admin-ink)]"
             >
               {title}
             </h2>
             {description ? (
-              <p className="mt-1.5 font-sans text-sm leading-relaxed text-[var(--admin-muted)]">{description}</p>
+              <p className="mt-1 font-sans text-sm text-[var(--admin-muted)]">{description}</p>
             ) : null}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[var(--admin-border)] p-2 text-[var(--admin-muted)] transition hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-raised)] hover:text-[var(--admin-ink)]"
+            className="rounded-lg p-2 text-[var(--admin-muted)] transition hover:bg-[var(--admin-surface-raised)] hover:text-[var(--admin-ink)]"
             aria-label="Close"
           >
             <X className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </header>
+
+        {/* Body */}
         <div className="admin-drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-6">
-          <CmsEditorProvider compact>{children}</CmsEditorProvider>
+          {children}
         </div>
-        <footer className="shrink-0 border-t border-[var(--admin-border)] bg-[var(--admin-surface)] px-6 py-4">
-          <CmsEditorSaveActions compact showPreviewLink />
-        </footer>
+
+        {/* Footer (optional) */}
+        {footer ? (
+          <footer className="shrink-0 border-t border-[var(--admin-border)] px-6 py-4">
+            {footer}
+          </footer>
+        ) : null}
       </aside>
     </div>
   );
