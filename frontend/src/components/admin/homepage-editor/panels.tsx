@@ -21,7 +21,7 @@ import { HomepageLayoutSectionList } from "@/components/admin/homepage-editor/Ho
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
 import { DEFAULT_COLLECTIONS_PAGE } from "@/lib/cms/collections-page-config";
 import { GlobalCategoriesEditor } from "@/components/admin/cms/GlobalCategoriesEditor";
-import { getGlobalCategories, moveGlobalCategory, newGlobalCategory } from "@/lib/cms/global-categories";
+import { getGlobalCategories, newGlobalCategory } from "@/lib/cms/global-categories";
 import {
   BESTSELLERS_HOMEPAGE_VISIBLE,
   BESTSELLERS_RAIL_MAX,
@@ -424,7 +424,6 @@ export function ContentEditorCategoriesPanel() {
             patchGlobalCategories((list) => [...list, newGlobalCategory(list.length)])
           }
           onRemove={(id) => patchGlobalCategories((list) => list.filter((c) => c.id !== id))}
-          onMove={(index, dir) => patchGlobalCategories((list) => moveGlobalCategory(list, index, dir))}
         />
       ) : (
         <div className="rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-8 text-center">

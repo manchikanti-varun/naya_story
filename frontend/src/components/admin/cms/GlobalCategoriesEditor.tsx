@@ -17,7 +17,6 @@ type Props = {
   onChange: (next: GlobalStoreCategory[]) => void;
   onAdd: () => void;
   onRemove: (id: string) => void;
-  onMove: (index: number, dir: -1 | 1) => void;
 };
 
 export function GlobalCategoriesEditor({
@@ -26,29 +25,40 @@ export function GlobalCategoriesEditor({
   onChange,
   onAdd,
   onRemove,
-  onMove,
 }: Props) {
   const sorted = [...categories].sort((a, b) => a.order - b.order);
 
-  function patch(id: string, patch: Partial<GlobalStoreCategory>) {
+  function patch(id: string, update: Partial<GlobalStoreCategory>) {
     onChange(
       categories.map((c) => {
         if (c.id !== id) return c;
-        const next = { ...c, ...patch };
-        if (patch.slug !== undefined || patch.name !== undefined) {
+        const next = { ...c, ...update };
+        // Always keep slug in sync
+        if (update.slug !== undefined || update.name !== undefined) {
           const slug =
-            (patch.slug ?? next.slug).trim() ||
-            slugifyCategoryName(patch.name ?? next.name) ||
+            (update.slug ?? next.slug).trim() ||
+            slugifyCategoryName(update.name ?? next.name) ||
             next.slug;
           next.slug = slug;
-          if (patch.href === undefined && !c.href.includes("category=")) {
-            next.href = hrefFromCategorySlug(slug);
-          }
-        }
-        if (patch.slug !== undefined && patch.href === undefined) {
-          next.href = hrefFromCategorySlug(patch.slug);
+          // Always update href to match slug
+          next.href = hrefFromCategorySlug(slug);
         }
         return next;
+      }),
+    );
+  }
+
+  function handleMove(visualIndex: number, dir: -1 | 1) {
+    const target = visualIndex + dir;
+    if (target < 0 || target >= sorted.length) return;
+    // Swap order values between the two items
+    const itemA = sorted[visualIndex]!;
+    const itemB = sorted[target]!;
+    onChange(
+      categories.map((c) => {
+        if (c.id === itemA.id) return { ...c, order: itemB.order };
+        if (c.id === itemB.id) return { ...c, order: itemA.order };
+        return c;
       }),
     );
   }
@@ -81,7 +91,7 @@ export function GlobalCategoriesEditor({
                     className="rounded-lg p-1.5 text-[var(--admin-muted)] hover:bg-[var(--admin-surface-raised)] disabled:opacity-30"
                     disabled={i === 0}
                     aria-label="Move up"
-                    onClick={() => onMove(i, -1)}
+                    onClick={() => handleMove(i, -1)}
                   >
                     <ChevronUp className="h-4 w-4" strokeWidth={1.5} />
                   </button>
@@ -90,7 +100,7 @@ export function GlobalCategoriesEditor({
                     className="rounded-lg p-1.5 text-[var(--admin-muted)] hover:bg-[var(--admin-surface-raised)] disabled:opacity-30"
                     disabled={i === sorted.length - 1}
                     aria-label="Move down"
-                    onClick={() => onMove(i, 1)}
+                    onClick={() => handleMove(i, 1)}
                   >
                     <ChevronDown className="h-4 w-4" strokeWidth={1.5} />
                   </button>
