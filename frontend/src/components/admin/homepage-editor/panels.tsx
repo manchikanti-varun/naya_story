@@ -16,6 +16,7 @@ import { CmsImageUrlField } from "@/components/admin/cms/CmsImageUrlField";
 import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
 import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
 import { AdminField, AdminInput, AdminSelect, AdminTextarea } from "@/components/admin/ui/AdminField";
+import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { HomepageLayoutSectionList } from "@/components/admin/homepage-editor/HomepageLayoutSectionList";
 import { useHomepageEditor } from "@/components/admin/homepage-editor/context";
 import { DEFAULT_COLLECTIONS_PAGE } from "@/lib/cms/collections-page-config";
@@ -26,6 +27,7 @@ import {
   BESTSELLERS_RAIL_MAX,
 } from "@/lib/cms/homepage-product-limits";
 import { homepageSectionEditUrl } from "@/lib/admin/homepage-edit";
+import { apiFetch } from "@/lib/api";
 
 export function ContentEditorHeroPanel() {
   return <HeroCarouselEditor />;
@@ -319,6 +321,34 @@ export function ContentEditorCategoriesPanel() {
 
   const globals = getGlobalCategories(hp);
 
+  async function syncFromProducts() {
+    if (!token) return;
+    try {
+      const data = await apiFetch<{ products: { category: string }[] }>(
+        "/products?limit=500",
+        { token },
+      );
+      const productCategories = [...new Set(
+        (data.products ?? []).map((p) => p.category).filter(Boolean),
+      )];
+      if (productCategories.length === 0) return;
+
+      patchGlobalCategories((list) => {
+        const existingSlugs = new Set(list.map((c) => c.name.toLowerCase()));
+        const newOnes = productCategories
+          .filter((cat) => !existingSlugs.has(cat.toLowerCase()))
+          .map((cat, i) => ({
+            ...newGlobalCategory(list.length + i),
+            name: cat,
+            slug: cat.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+          }));
+        return [...list, ...newOnes];
+      });
+    } catch {
+      // silently fail
+    }
+  }
+
   const contentTab = (
     <div className="space-y-6">
       <CmsVisibilityToggle
@@ -360,14 +390,27 @@ export function ContentEditorCategoriesPanel() {
           />
         </AdminField>
       </CmsFormGrid>
-      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-4">
-        <p className="font-sans text-sm font-medium text-[var(--admin-ink)]">How it works</p>
-        <p className="mt-1 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
-          Categories are <strong className="font-medium text-[var(--admin-ink)]">auto-synced from your products</strong>.
-          When you create a product with a category (e.g. &quot;Dresses&quot;), it automatically appears here as a card
-          and as a tab on the Collections page. Add images to category cards from the list below.
-        </p>
+
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2">
+        <AdminButton
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => patchGlobalCategories((list) => [...list, newGlobalCategory(list.length)])}
+        >
+          + Add category manually
+        </AdminButton>
+        <AdminButton
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => void syncFromProducts()}
+        >
+          Sync from products
+        </AdminButton>
       </div>
+
       {globals.length > 0 ? (
         <GlobalCategoriesEditor
           categories={globals}
@@ -380,9 +423,14 @@ export function ContentEditorCategoriesPanel() {
           onMove={(index, dir) => patchGlobalCategories((list) => moveGlobalCategory(list, index, dir))}
         />
       ) : (
-        <p className="rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-8 text-center font-sans text-sm text-[var(--admin-muted)]">
-          No categories yet. Create a product with a category to see it here automatically.
-        </p>
+        <div className="rounded-xl border border-dashed border-[var(--admin-border)] px-4 py-8 text-center">
+          <p className="font-sans text-sm text-[var(--admin-muted)]">
+            No categories yet.
+          </p>
+          <p className="mt-1 font-sans text-xs text-[var(--admin-faint)]">
+            Click &quot;Sync from products&quot; to pull categories from your catalog, or add them manually.
+          </p>
+        </div>
       )}
     </div>
   );

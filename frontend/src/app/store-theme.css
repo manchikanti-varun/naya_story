@@ -150,20 +150,20 @@
 .store-app .lux-newin-masonry {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  gap: 0;
 }
 
 @media (min-width: 768px) {
   .store-app .lux-newin-masonry {
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
+    gap: 0;
   }
 }
 
 @media (min-width: 1280px) {
   .store-app .lux-newin-masonry {
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
+    gap: 0;
   }
 }
 

@@ -268,9 +268,9 @@ export function HeroSlideEditorFields({
             </SlideSection>
 
             <SlideSection title="Extra labels" summary="Kicker line and right-column meta">
-              <AdminField label="Kicker" hint="Blank = site name + slide number.">
+              <AdminField label="Kicker" hint="Blank = shows 'Naya Story — 01' (site name + slide number) on storefront.">
                 <AdminInput
-                  placeholder="Naya — 01"
+                  placeholder="Naya Story — 01"
                   value={slide.kicker ?? ""}
                   onChange={(e) => onUpdate({ kicker: e.target.value })}
                 />

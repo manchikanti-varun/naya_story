@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HeroSlide, SectionDesign, SectionTextColors } from "@/types/homepage";
-import { SITE_NAME } from "@/lib/constants";
 import { getEffectiveHeroSlideStyle } from "@/lib/cms/hero-slide-styles";
 import {
   heroCtaStyle,
@@ -95,8 +94,8 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
   const mobile = slide.mobileImage?.trim() || desktop;
   const hasHeroImage = isValidImageSrc(desktop) || isValidImageSrc(mobile);
   const imgSrc = isValidImageSrc(desktop) ? desktop : mobile;
-  const kickerText =
-    slide.kicker?.trim() || `${SITE_NAME} — ${String(safeIndex + 1).padStart(2, "0")}`;
+  const SITE_NAME = "Naya Story";
+  const kickerText = slide.kicker?.trim() || `${SITE_NAME} — ${String(safeIndex + 1).padStart(2, "0")}`;
   const alignClass =
     slideDesign?.align === "center"
       ? "text-center items-center"

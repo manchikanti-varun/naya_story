@@ -11,10 +11,7 @@ import { sanitizeProductMedia } from "../lib/strip-unsplash.js";
 import { removeProductFromHomepagePins } from "../lib/homepage-product-pins.js";
 import { escapeRegex } from "../lib/sanitize-input.js";
 import {
-  getGlobalCategories,
-  applyGlobalCategories,
   slugifyCategoryName,
-  hrefFromCategorySlug,
 } from "../lib/global-categories.js";
 import { HttpError } from "../middleware/httpError.js";
 import type { HomepageConfig } from "../types/homepage.js";
@@ -211,30 +208,73 @@ export const productService = {
     const slug = slugifyCategoryName(categoryName);
     if (!slug) return;
 
-    const doc = await settingsRepository.findOne();
-    const hp = mergeHomepageConfig((doc?.homepage ?? {}) as Partial<HomepageConfig>);
-    const globals = getGlobalCategories(hp);
-    if (globals.some((g) => g.slug === slug)) return;
+    try {
+      const doc = await settingsRepository.findOne();
+      
+      // Read existing global categories directly from the raw doc (bypass mergeHomepageConfig)
+      const rawHp = (doc?.homepage ?? {}) as Record<string, unknown>;
+      const rawGlobals = Array.isArray(rawHp.globalCategories) ? rawHp.globalCategories as Array<Record<string, unknown>> : [];
+      
+      // Check if category already exists
+      if (rawGlobals.some((g) => String(g.slug ?? "").toLowerCase() === slug.toLowerCase())) return;
 
-    const maxOrder = globals.length > 0 ? Math.max(...globals.map((g) => g.order)) : -1;
-    const newCat = {
-      id: `cat-${slug}`,
-      name: categoryName.trim(),
-      slug,
-      image: "",
-      href: hrefFromCategorySlug(slug),
-      enabled: true,
-      order: maxOrder + 1,
-      homepage: true,
-      collections: true,
-    };
-    const updated = applyGlobalCategories(hp, [...globals, newCat]);
+      const maxOrder = rawGlobals.length > 0 
+        ? Math.max(...rawGlobals.map((g) => typeof g.order === "number" ? g.order : 0)) 
+        : -1;
 
-    await settingsRepository.upsertFields({
-      "homepage.globalCategories": updated.globalCategories,
-      "homepage.categories": updated.categories,
-      "homepage.collectionsPage.categories": updated.collectionsPage?.categories,
-    });
+      const newCat = {
+        id: `cat-${slug}`,
+        name: categoryName.trim(),
+        slug,
+        image: "",
+        href: `/collections?category=${encodeURIComponent(slug)}`,
+        enabled: true,
+        order: maxOrder + 1,
+        homepage: true,
+        collections: true,
+      };
+
+      const updatedGlobals = [...rawGlobals, newCat];
+
+      // Build collections tabs: All + Bestselling + New In + category tabs
+      const categoryTabs = updatedGlobals
+        .filter((g) => g.enabled !== false && g.collections !== false)
+        .map((g, i) => ({
+          id: String(g.id ?? `cat-${g.slug}`),
+          label: String(g.name ?? ""),
+          type: "category" as const,
+          value: String(g.slug ?? ""),
+          enabled: true,
+          order: 3 + i,
+        }));
+
+      const collectionsCategories = [
+        { id: "all", label: "All", type: "all" as const, value: "", enabled: true, order: 0 },
+        { id: "bestselling", label: "Bestselling", type: "bestselling" as const, value: "", enabled: true, order: 1 },
+        { id: "new-in", label: "New In", type: "newIn" as const, value: "", enabled: true, order: 2 },
+        ...categoryTabs,
+      ];
+
+      // Build homepage category cards
+      const categoryCards = updatedGlobals
+        .filter((g) => g.enabled !== false && g.homepage !== false)
+        .map((g) => ({
+          id: String(g.id ?? `cat-${g.slug}`),
+          name: String(g.name ?? ""),
+          image: String(g.image ?? ""),
+          href: String(g.href ?? `/collections?category=${encodeURIComponent(String(g.slug ?? ""))}`),
+          enabled: true,
+          order: typeof g.order === "number" ? g.order : 0,
+        }));
+
+      await settingsRepository.upsertFields({
+        "homepage.globalCategories": updatedGlobals,
+        "homepage.categories.items": categoryCards,
+        "homepage.collectionsPage.categories": collectionsCategories,
+      });
+    } catch (e) {
+      console.error("[ProductService] ensureCategoryExists failed:", (e as Error).message);
+    }
   },
 
   async syncHomepagePins(
@@ -274,10 +314,13 @@ export const productService = {
       if (!cat?.trim()) continue;
       const slug = slugifyCategoryName(cat);
       if (!slug) continue;
+
+      // Check if already exists using raw doc (no mergeHomepageConfig dependency)
       const doc = await settingsRepository.findOne();
-      const hp = mergeHomepageConfig((doc?.homepage ?? {}) as Partial<HomepageConfig>);
-      const globals = getGlobalCategories(hp);
-      if (globals.some((g) => g.slug === slug)) continue;
+      const rawHp = (doc?.homepage ?? {}) as Record<string, unknown>;
+      const rawGlobals = Array.isArray(rawHp.globalCategories) ? rawHp.globalCategories as Array<Record<string, unknown>> : [];
+      if (rawGlobals.some((g) => String(g.slug ?? "").toLowerCase() === slug.toLowerCase())) continue;
+
       await this.ensureCategoryExists(cat);
       added++;
     }
