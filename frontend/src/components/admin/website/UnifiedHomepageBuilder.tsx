@@ -13,6 +13,7 @@ import {
 import { getSectionMeta } from "@/lib/cms/section-meta";
 import { CmsBlockCard } from "@/components/admin/cms/CmsBlockCard";
 import { CmsEditorProvider } from "@/components/admin/cms/CmsEditorContext";
+import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { AdminDrawer } from "@/components/admin/ui/AdminDrawer";
 import { AdminSection } from "@/components/admin/ui/AdminSection";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
@@ -166,6 +167,9 @@ export function UnifiedHomepageBuilder({ embedded = false }: { embedded?: boolea
         title={drawerMeta?.label ?? "Edit section"}
         description={drawerMeta?.description}
         size={editSection === "hero" ? "xl" : "lg"}
+        footer={
+          <CmsEditorSaveActions compact actionsOnly />
+        }
       >
         <CmsEditorProvider compact>
           <div key={editSection ?? "none"}>{drawerContent}</div>

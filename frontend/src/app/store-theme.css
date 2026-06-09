@@ -148,19 +148,22 @@
 }
 
 .store-app .lux-newin-masonry {
-  columns: 1;
-  column-gap: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
 
 @media (min-width: 768px) {
   .store-app .lux-newin-masonry {
-    columns: 2;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
   }
 }
 
 @media (min-width: 1280px) {
   .store-app .lux-newin-masonry {
-    columns: 3;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
   }
 }
 

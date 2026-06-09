@@ -24,11 +24,11 @@ import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-pro
 
 const tileRhythm = [
   "aspect-[3/4]",
-  "aspect-[4/5]",
-  "aspect-[5/7]",
-  "aspect-[1/1]",
-  "aspect-[4/6]",
-  "aspect-[3/5]",
+  "aspect-[3/4]",
+  "aspect-[3/4]",
+  "aspect-[3/4]",
+  "aspect-[3/4]",
+  "aspect-[3/4]",
 ];
 
 const PAGE_SIZE = 60;
@@ -280,7 +280,7 @@ function NewInTile({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-5% 0px -10% 0px" }}
       transition={{ duration: 0.9, delay: Math.min(index * 0.03, 0.4), ease: [0.22, 1, 0.36, 1] }}
-      className="group relative m-0 break-inside-avoid p-0"
+      className="group relative m-0 p-0"
     >
       <Link href={`/products/${product.slug}`} className="block">
         <div

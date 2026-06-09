@@ -13,14 +13,24 @@ function stableJson(obj: unknown): string {
 }
 
 function publishedHomepage(doc: SiteDoc): HomepageConfig {
-  return mergeHomepageConfig(doc.homepage as Partial<HomepageConfig>);
+  try {
+    return mergeHomepageConfig(doc.homepage as Partial<HomepageConfig>);
+  } catch (e) {
+    console.error("[CMS] publishedHomepage merge failed:", (e as Error).message);
+    return mergeHomepageConfig(null);
+  }
 }
 
 function editorHomepage(doc: SiteDoc): HomepageConfig {
-  const base = doc.homepageDraft !== undefined && doc.homepageDraft !== null
-    ? doc.homepageDraft
-    : doc.homepage;
-  return mergeHomepageConfig(base as Partial<HomepageConfig>);
+  try {
+    const base = doc.homepageDraft !== undefined && doc.homepageDraft !== null
+      ? doc.homepageDraft
+      : doc.homepage;
+    return mergeHomepageConfig(base as Partial<HomepageConfig>);
+  } catch (e) {
+    console.error("[CMS] editorHomepage merge failed:", (e as Error).message);
+    return mergeHomepageConfig(null);
+  }
 }
 
 function buildPublicSettings(doc: SiteDoc) {

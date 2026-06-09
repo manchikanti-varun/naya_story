@@ -2,6 +2,7 @@
 
 import { HeroCarouselEditor } from "@/components/admin/cms/HeroCarouselEditor";
 import { CmsLayoutTabLink } from "@/components/admin/cms/CmsLayoutTabLink";
+import { CmsEditorSaveActions } from "@/components/admin/cms/CmsEditorSaveActions";
 import { CmsSectionEditorShell } from "@/components/admin/cms/CmsSectionEditorShell";
 import { CmsFieldGroup } from "@/components/admin/cms/CmsFieldGroup";
 import {
@@ -41,6 +42,9 @@ export function ContentEditorHomeLayoutPanel() {
       </p>
       <div className="mt-6">
         <HomepageLayoutSectionList showGlobalChrome={false} />
+      </div>
+      <div className="mt-6 border-t border-[var(--admin-border)] pt-5">
+        <CmsEditorSaveActions compact />
       </div>
     </section>
   );
@@ -1034,6 +1038,9 @@ export function ContentEditorOurStoryPanel({ embedded = false }: { embedded?: bo
                   </div>
                 ))}
             </div>
+            <div className="border-t border-[var(--admin-border)] pt-5">
+              <CmsEditorSaveActions compact />
+            </div>
           </section>
   );
 }
@@ -1239,6 +1246,9 @@ export function ContentEditorFooterPanel() {
                   }
                 />
               </label>
+            </div>
+            <div className="border-t border-[var(--admin-border)] pt-5">
+              <CmsEditorSaveActions compact />
             </div>
           </section>
   );

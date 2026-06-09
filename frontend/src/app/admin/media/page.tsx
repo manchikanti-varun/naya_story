@@ -17,7 +17,7 @@ import { AdminField, AdminInput, AdminSelect } from "@/components/admin/ui/Admin
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
 import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
 import { useToast } from "@/components/admin/ui/AdminToast";
-import { CloudinaryImageUpload } from "@/components/admin/CloudinaryImageUpload";
+import { BulkImageUpload } from "@/components/admin/BulkImageUpload";
 import { cn } from "@/lib/cn";
 
 const CATEGORIES = ["general", "product", "banner", "homepage", "collection", "campaign", "lookbook"];
@@ -91,8 +91,12 @@ export default function AdminMediaPage() {
       {/* Upload area */}
       {showUpload && (
         <AdminCard padding="md">
-          <CloudinaryImageUpload token={token} category={category || "general"} label="Drop image or click to upload"
-            onUploaded={() => { void load(); setShowUpload(false); }} onLibraryItem={() => void load()} />
+          <BulkImageUpload
+            token={token}
+            category={category || "general"}
+            maxFiles={10}
+            onUploaded={(_urls) => { void load(); setShowUpload(false); }}
+          />
         </AdminCard>
       )}
 

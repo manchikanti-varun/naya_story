@@ -118,6 +118,13 @@ export function CmsSectionEditorShell({
           </p>
         ) : null}
         {activeTab?.content}
+
+        {/* Save actions at the bottom when in compact/drawer mode */}
+        {compact ? (
+          <div className="mt-8 border-t border-[var(--admin-border)] pt-4">
+            <CmsEditorSaveActions compact />
+          </div>
+        ) : null}
       </div>
     </article>
   );

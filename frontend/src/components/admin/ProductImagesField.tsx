@@ -99,12 +99,53 @@ export function ProductImagesField({ images: imagesProp, captions: captionsProp,
         }}
       />
 
+      {/* Quick actions: Library picker + URL input */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        {token ? (
+          <AdminButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={atMax}
+            onClick={() => setPickerOpen(true)}
+          >
+            <Images className="h-4 w-4" strokeWidth={1.5} />
+            Choose from library
+          </AdminButton>
+        ) : null}
+        <div className="flex min-w-0 flex-1 gap-2">
+          <AdminInput
+            type="url"
+            placeholder="Paste image URL…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addUrlFromDraft();
+              }
+            }}
+            className="!mt-0 min-w-0 flex-1"
+          />
+          <AdminButton
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={!draft.trim() || atMax}
+            onClick={addUrlFromDraft}
+          >
+            <Plus className="h-4 w-4" strokeWidth={1.5} />
+            Add
+          </AdminButton>
+        </div>
+      </div>
+
       {/* Single upload fallback */}
       <details className="group">
         <summary className="cursor-pointer font-sans text-xs text-[var(--admin-muted)] hover:text-[var(--admin-ink)]">
-          Or upload a single image / add by URL
+          Upload a single image (with preview)
         </summary>
-        <div className="mt-3 space-y-3">
+        <div className="mt-3">
           <CloudinaryImageUpload
             token={token}
             category="product"
@@ -113,45 +154,6 @@ export function ProductImagesField({ images: imagesProp, captions: captionsProp,
             disabled={atMax}
             onUploaded={(url) => addUrl(url)}
           />
-          <AdminField label="Add by URL">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <AdminInput
-                type="url"
-                placeholder="https://…"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addUrlFromDraft();
-                  }
-                }}
-                className="flex-1"
-              />
-              {token ? (
-                <AdminButton
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={atMax}
-                  onClick={() => setPickerOpen(true)}
-                >
-                  <Images className="h-4 w-4" strokeWidth={1.5} />
-                  Library
-                </AdminButton>
-              ) : null}
-              <AdminButton
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={!draft.trim() || atMax}
-                onClick={addUrlFromDraft}
-              >
-                <Plus className="h-4 w-4" strokeWidth={1.5} />
-                Add image
-              </AdminButton>
-            </div>
-          </AdminField>
         </div>
       </details>
 

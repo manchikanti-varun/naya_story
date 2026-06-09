@@ -360,7 +360,18 @@ export function ProductEditor({
                   type="number"
                   className={inputClass}
                   value={form.price}
-                  onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
+                  onChange={(e) => {
+                    const price = Number(e.target.value) || 0;
+                    setForm((f) => {
+                      const compareAt = f.compareAtPrice;
+                      // Auto-calculate discount % from compare at and new selling price
+                      if (compareAt && compareAt > 0 && price > 0 && price < compareAt) {
+                        const disc = Math.round(((compareAt - price) / compareAt) * 100);
+                        return { ...f, price, discountPercent: disc };
+                      }
+                      return { ...f, price, discountPercent: 0 };
+                    });
+                  }}
                 />
               </Field>
               <Field label="Compare at (MRP)">
@@ -369,12 +380,25 @@ export function ProductEditor({
                   className={inputClass}
                   placeholder="Optional"
                   value={form.compareAtPrice ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      compareAtPrice: e.target.value === "" ? undefined : Number(e.target.value),
-                    }))
-                  }
+                  onChange={(e) => {
+                    const compareAt = e.target.value === "" ? undefined : Number(e.target.value);
+                    setForm((f) => {
+                      if (!compareAt || compareAt <= 0) {
+                        return { ...f, compareAtPrice: undefined, discountPercent: 0 };
+                      }
+                      // If discount % exists, auto-calculate selling price
+                      if (f.discountPercent && f.discountPercent > 0) {
+                        const price = Math.round(compareAt * (1 - f.discountPercent / 100));
+                        return { ...f, compareAtPrice: compareAt, price };
+                      }
+                      // If selling price exists, auto-calculate discount %
+                      if (f.price > 0 && f.price < compareAt) {
+                        const disc = Math.round(((compareAt - f.price) / compareAt) * 100);
+                        return { ...f, compareAtPrice: compareAt, discountPercent: disc };
+                      }
+                      return { ...f, compareAtPrice: compareAt };
+                    });
+                  }}
                 />
               </Field>
               <Field label="Tax %">
@@ -390,10 +414,33 @@ export function ProductEditor({
                   type="number"
                   className={inputClass}
                   value={form.discountPercent ?? 0}
-                  onChange={(e) => setForm((f) => ({ ...f, discountPercent: Number(e.target.value) }))}
+                  onChange={(e) => {
+                    const disc = Number(e.target.value) || 0;
+                    setForm((f) => {
+                      const compareAt = f.compareAtPrice;
+                      // Auto-calculate selling price from compare at and discount
+                      if (compareAt && compareAt > 0 && disc > 0 && disc < 100) {
+                        const price = Math.round(compareAt * (1 - disc / 100));
+                        return { ...f, discountPercent: disc, price };
+                      }
+                      // Auto-calculate compare at from selling price and discount
+                      if (!compareAt && f.price > 0 && disc > 0 && disc < 100) {
+                        const mrp = Math.round(f.price / (1 - disc / 100));
+                        return { ...f, discountPercent: disc, compareAtPrice: mrp };
+                      }
+                      return { ...f, discountPercent: disc };
+                    });
+                  }}
                 />
               </Field>
             </div>
+            {form.compareAtPrice && form.price > 0 && form.compareAtPrice > form.price ? (
+              <p className="text-xs text-[var(--admin-muted)]">
+                Customer sees: <span className="line-through">₹{form.compareAtPrice.toLocaleString("en-IN")}</span>{" "}
+                <span className="font-semibold text-[var(--admin-ink)]">₹{form.price.toLocaleString("en-IN")}</span>{" "}
+                <span className="font-medium text-emerald-700">({form.discountPercent}% off)</span>
+              </p>
+            ) : null}
 
             <div>
               <p className="admin-label mb-1">Sizes &amp; stock</p>

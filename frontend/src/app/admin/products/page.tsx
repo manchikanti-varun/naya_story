@@ -95,7 +95,26 @@ export default function AdminProductsPage() {
   return (
     <AdminPageLayout
       title="Products"
-      actions={<Link href="/admin/products/new" className="admin-btn admin-btn--primary admin-btn--sm"><Plus className="h-3.5 w-3.5" strokeWidth={2} /> Add product</Link>}
+      actions={
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="admin-btn admin-btn--secondary admin-btn--sm"
+            onClick={async () => {
+              if (!token) return;
+              try {
+                const res = await apiFetch<{ message: string }>("/products/sync-categories", { method: "POST", token });
+                toast.success(res.message ?? "Categories synced");
+              } catch (e) {
+                toast.error((e as Error).message ?? "Sync failed");
+              }
+            }}
+          >
+            Sync categories
+          </button>
+          <Link href="/admin/products/new" className="admin-btn admin-btn--primary admin-btn--sm"><Plus className="h-3.5 w-3.5" strokeWidth={2} /> Add product</Link>
+        </div>
+      }
       toolbar={
         <div className="flex w-full items-center gap-3">
           <div className="relative min-w-0 flex-1">
