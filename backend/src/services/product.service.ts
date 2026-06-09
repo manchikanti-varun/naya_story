@@ -133,14 +133,25 @@ export const productService = {
     const row = raw as { storefrontVisible?: boolean };
     if (!isAdmin && row.storefrontVisible === false) throw new HttpError(404, "Not found");
 
-    const settingsDoc = await settingsRepository.findOne();
-    const homepage = mergeHomepageConfig((settingsDoc?.homepage ?? {}) as Partial<HomepageConfig>);
-    const storefront = mergeStorefrontSettings(settingsDoc?.storefront);
-    const suggested = await loadPdpSuggestedProducts(
-      raw as unknown as { _id: mongoose.Types.ObjectId; category: string; collection?: string },
-      storefront.pdpSuggestedMode ?? "auto",
-      homepage,
-    );
+    let storefront = mergeStorefrontSettings(undefined);
+    let suggested: { mode: string; label: string; products: Record<string, unknown>[] } = {
+      mode: "auto",
+      label: "Suggested for you",
+      products: [],
+    };
+
+    try {
+      const settingsDoc = await settingsRepository.findOne();
+      const homepage = mergeHomepageConfig((settingsDoc?.homepage ?? {}) as Partial<HomepageConfig>);
+      storefront = mergeStorefrontSettings(settingsDoc?.storefront);
+      suggested = await loadPdpSuggestedProducts(
+        raw as unknown as { _id: mongoose.Types.ObjectId; category: string; collection?: string },
+        storefront.pdpSuggestedMode ?? "auto",
+        homepage,
+      );
+    } catch {
+      // Non-critical: product still loads without suggestions
+    }
 
     return {
       product: sanitizeProductMedia(raw as Record<string, unknown>),
