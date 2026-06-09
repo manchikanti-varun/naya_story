@@ -10,8 +10,13 @@ export function createContentRouter(secret: string) {
   // GET /site — Public or admin site settings
   r.get("/site", asyncHandler(async (req, res) => {
     const isAdmin = await isAdminRequest(req, secret);
-    const settings = await cmsService.getSiteSettings(isAdmin);
-    res.json({ settings });
+    try {
+      const settings = await cmsService.getSiteSettings(isAdmin);
+      res.json({ settings });
+    } catch (e) {
+      console.error("[CONTENT /site] Error:", (e as Error).message, (e as Error).stack);
+      throw e;
+    }
   }));
 
   // GET /home — Public homepage data

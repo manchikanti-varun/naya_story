@@ -35,15 +35,16 @@ function buildPublicSettings(doc: SiteDoc) {
 function buildAdminSettings(doc: SiteDoc) {
   const published = publishedHomepage(doc);
   const draftView = editorHomepage(doc);
+  const hasUnpublishedChanges = stableJson(draftView) !== stableJson(published);
   return {
     homepage: draftView,
     banners: doc.banners ?? [],
     storefront: mergeStorefrontSettings(doc.storefront),
     updatedAt: doc.updatedAt,
     cms: {
-      publishedAt: doc.homepagePublishedAt?.toISOString() ?? null,
+      publishedAt: doc.homepagePublishedAt?.toISOString?.() ?? null,
       version: doc.homepageCmsVersion ?? 0,
-      hasUnpublishedChanges: stableJson(draftView) !== stableJson(published),
+      hasUnpublishedChanges,
     },
   };
 }
@@ -51,7 +52,18 @@ function buildAdminSettings(doc: SiteDoc) {
 export const cmsService = {
   async getSiteSettings(isAdmin: boolean) {
     const doc = await settingsRepository.findOrCreate();
-    return isAdmin ? buildAdminSettings(doc) : buildPublicSettings(doc);
+    try {
+      return isAdmin ? buildAdminSettings(doc) : buildPublicSettings(doc);
+    } catch (e) {
+      console.error("[CMS] getSiteSettings crash — falling back to defaults:", (e as Error).message, (e as Error).stack);
+      // If settings data is corrupted, return safe defaults rather than 500
+      const fallbackDoc: SiteDoc = { homepage: {}, banners: [], storefront: {} };
+      try {
+        return isAdmin ? buildAdminSettings(fallbackDoc) : buildPublicSettings(fallbackDoc);
+      } catch {
+        throw e; // If even defaults fail, something is fundamentally wrong
+      }
+    }
   },
 
   async getHomepage() {

@@ -5,6 +5,7 @@ import cors from "cors";
 import express, { type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import mongoose from "mongoose";
 import passport from "passport";
 import { connectDb } from "./config/db.js";
 import { createCorsOptions } from "./lib/cors-config.js";
@@ -95,7 +96,16 @@ async function main() {
   app.use(sanitizeBodyMiddleware);
   app.use(passport.initialize());
 
-  app.get("/api/health", (_req, res) => res.json({ ok: true }));
+  app.get("/api/health", (_req, res) => {
+    const dbState = mongoose.connection.readyState;
+    // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
+    const dbOk = dbState === 1;
+    res.status(dbOk ? 200 : 503).json({
+      ok: dbOk,
+      db: dbOk ? "connected" : `state=${dbState}`,
+      uptime: Math.floor(process.uptime()),
+    });
+  });
 
   app.use(
     "/api/auth",
