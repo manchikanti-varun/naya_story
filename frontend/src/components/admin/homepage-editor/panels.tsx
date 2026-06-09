@@ -344,6 +344,7 @@ export function ContentEditorCategoriesPanel() {
               id: `cat-${slug}`,
               name: cat,
               slug,
+              href: `/collections?category=${encodeURIComponent(slug)}`,
             };
           });
         return [...list, ...newOnes];

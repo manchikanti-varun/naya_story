@@ -147,13 +147,12 @@ export function applyGlobalCategories(
 
 export function newGlobalCategory(order: number): GlobalStoreCategory {
   const id = `cat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const slug = `category-${order + 1}`;
   return {
     id,
-    name: "New category",
-    slug,
+    name: "",
+    slug: "",
     image: "",
-    href: hrefFromCategorySlug(slug),
+    href: "/collections",
     enabled: true,
     order,
     homepage: true,
