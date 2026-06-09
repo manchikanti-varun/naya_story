@@ -13,7 +13,7 @@ type Props = {
   maxWidthClass?: string;
 };
 
-/** Simple page scaffold: title, optional one-line description, content. */
+/** Page scaffold: title, optional description, content with consistent spacing. */
 export function AdminPageLayout({
   title,
   description,
@@ -24,20 +24,20 @@ export function AdminPageLayout({
   maxWidthClass = "max-w-6xl",
 }: Props) {
   return (
-    <div className={cn("admin-page-shell mx-auto space-y-6", maxWidthClass, className)}>
+    <div className={cn("admin-page-shell mx-auto space-y-5", maxWidthClass, className)}>
       <header className="admin-page-header">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1">
             <h1 className="admin-page-title">{title}</h1>
             {description ? <div className="admin-page-desc">{description}</div> : null}
           </div>
-          {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
+          {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
         </div>
       </header>
 
-      {toolbar ? <div>{toolbar}</div> : null}
+      {toolbar ? <div className="pb-0.5">{toolbar}</div> : null}
 
-      <div className="space-y-5">{children}</div>
+      <div className="space-y-4">{children}</div>
     </div>
   );
 }

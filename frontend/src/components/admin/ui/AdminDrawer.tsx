@@ -26,8 +26,8 @@ type Props = {
 };
 
 /**
- * Generic slide-over panel. Used for order details, customer profiles,
- * media metadata, CMS section editing, etc.
+ * Slide-over panel — used for detail views (orders, customers, media).
+ * Linear/Stripe-style sheet with backdrop blur.
  */
 export function AdminDrawer({
   open,
@@ -58,7 +58,7 @@ export function AdminDrawer({
     <div className="fixed inset-0 z-[80]" role="presentation">
       <button
         type="button"
-        className="absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity"
+        className="absolute inset-0 bg-black/25 backdrop-blur-[2px] transition-opacity"
         aria-label="Close panel"
         onClick={onClose}
       />
@@ -67,42 +67,42 @@ export function AdminDrawer({
         aria-modal="true"
         aria-labelledby="admin-drawer-title"
         className={cn(
-          "admin-drawer-panel absolute right-0 top-0 flex h-full w-full flex-col border-l border-[var(--admin-border)] bg-[var(--admin-surface)]",
+          "admin-drawer-panel absolute right-0 top-0 flex h-full w-full flex-col border-l border-[var(--admin-border)] bg-[var(--admin-surface)] shadow-[var(--admin-shadow-lg)]",
           WIDTH[size],
           className,
         )}
       >
         {/* Header */}
-        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--admin-border)] px-6 py-5">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-6 py-4">
           <div className="min-w-0">
             <h2
               id="admin-drawer-title"
-              className="font-sans text-lg font-semibold text-[var(--admin-ink)]"
+              className="font-sans text-base font-semibold text-[var(--admin-ink)]"
             >
               {title}
             </h2>
             {description ? (
-              <p className="mt-1 font-sans text-sm text-[var(--admin-muted)]">{description}</p>
+              <p className="mt-0.5 font-sans text-sm text-[var(--admin-muted)]">{description}</p>
             ) : null}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-[var(--admin-muted)] transition hover:bg-[var(--admin-surface-raised)] hover:text-[var(--admin-ink)]"
+            className="shrink-0 rounded-lg border border-[var(--admin-border)] p-1.5 text-[var(--admin-muted)] transition hover:border-[var(--admin-border-strong)] hover:bg-[var(--admin-surface-sunken)] hover:text-[var(--admin-ink)]"
             aria-label="Close"
           >
-            <X className="h-5 w-5" strokeWidth={1.5} />
+            <X className="h-4 w-4" strokeWidth={1.5} />
           </button>
         </header>
 
         {/* Body */}
-        <div className="admin-drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="admin-drawer-scroll min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {children}
         </div>
 
         {/* Footer (optional) */}
         {footer ? (
-          <footer className="shrink-0 border-t border-[var(--admin-border)] px-6 py-4">
+          <footer className="shrink-0 border-t border-[var(--admin-border)] bg-[var(--admin-surface-raised)] px-6 py-3.5">
             {footer}
           </footer>
         ) : null}

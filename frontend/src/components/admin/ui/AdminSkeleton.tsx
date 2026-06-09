@@ -9,15 +9,15 @@ type Props = {
 const variantClass = {
   text: "h-4 w-full rounded-md",
   circle: "h-10 w-10 rounded-full",
-  card: "h-32 w-full rounded-[var(--admin-radius)]",
-  image: "aspect-[4/3] w-full rounded-[var(--admin-radius)]",
+  card: "h-32 w-full rounded-[var(--admin-radius-lg)]",
+  image: "aspect-[4/3] w-full rounded-[var(--admin-radius-lg)]",
 };
 
 export function AdminSkeleton({ className, variant = "text" }: Props) {
   return (
     <div
       className={cn(
-        "animate-pulse bg-[var(--admin-surface-raised)]",
+        "animate-pulse bg-[var(--admin-surface-sunken)]",
         variantClass[variant],
         className,
       )}
@@ -31,13 +31,10 @@ export function AdminMetricsSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="admin-panel space-y-3 p-5"
-        >
-          <AdminSkeleton className="h-3 w-24" />
-          <AdminSkeleton className="h-8 w-32" />
-          <AdminSkeleton className="h-3 w-16" />
+        <div key={i} className="admin-panel space-y-3 p-4 sm:p-5">
+          <AdminSkeleton className="h-3 w-20" />
+          <AdminSkeleton className="h-7 w-28" />
+          <AdminSkeleton className="h-3 w-14" />
         </div>
       ))}
     </div>
@@ -58,7 +55,7 @@ export function AdminTableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols
       {Array.from({ length: rows }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-4 border-b border-[var(--admin-border)] px-4 py-4 last:border-b-0"
+          className="flex items-center gap-4 border-b border-[var(--admin-border)] px-4 py-3.5 last:border-b-0"
         >
           {Array.from({ length: cols }).map((_, j) => (
             <AdminSkeleton key={j} className="h-4 flex-1" />
@@ -72,10 +69,10 @@ export function AdminTableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols
 /** Prebuilt skeleton: Page layout with title + cards */
 export function AdminPageSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-5">
       <div className="space-y-2">
-        <AdminSkeleton className="h-7 w-48" />
-        <AdminSkeleton className="h-4 w-72" />
+        <AdminSkeleton className="h-7 w-44" />
+        <AdminSkeleton className="h-4 w-64" />
       </div>
       <AdminMetricsSkeleton />
       <AdminTableSkeleton />

@@ -16,8 +16,8 @@ type Props = {
 };
 
 /**
- * KPI metric card with trend indicator.
- * Shows growth/decline arrow and percentage change.
+ * KPI metric card with trend indicator — Stripe-style presentation.
+ * Shows growth/decline with clear visual hierarchy.
  */
 export function AdminKPITrend({ label, value, trend, trendLabel, icon: Icon, accent }: Props) {
   const isPositive = trend !== undefined && trend >= 0;
@@ -27,34 +27,32 @@ export function AdminKPITrend({ label, value, trend, trendLabel, icon: Icon, acc
     <AdminCard
       padding="md"
       className={cn(
-        "admin-metric-card h-full",
-        accent && "border-amber-200/70 bg-amber-50/30",
+        "admin-metric-card group h-full",
+        accent && "border-amber-200/60 bg-amber-50/20",
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <p className="admin-metric-label">{label}</p>
         {Icon ? (
-          <Icon className="h-4 w-4 shrink-0 text-[var(--admin-accent-bright)]" strokeWidth={1.5} aria-hidden />
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--admin-surface-sunken)] text-[var(--admin-muted)] transition-colors group-hover:bg-[var(--admin-accent-soft)] group-hover:text-[var(--admin-accent-bright)]">
+            <Icon className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+          </span>
         ) : null}
       </div>
-      <p className="admin-metric-value mt-3 text-2xl tabular-nums text-[var(--admin-ink)] md:text-3xl">
+      <p className="admin-metric-value mt-2.5 text-[1.625rem] tabular-nums text-[var(--admin-ink)]">
         {value}
       </p>
       {trend !== undefined ? (
         <div className="mt-2 flex items-center gap-1.5">
-          <TrendIcon
-            className={cn(
-              "h-3.5 w-3.5",
-              isPositive ? "text-emerald-600" : "text-red-500",
-            )}
-            strokeWidth={2}
-          />
           <span
             className={cn(
-              "font-sans text-xs font-semibold tabular-nums",
-              isPositive ? "text-emerald-700" : "text-red-600",
+              "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-sans text-[10px] font-semibold tabular-nums",
+              isPositive
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-red-50 text-red-600",
             )}
           >
+            <TrendIcon className="h-3 w-3" strokeWidth={2.5} />
             {isPositive ? "+" : ""}
             {trend.toFixed(1)}%
           </span>
