@@ -12,7 +12,7 @@ export function createReviewsRouter(secret: string) {
   // POST /api/reviews/:productId — Submit a review (authenticated users)
   r.post(
     "/:productId",
-    ...(requireAuth(secret) as unknown as RequestHandler[]),
+    requireAuth(secret) as RequestHandler,
     ...createReviewRules,
     handleValidationErrors,
     asyncHandler(async (req, res) => {
@@ -49,7 +49,7 @@ export function createReviewsRouter(secret: string) {
   // GET /api/reviews/admin/all — List all reviews for moderation (admin)
   r.get(
     "/admin/all",
-    ...(requireAdmin(secret) as unknown as RequestHandler[]),
+    ...(requireAdmin(secret) as RequestHandler[]),
     asyncHandler(async (req, res) => {
       const page = Math.max(Number(req.query.page) || 1, 1);
       const status = req.query.status as string | undefined;
@@ -61,7 +61,7 @@ export function createReviewsRouter(secret: string) {
   // PATCH /api/reviews/admin/:id — Approve or reject a review (admin)
   r.patch(
     "/admin/:id",
-    ...(requireAdmin(secret) as unknown as RequestHandler[]),
+    ...(requireAdmin(secret) as RequestHandler[]),
     ...moderateReviewRules,
     handleValidationErrors,
     asyncHandler(async (req, res) => {
@@ -73,7 +73,7 @@ export function createReviewsRouter(secret: string) {
   // DELETE /api/reviews/admin/:id — Delete a review (admin)
   r.delete(
     "/admin/:id",
-    ...(requireAdmin(secret) as unknown as RequestHandler[]),
+    ...(requireAdmin(secret) as RequestHandler[]),
     asyncHandler(async (req, res) => {
       await reviewService.deleteReview(req.params.id);
       res.json({ ok: true });
