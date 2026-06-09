@@ -6,7 +6,7 @@ const LABEL_OVERRIDES: Record<string, string> = {
   admin: "Dashboard",
   website: "Website",
   homepage: "Homepage",
-  pages: "Pages",
+  pages: "Page Builder",
   content: "Website",
   storefront: "Website",
   catalog: "Products",

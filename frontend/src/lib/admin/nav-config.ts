@@ -94,9 +94,9 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       {
         href: "/admin/website/pages",
-        label: "Homepage Builder",
+        label: "Page Builder",
         icon: FileText,
-        keywords: ["homepage", "cms", "builder", "sections", "hero", "editorial"],
+        keywords: ["homepage", "cms", "builder", "sections", "hero", "editorial", "pages"],
       },
       {
         href: "/admin/media",

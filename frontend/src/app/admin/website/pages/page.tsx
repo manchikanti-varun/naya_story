@@ -28,7 +28,7 @@ const TABS: { id: WebsitePagesTab; label: string }[] = [
 
 const TAB_DESCRIPTIONS: Record<WebsitePagesTab, { title: string; description: string }> = {
   homepage: {
-    title: "Homepage Builder",
+    title: "Page Builder",
     description: "Edit sections, reorder content, and publish changes to your storefront.",
   },
   "collections-browse": {
