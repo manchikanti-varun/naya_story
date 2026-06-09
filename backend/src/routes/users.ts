@@ -1,49 +1,35 @@
 import { Router } from "express";
-import { body, validationResult } from "express-validator";
-import mongoose from "mongoose";
-import type { LeanProduct, LeanUserFull } from "../lean.js";
-import { User } from "../models/User.js";
+import { body } from "express-validator";
 import { requireAuth } from "../middleware/auth.js";
+import { asyncHandler } from "../middleware/httpError.js";
+import { customerService } from "../services/customer.service.js";
+import { handleValidationErrors } from "../validators/index.js";
 
 export function createUsersRouter(secret: string) {
   const r = Router();
 
-  r.get("/wishlist", requireAuth(secret), async (req, res) => {
-    const raw = await User.findById(req.user!._id).populate("wishlist").lean();
-    if (!raw || Array.isArray(raw))
-      return res.status(404).json({ message: "Not found" });
-    const user = raw as unknown as LeanUserFull & { wishlist?: LeanProduct[] };
-    const products = user.wishlist ?? [];
+  // GET /wishlist
+  r.get("/wishlist", requireAuth(secret), asyncHandler(async (req, res) => {
+    const products = await customerService.getWishlist(String(req.user!._id));
     res.json({ products });
-  });
+  }));
 
+  // PATCH /wishlist — toggle item
   r.patch(
     "/wishlist",
     requireAuth(secret),
     body("productId").notEmpty(),
-    async (req, res) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty())
-        return res.status(400).json({ message: "Validation failed", errors: errors.array() });
-      const { productId } = req.body as { productId: string };
-      if (!mongoose.isValidObjectId(productId))
-        return res.status(400).json({ message: "Invalid product" });
-
-      const user = await User.findById(req.user!._id);
-      if (!user) return res.status(404).json({ message: "Not found" });
-
-      const list = new Set((user.wishlist ?? []).map(String));
-      if (list.has(productId)) list.delete(productId);
-      else list.add(productId);
-      user.wishlist = [...list].map(
-        (id) => new mongoose.Types.ObjectId(String(id)),
-      ) as mongoose.Types.ObjectId[];
-      await user.save();
-
-      res.json({ wishlist: user.wishlist.map(String) });
-    },
+    handleValidationErrors,
+    asyncHandler(async (req, res) => {
+      const wishlist = await customerService.toggleWishlistItem(
+        String(req.user!._id),
+        req.body.productId,
+      );
+      res.json({ wishlist });
+    }),
   );
 
+  // PUT /addresses — replace all addresses
   r.put(
     "/addresses",
     requireAuth(secret),
@@ -54,29 +40,14 @@ export function createUsersRouter(secret: string) {
     body("addresses.*.state").trim().notEmpty().isLength({ max: 100 }),
     body("addresses.*.postalCode").trim().notEmpty().isLength({ max: 20 }),
     body("addresses.*.country").trim().notEmpty().isLength({ max: 100 }),
-    async (req, res) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty())
-        return res.status(400).json({ message: "Validation failed", errors: errors.array() });
-      // Only allow whitelisted address fields
-      const sanitizedAddresses = (req.body.addresses as Record<string, unknown>[]).map((addr) => ({
-        line1: String(addr.line1 ?? "").trim(),
-        line2: addr.line2 ? String(addr.line2).trim() : undefined,
-        city: String(addr.city ?? "").trim(),
-        state: String(addr.state ?? "").trim(),
-        postalCode: String(addr.postalCode ?? "").trim(),
-        country: String(addr.country ?? "").trim(),
-      }));
-      await User.findByIdAndUpdate(req.user!._id, {
-        addresses: sanitizedAddresses,
-      });
-      const rawFresh = await User.findById(req.user!._id).lean();
-      const fresh =
-        rawFresh && !Array.isArray(rawFresh)
-          ? (rawFresh as unknown as LeanUserFull)
-          : null;
-      res.json({ addresses: fresh?.addresses ?? [] });
-    },
+    handleValidationErrors,
+    asyncHandler(async (req, res) => {
+      const addresses = await customerService.updateAddresses(
+        String(req.user!._id),
+        req.body.addresses,
+      );
+      res.json({ addresses });
+    }),
   );
 
   return r;

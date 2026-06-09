@@ -10,6 +10,8 @@ import { adminNavGroups, isNavActive, type AdminNavItem } from "@/lib/admin/nav-
 import { AdminBrand } from "@/components/admin/AdminBrand";
 import { AdminBreadcrumbs } from "@/components/admin/ui/AdminBreadcrumbs";
 import { AdminCommandPalette } from "@/components/admin/ui/AdminCommandPalette";
+import { AdminNotifications } from "@/components/admin/ui/AdminNotifications";
+import { AdminQuickCreate } from "@/components/admin/ui/AdminQuickCreate";
 import { cn } from "@/lib/cn";
 
 function NavLinks({
@@ -214,7 +216,9 @@ export function AdminShell({
             <div className="hidden min-w-0 flex-1 lg:block">
               <AdminBreadcrumbs />
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <AdminQuickCreate />
+              <AdminNotifications />
               <AdminCommandPalette />
             </div>
           </div>

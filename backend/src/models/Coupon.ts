@@ -13,5 +13,8 @@ const CouponSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Compound index for coupon validation lookup
+CouponSchema.index({ code: 1, active: 1 });
+
 export const Coupon =
   mongoose.models.Coupon || mongoose.model("Coupon", CouponSchema);

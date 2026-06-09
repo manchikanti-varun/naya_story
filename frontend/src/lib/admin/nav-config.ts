@@ -39,8 +39,8 @@ export type AdminNavGroup = {
 };
 
 /**
- * Workflow-based admin IA (Shopify Plus–style): how merchants operate the business,
- * not how the repo is split. Sidebar + command palette read from this list only.
+ * Unified admin IA — restructured for Phase 10.
+ * Groups: Dashboard, Commerce, Content, Marketing, Analytics, Settings
  */
 export const adminNavGroups: AdminNavGroup[] = [
   {
@@ -57,77 +57,9 @@ export const adminNavGroups: AdminNavGroup[] = [
     ],
   },
   {
-    id: "website",
-    label: "Website",
+    id: "commerce",
+    label: "Commerce",
     defaultOpen: true,
-    items: [
-      {
-        href: "/admin/website",
-        label: "Website overview",
-        icon: Globe,
-        keywords: ["storefront", "hub", "what customers see"],
-        hidden: true,
-      },
-      {
-        href: "/admin/website/pages",
-        label: "Pages",
-        icon: FileText,
-        keywords: ["homepage", "collections browse", "new in", "our story", "cms", "builder", "edit homepage"],
-      },
-      {
-        href: "/admin/website/product-page",
-        label: "Product page",
-        icon: Package,
-        keywords: ["pdp", "suggested", "gallery", "product detail", "related"],
-      },
-      {
-        href: "/admin/website/size-chart",
-        label: "Size chart",
-        icon: Ruler,
-        keywords: ["size guide", "fit", "measurements", "global", "sizing"],
-      },
-      {
-        href: "/admin/website/navigation",
-        label: "Navigation",
-        icon: Navigation2,
-        keywords: ["menu", "header", "links", "primary"],
-      },
-      {
-        href: "/admin/website/footer",
-        label: "Footer",
-        icon: LayoutGrid,
-        keywords: ["legal", "social", "links"],
-      },
-      {
-        href: "/admin/website/legal-pages",
-        label: "Legal pages",
-        icon: Shield,
-        keywords: ["terms", "privacy", "refund", "shipping", "policies"],
-      },
-      {
-        href: "/admin/website/announcement-bar",
-        label: "Announcement bar",
-        icon: Megaphone,
-        keywords: ["promo", "strip", "top bar"],
-      },
-      {
-        href: "/admin/website/theme",
-        label: "Theme",
-        icon: Palette,
-        keywords: ["colors", "typography", "brand", "theme studio"],
-      },
-      {
-        href: "/admin/media",
-        label: "Media library",
-        icon: ImageIcon,
-        keywords: ["images", "assets", "upload"],
-      },
-    ],
-  },
-  {
-    id: "products",
-    label: "Products",
-    defaultOpen: false,
     items: [
       {
         href: "/admin/products",
@@ -136,121 +68,130 @@ export const adminNavGroups: AdminNavGroup[] = [
         keywords: ["catalog", "sku", "add product"],
       },
       {
-        href: "/admin/products/new",
-        label: "Add product",
-        icon: Package,
-        keywords: ["create", "new"],
-        hidden: true,
-      },
-      {
-        href: "/admin/inventory",
-        label: "Inventory",
-        icon: Boxes,
-        keywords: ["stock", "low stock"],
-      },
-    ],
-  },
-  {
-    id: "orders",
-    label: "Orders",
-    defaultOpen: false,
-    items: [
-      {
         href: "/admin/orders",
         label: "Orders",
         icon: ShoppingBag,
         keywords: ["fulfillment", "tracking", "status"],
       },
       {
-        href: "/admin/orders/shipping",
-        label: "Fulfillment",
-        icon: Truck,
-        keywords: ["shipping", "labels", "carriers"],
+        href: "/admin/customers",
+        label: "Customers",
+        icon: Users,
+        keywords: ["buyers", "email", "crm"],
       },
       {
-        href: "/admin/orders/returns",
-        label: "Returns",
-        icon: Undo2,
-        keywords: ["rma", "refund", "exchange"],
+        href: "/admin/inventory",
+        label: "Inventory",
+        icon: Boxes,
+        keywords: ["stock", "low stock", "restock"],
       },
     ],
   },
   {
-    id: "customers",
-    label: "Customers",
-    defaultOpen: false,
+    id: "content",
+    label: "Content",
+    defaultOpen: true,
     items: [
       {
-        href: "/admin/customers",
-        label: "Customers",
-        icon: Users,
-        keywords: ["buyers", "email"],
+        href: "/admin/website/pages",
+        label: "Homepage Builder",
+        icon: FileText,
+        keywords: ["homepage", "cms", "builder", "sections", "hero", "editorial"],
       },
       {
-        href: "/admin/customers/segments",
-        label: "Segments",
+        href: "/admin/media",
+        label: "Media Library",
+        icon: ImageIcon,
+        keywords: ["images", "assets", "upload", "cloudinary"],
+      },
+      {
+        href: "/admin/website/navigation",
+        label: "Navigation",
+        icon: Navigation2,
+        keywords: ["menu", "header", "links"],
+      },
+      {
+        href: "/admin/website/footer",
+        label: "Footer",
         icon: LayoutGrid,
-        keywords: ["audience", "crm"],
+        keywords: ["footer", "social", "contact"],
+      },
+      {
+        href: "/admin/website/legal-pages",
+        label: "Legal Pages",
+        icon: Shield,
+        keywords: ["terms", "privacy", "refund", "shipping", "policies"],
       },
     ],
   },
   {
     id: "marketing",
     label: "Marketing",
+    defaultOpen: false,
     items: [
       {
         href: "/admin/coupons",
         label: "Coupons",
         icon: Percent,
-        keywords: ["discount", "code"],
+        keywords: ["discount", "code", "promo"],
       },
       {
-        href: "/admin/marketing/campaigns",
-        label: "Campaigns",
+        href: "/admin/website/announcement-bar",
+        label: "Announcements",
         icon: Megaphone,
-        keywords: ["promotions", "email", "drops"],
+        keywords: ["promo", "strip", "top bar", "banner"],
       },
     ],
   },
   {
     id: "analytics",
     label: "Analytics",
+    defaultOpen: false,
     items: [
       {
         href: "/admin/analytics",
         label: "Analytics",
         icon: BarChart3,
-        keywords: ["sales", "trend", "reports"],
+        keywords: ["sales", "trend", "reports", "revenue"],
       },
     ],
   },
   {
-    id: "system",
-    label: "System",
+    id: "settings",
+    label: "Settings",
+    defaultOpen: false,
     items: [
       {
+        href: "/admin/website/theme",
+        label: "Theme",
+        icon: Palette,
+        keywords: ["colors", "typography", "brand", "theme studio"],
+      },
+      {
+        href: "/admin/website/product-page",
+        label: "Product Page",
+        icon: Package,
+        keywords: ["pdp", "suggested", "size chart"],
+        hidden: true,
+      },
+      {
+        href: "/admin/website/size-chart",
+        label: "Size Chart",
+        icon: Ruler,
+        keywords: ["size guide", "fit", "measurements"],
+        hidden: true,
+      },
+      {
         href: "/admin/settings",
-        label: "Settings",
+        label: "Environment",
         icon: Server,
-        keywords: ["environment", "api", "general"],
-      },
-      {
-        href: "/admin/system/roles",
-        label: "Roles & permissions",
-        icon: Shield,
-        keywords: ["rbac", "access", "staff"],
-      },
-      {
-        href: "/admin/pages",
-        label: "Admin map",
-        icon: Globe,
-        keywords: ["reference", "sitemap", "all routes"],
+        keywords: ["api", "general", "environment"],
       },
     ],
   },
 ];
 
-/** Legacy `/admin/content/*` routes (redirect to Website builder); hidden from sidebar */
+/** Legacy `/admin/content/*` routes */
 export const legacyContentLinks: AdminNavItem[] = [
   { href: "/admin/content/hero", label: "Hero", hidden: true, keywords: ["homepage"] },
   { href: "/admin/content/bestsellers", label: "Bestsellers", hidden: true },
@@ -268,24 +209,13 @@ export const legacyContentLinks: AdminNavItem[] = [
   { href: "/admin/content/preview/hero", label: "Section preview", icon: Sparkles, hidden: true },
 ];
 
-/** @deprecated Renamed to `legacyContentLinks` — kept for older imports (e.g. breadcrumbs). */
+/** @deprecated Renamed to `legacyContentLinks` */
 export const contentSectionLinks = legacyContentLinks;
 
 export function flattenNavItems(): AdminNavItem[] {
   const visible = adminNavGroups.flatMap((g) => g.items.filter((i) => !i.hidden));
   const shortcuts: AdminNavItem[] = [
-    {
-      href: "/admin/products/new",
-      label: "Add product",
-      icon: Package,
-      keywords: ["create", "new product"],
-    },
-    {
-      href: "/admin/media",
-      label: "Media library",
-      icon: ImageIcon,
-      keywords: ["upload", "images"],
-    },
+    { href: "/admin/products/new", label: "Add product", icon: Package, keywords: ["create", "new product"] },
   ];
   const seen = new Set(visible.map((i) => i.href));
   return [
@@ -295,7 +225,6 @@ export function flattenNavItems(): AdminNavItem[] {
   ];
 }
 
-/** Sidebar + legacy content routes — for breadcrumbs and deep links. */
 export function flattenNavItemsForBreadcrumbs(): AdminNavItem[] {
   return [...adminNavGroups.flatMap((g) => g.items), ...legacyContentLinks];
 }
@@ -308,10 +237,7 @@ export function isNavActive(pathname: string | null, href: string): boolean {
 
   if (pathname === path && !href.includes("?")) return true;
 
-  /** Hub only — not child routes like /admin/website/homepage */
-  if (path === "/admin/website") {
-    return pathname === "/admin/website";
-  }
+  if (path === "/admin/website") return pathname === "/admin/website";
 
   if (path === "/admin/website/pages") {
     return (
@@ -330,32 +256,12 @@ export function isNavActive(pathname: string | null, href: string): boolean {
     return pathname === "/admin/products" || pathname.startsWith("/admin/products/");
   }
 
-  if (path === "/admin/orders") {
-    return pathname === "/admin/orders";
-  }
-
-  if (path === "/admin/orders/shipping") {
-    return pathname.startsWith("/admin/orders/shipping") || pathname.startsWith("/admin/orders/tracking");
-  }
-
-  if (path === "/admin/orders/returns") {
-    return pathname.startsWith("/admin/orders/returns");
-  }
-
-  if (path === "/admin/customers") {
-    return (
-      pathname === "/admin/customers" ||
-      (pathname.startsWith("/admin/customers/") && !pathname.startsWith("/admin/customers/segments"))
-    );
-  }
-
-  if (path === "/admin/customers/segments") {
-    return pathname.startsWith("/admin/customers/segments");
-  }
-
-  if (path === "/admin/marketing/campaigns") {
-    return pathname.startsWith("/admin/marketing/");
-  }
+  if (path === "/admin/orders") return pathname === "/admin/orders" || pathname.startsWith("/admin/orders/");
+  if (path === "/admin/customers") return pathname === "/admin/customers" || pathname.startsWith("/admin/customers/");
+  if (path === "/admin/media") return pathname === "/admin/media";
+  if (path === "/admin/analytics") return pathname === "/admin/analytics";
+  if (path === "/admin/coupons") return pathname === "/admin/coupons";
+  if (path === "/admin/inventory") return pathname === "/admin/inventory";
 
   return pathname === path || pathname.startsWith(`${path}/`);
 }

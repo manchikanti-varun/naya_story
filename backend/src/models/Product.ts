@@ -60,6 +60,9 @@ ProductSchema.index({ name: "text", description: "text", shortDescription: "text
 ProductSchema.index({ storefrontVisible: 1, category: 1, createdAt: -1 });
 ProductSchema.index({ storefrontVisible: 1, bestseller: -1, featured: -1 });
 ProductSchema.index({ storefrontVisible: 1, newIn: -1, newInOrder: 1 });
+ProductSchema.index({ "variants.sku": 1 });
+ProductSchema.index({ category: 1, price: 1 });
+ProductSchema.index({ tags: 1 });
 
 export const Product =
   mongoose.models.Product || mongoose.model("Product", ProductSchema);
