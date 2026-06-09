@@ -844,16 +844,54 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
           </a>
           . Edit All / Bestselling below.
         </p>
-        <div className="mt-4 space-y-5">
+        <div className="mt-4 space-y-3">
           {cp.categories
             .filter((cat) => cat.type === "all" || cat.type === "bestselling" || cat.type === "newIn")
             .sort((a, b) => a.order - b.order)
-            .map((cat) => (
-              <div key={cat.id} className="rounded-2xl border border-slate-100 p-4">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                    {cat.type === "all" ? "All products tab" : "Bestselling tab"}
-                  </span>
+            .map((cat, idx, arr) => (
+              <div key={cat.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 p-4">
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    type="button"
+                    disabled={idx === 0}
+                    onClick={() => {
+                      const prev = arr[idx - 1];
+                      if (!prev) return;
+                      updateCollectionsCategory(cat.id, { order: prev.order });
+                      updateCollectionsCategory(prev.id, { order: cat.order });
+                    }}
+                    className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label="Move up"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 2L1 7h8L5 2z" fill="currentColor"/></svg>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={idx === arr.length - 1}
+                    onClick={() => {
+                      const next = arr[idx + 1];
+                      if (!next) return;
+                      updateCollectionsCategory(cat.id, { order: next.order });
+                      updateCollectionsCategory(next.id, { order: cat.order });
+                    }}
+                    className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label="Move down"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 8L1 3h8L5 8z" fill="currentColor"/></svg>
+                  </button>
+                </div>
+                <div className="flex flex-1 flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <input
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                      placeholder="Label"
+                      value={cat.label}
+                      onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
+                    />
+                    <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                      {cat.type === "all" ? "All" : cat.type === "bestselling" ? "Bestselling" : "New In"}
+                    </span>
+                  </div>
                   <label className="flex items-center gap-2 text-xs text-slate-600">
                     <input
                       type="checkbox"
@@ -864,22 +902,6 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
                     />
                     Enabled
                   </label>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <input
-                    className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                    placeholder="Label"
-                    value={cat.label}
-                    onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
-                  />
-                  <input
-                    type="number"
-                    className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                    value={cat.order}
-                    onChange={(e) =>
-                      updateCollectionsCategory(cat.id, { order: Number(e.target.value) || 0 })
-                    }
-                  />
                 </div>
               </div>
             ))}
@@ -892,12 +914,45 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
             {cp.categories
               .filter((c) => c.type === "category")
               .sort((a, b) => a.order - b.order)
-              .map((cat) => (
-                <div key={cat.id} className="rounded-2xl border border-slate-100 p-4">
-                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-sans text-xs uppercase tracking-[0.18em] text-slate-400">
-                      {cat.label || cat.value}
-                    </span>
+              .map((cat, idx, arr) => (
+                <div key={cat.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 p-4">
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => {
+                        const prev = arr[idx - 1];
+                        if (!prev) return;
+                        updateCollectionsCategory(cat.id, { order: prev.order });
+                        updateCollectionsCategory(prev.id, { order: cat.order });
+                      }}
+                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label="Move up"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 2L1 7h8L5 2z" fill="currentColor"/></svg>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === arr.length - 1}
+                      onClick={() => {
+                        const next = arr[idx + 1];
+                        if (!next) return;
+                        updateCollectionsCategory(cat.id, { order: next.order });
+                        updateCollectionsCategory(next.id, { order: cat.order });
+                      }}
+                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label="Move down"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 8L1 3h8L5 8z" fill="currentColor"/></svg>
+                    </button>
+                  </div>
+                  <div className="flex flex-1 flex-wrap items-center justify-between gap-3">
+                    <input
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                      placeholder="Label"
+                      value={cat.label}
+                      onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
+                    />
                     <label className="flex items-center gap-2 text-xs text-slate-600">
                       <input
                         type="checkbox"
@@ -908,23 +963,6 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
                       />
                       Enabled
                     </label>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <input
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Label"
-                      value={cat.label}
-                      onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
-                    />
-                    <input
-                      type="number"
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Order"
-                      value={cat.order}
-                      onChange={(e) =>
-                        updateCollectionsCategory(cat.id, { order: Number(e.target.value) || 0 })
-                      }
-                    />
                   </div>
                 </div>
               ))}

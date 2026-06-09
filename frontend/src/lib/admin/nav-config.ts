@@ -193,7 +193,6 @@ export const adminNavGroups: AdminNavGroup[] = [
         label: "Size Chart",
         icon: Ruler,
         keywords: ["size guide", "fit", "measurements"],
-        hidden: true,
       },
       {
         href: "/admin/settings",

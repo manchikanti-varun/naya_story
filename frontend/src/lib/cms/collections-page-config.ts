@@ -104,7 +104,7 @@ export function normalizeCollectionsPage(
         .map((c, i) => {
           const fb = d.categories[i] ?? d.categories[0]!;
           const type =
-            c.type === "all" || c.type === "bestselling" || c.type === "category"
+            c.type === "all" || c.type === "bestselling" || c.type === "newIn" || c.type === "category"
               ? c.type
               : fb.type;
           return {

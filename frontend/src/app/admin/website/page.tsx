@@ -7,6 +7,7 @@ import {
   Megaphone,
   Navigation2,
   Palette,
+  Ruler,
   Shield,
 } from "lucide-react";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
@@ -19,6 +20,7 @@ const links = [
   { href: "/admin/website/footer", title: "Footer", description: "Contact and social links", icon: LayoutGrid },
   { href: "/admin/website/legal-pages", title: "Legal pages", description: "Terms, privacy, shipping", icon: Shield },
   { href: "/admin/website/announcement-bar", title: "Announcement bar", description: "Top promo strip", icon: Megaphone },
+  { href: "/admin/website/size-chart", title: "Size chart", description: "Global fit guide for product pages", icon: Ruler },
   { href: "/admin/media", title: "Media library", description: "Upload and reuse images", icon: ImageIcon },
 ];
 

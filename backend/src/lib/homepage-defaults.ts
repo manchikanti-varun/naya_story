@@ -434,7 +434,7 @@ export function mergeCollectionsPage(
         const fallback = defaults.categories[index % defaults.categories.length];
         const typeRaw = safe.type;
         const type =
-          typeRaw === "all" || typeRaw === "bestselling" || typeRaw === "category"
+          typeRaw === "all" || typeRaw === "bestselling" || typeRaw === "newIn" || typeRaw === "category"
             ? typeRaw
             : fallback.type;
         return {
