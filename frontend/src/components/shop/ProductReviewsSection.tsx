@@ -5,23 +5,68 @@ import { Star, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/context/auth-context";
+
+type ReviewItem = {
+  _id: string;
+  rating: number;
+  body: string;
+  createdAt: string;
+  user?: { name?: string; email?: string };
+};
+
+type ReviewsResponse = {
+  reviews: ReviewItem[];
+  total: number;
+  page: number;
+  pages: number;
+  averageRating: number;
+  totalCount: number;
+};
 
 type Props = {
+  productId: string;
   productName: string;
   className?: string;
 };
 
-export function ProductReviewsSection({ productName, className }: Props) {
+export function ProductReviewsSection({ productId, productName, className }: Props) {
+  const { token, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [body, setBody] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reviews data
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loadingReviews, setLoadingReviews] = useState(true);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fetch reviews on mount
+  useEffect(() => {
+    if (!productId) return;
+    setLoadingReviews(true);
+    apiFetch<ReviewsResponse>(`/reviews/${productId}`)
+      .then((data) => {
+        setReviews(data.reviews);
+        setAverageRating(data.averageRating);
+        setTotalCount(data.totalCount);
+      })
+      .catch(() => {
+        // Non-critical — section still renders
+      })
+      .finally(() => setLoadingReviews(false));
+  }, [productId]);
 
   useEffect(() => {
     if (!open) return;
@@ -35,19 +80,50 @@ export function ProductReviewsSection({ productName, className }: Props) {
   const displayRating = hoverRating || rating;
 
   const onSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
       if (!body.trim() || rating < 1) return;
-      setSubmitted(true);
-      window.setTimeout(() => {
-        setOpen(false);
-        setSubmitted(false);
-        setBody("");
-        setRating(0);
-      }, 1600);
+      if (!token) {
+        setError("Please log in to submit a review.");
+        return;
+      }
+
+      setSubmitting(true);
+      setError(null);
+
+      try {
+        await apiFetch(`/reviews/${productId}`, {
+          method: "POST",
+          token,
+          body: JSON.stringify({ rating, body: body.trim() }),
+        });
+        setSubmitted(true);
+        window.setTimeout(() => {
+          setOpen(false);
+          setSubmitted(false);
+          setBody("");
+          setRating(0);
+        }, 1600);
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error ? err.message : "Failed to submit review";
+        setError(msg);
+      } finally {
+        setSubmitting(false);
+      }
     },
-    [body, rating],
+    [body, rating, token, productId],
   );
+
+  const renderStars = (value: number, size = "h-4 w-4") =>
+    Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={cn(size, value >= i + 1 ? "text-gold" : "text-ivory-deep")}
+        strokeWidth={1}
+        fill={value >= i + 1 ? "currentColor" : "transparent"}
+      />
+    ));
 
   const modal =
     mounted && open ? (
@@ -128,11 +204,15 @@ export function ProductReviewsSection({ productName, className }: Props) {
                     placeholder="Fit, fabric, occasion…"
                   />
                 </label>
+                {error && (
+                  <p className="font-sans text-xs text-red-600">{error}</p>
+                )}
                 <button
                   type="submit"
-                  className="w-full rounded-md border border-ink bg-ink py-3 font-sans text-[11px] uppercase tracking-[0.2em] text-ivory transition hover:bg-ink/90"
+                  disabled={submitting}
+                  className="w-full rounded-md border border-ink bg-ink py-3 font-sans text-[11px] uppercase tracking-[0.2em] text-ivory transition hover:bg-ink/90 disabled:opacity-50"
                 >
-                  Submit review
+                  {submitting ? "Submitting…" : "Submit review"}
                 </button>
               </form>
             )}
@@ -149,20 +229,59 @@ export function ProductReviewsSection({ productName, className }: Props) {
         Share how this piece feels in motion — fit, fabric, and occasion. Your note helps others
         choose with confidence.
       </p>
-      <div className="mt-4 flex justify-center gap-0.5" aria-hidden>
-        {Array.from({ length: 5 }, (_, i) => (
-          <Star
-            key={i}
-            className="h-4 w-4 text-ivory-deep"
-            strokeWidth={1}
-            fill="transparent"
-          />
-        ))}
+
+      {/* Aggregate rating */}
+      <div className="mt-4 flex items-center justify-center gap-2">
+        <div className="flex gap-0.5" aria-hidden>
+          {renderStars(Math.round(averageRating))}
+        </div>
+        {totalCount > 0 && (
+          <span className="font-sans text-xs text-ink-soft">
+            {averageRating.toFixed(1)} ({totalCount} {totalCount === 1 ? "review" : "reviews"})
+          </span>
+        )}
       </div>
-      <p className="mt-2 font-sans text-xs text-ink-soft">No published reviews yet</p>
+
+      {totalCount === 0 && !loadingReviews && (
+        <p className="mt-2 font-sans text-xs text-ink-soft">No published reviews yet</p>
+      )}
+
+      {/* Reviews list */}
+      {reviews.length > 0 && (
+        <div className="mx-auto mt-6 max-w-lg space-y-4 text-left">
+          {reviews.map((review) => (
+            <div
+              key={review._id}
+              className="rounded-md border border-ivory-deep bg-white p-4"
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex gap-0.5">{renderStars(review.rating, "h-3.5 w-3.5")}</div>
+                <span className="font-sans text-xs text-ink-soft">
+                  {review.user?.name || "Anonymous"}
+                </span>
+              </div>
+              <p className="mt-2 font-sans text-sm font-light text-ink">
+                {review.body}
+              </p>
+              <p className="mt-1 font-sans text-[10px] text-ink-muted">
+                {new Date(review.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (!user) {
+            setError("Please log in to write a review.");
+            setOpen(true);
+          } else {
+            setError(null);
+            setOpen(true);
+          }
+        }}
         className="mt-6 inline-flex rounded-md border border-ivory-deep bg-transparent px-8 py-2.5 font-sans text-[11px] uppercase tracking-[0.2em] text-ink transition hover:border-gold/50 hover:text-gold"
       >
         Write a review

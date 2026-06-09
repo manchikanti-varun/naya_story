@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Product } from "@/types";
-import { BESTSELLERS_HOMEPAGE_VISIBLE } from "@/lib/cms/homepage-product-limits";
+import { BESTSELLERS_HOMEPAGE_VISIBLE, NEWIN_HOMEPAGE_VISIBLE } from "@/lib/cms/homepage-product-limits";
 import type {
   HomepageConfig,
   HomepageEditorialConfig,
@@ -87,6 +87,7 @@ const sectionRegistry: Record<HomepageStorefrontBlockType, SectionRenderer> = {
       title={ctx.homepage.newIn.title}
       subtitle={ctx.homepage.newIn.subtitle}
       products={ctx.newList}
+      maxVisible={NEWIN_HOMEPAGE_VISIBLE}
       kicker={ctx.homepage.newIn.kicker}
       badge="latest"
       sectionText={ctx.colors?.newIn}

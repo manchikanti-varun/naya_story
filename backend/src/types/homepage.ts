@@ -40,6 +40,7 @@ export type GlobalStoreCategory = {
   order: number;
   homepage: boolean;
   collections: boolean;
+  pinnedProductIds?: string[];
 };
 
 export type TopPromoBarConfig = {

@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LayoutGrid,
   Megaphone,
+  MessageSquare,
   Navigation2,
   Package,
   Palette,
@@ -84,6 +85,12 @@ export const adminNavGroups: AdminNavGroup[] = [
         label: "Inventory",
         icon: Boxes,
         keywords: ["stock", "low stock", "restock"],
+      },
+      {
+        href: "/admin/reviews",
+        label: "Reviews",
+        icon: MessageSquare,
+        keywords: ["reviews", "ratings", "moderation", "feedback"],
       },
     ],
   },
@@ -262,6 +269,7 @@ export function isNavActive(pathname: string | null, href: string): boolean {
   if (path === "/admin/analytics") return pathname === "/admin/analytics";
   if (path === "/admin/coupons") return pathname === "/admin/coupons";
   if (path === "/admin/inventory") return pathname === "/admin/inventory";
+  if (path === "/admin/reviews") return pathname === "/admin/reviews";
 
   return pathname === path || pathname.startsWith(`${path}/`);
 }

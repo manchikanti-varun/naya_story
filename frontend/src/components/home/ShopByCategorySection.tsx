@@ -60,10 +60,10 @@ export function ShopByCategorySection({
         />
       </div>
 
-      {/* Full-width category grid — edge to edge */}
-      <div className="w-full">
+      {/* Category grid — same layout as product cards */}
+      <div className="lux-shell">
         <div
-          className="grid grid-cols-2 md:grid-cols-3"
+          className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:gap-6"
           role="list"
           aria-label="Shop by category"
         >
@@ -76,25 +76,26 @@ export function ShopByCategorySection({
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.95, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
             >
-              <Link href={cat.href || "/collections"} className="group relative block aspect-[3/4] overflow-hidden">
-                {isNextImageSrc(cat.image) ? (
-                  <Image
-                    src={cat.image.trim()}
-                    alt={cat.name}
-                    fill
-                    loading="lazy"
-                    className="object-cover object-center transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.05]"
-                    sizes="(max-width:768px) 50vw, 33vw"
-                    unoptimized={!cat.image.includes("res.cloudinary.com")}
-                  />
-                ) : (
-                  <MediaPlaceholder />
-                )}
-                <div className="absolute inset-0 bg-ink/20 transition duration-700 group-hover:bg-ink/40" aria-hidden />
-                <div className="absolute inset-0 flex items-end justify-start p-6 md:p-8">
-                  <span className="font-display text-[clamp(1.25rem,2.5vw,2rem)] font-normal leading-tight tracking-[-0.02em] text-ivory opacity-0 translate-y-3 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-hover:opacity-100">
+              <Link href={cat.href || "/collections"} className="group block">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-lux bg-ivory-soft shadow-lux ring-1 ring-ivory-deep/30 transition-[box-shadow,ring-color] duration-700 group-hover:shadow-lux-hover group-hover:ring-gold/28">
+                  {isNextImageSrc(cat.image) ? (
+                    <Image
+                      src={cat.image.trim()}
+                      alt={cat.name}
+                      fill
+                      loading="lazy"
+                      className="object-cover object-center transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+                      sizes="(max-width:768px) 50vw, 33vw"
+                      unoptimized={!cat.image.includes("res.cloudinary.com")}
+                    />
+                  ) : (
+                    <MediaPlaceholder />
+                  )}
+                </div>
+                <div className="mt-3 text-center">
+                  <p className="font-display text-lg text-ink transition-colors duration-700 group-hover:text-gold">
                     {cat.name}
-                  </span>
+                  </p>
                 </div>
               </Link>
             </motion.div>

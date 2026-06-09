@@ -46,6 +46,8 @@ export type GlobalStoreCategory = {
   order: number;
   homepage: boolean;
   collections: boolean;
+  /** Pinned product IDs in custom display order for this category */
+  pinnedProductIds?: string[];
 };
 
 /** Thin strip above the main nav — coupons, shipping notes, etc. */

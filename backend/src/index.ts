@@ -18,6 +18,7 @@ import { createLegalPagesRouter } from "./routes/legalPages.js";
 import { createMediaRouter } from "./routes/media.js";
 import { createOrdersRouter } from "./routes/orders.js";
 import { createProductsRouter } from "./routes/products.js";
+import { createReviewsRouter } from "./routes/reviews.js";
 import { createUsersRouter } from "./routes/users.js";
 import { razorpayWebhookHandler } from "./routes/razorpayWebhook.js";
 import { stripeWebhookHandler } from "./routes/stripeWebhook.js";
@@ -118,6 +119,7 @@ async function main() {
     }),
   );
 
+  app.use("/api/reviews", createReviewsRouter(JWT_SECRET));
   app.use("/api/products", createProductsRouter(JWT_SECRET));
   app.use("/api/orders", createOrdersRouter(JWT_SECRET));
   app.use("/api/users", createUsersRouter(JWT_SECRET));

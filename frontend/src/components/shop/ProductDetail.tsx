@@ -485,6 +485,7 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
           ) : null}
 
           <ProductReviewsSection
+            productId={product._id}
             productName={product.name}
             className="mt-14 w-full pt-10"
           />

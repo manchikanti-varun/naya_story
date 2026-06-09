@@ -13,6 +13,7 @@ import {
   CmsStorePagePublishToggle,
 } from "@/components/admin/cms/CmsFormHelpers";
 import { CmsImageUrlField } from "@/components/admin/cms/CmsImageUrlField";
+import { ProductPinEditor } from "@/components/admin/cms/ProductPinEditor";
 import { SectionDesignFields } from "@/components/admin/cms/SectionDesignFields";
 import { SectionTypographyFields } from "@/components/admin/cms/SectionTypographyFields";
 import { AdminField, AdminInput, AdminSelect, AdminTextarea } from "@/components/admin/ui/AdminField";
@@ -96,14 +97,12 @@ export function ContentEditorBestsellersPanel() {
             }
           />
         </AdminField>
-        <div className="md:col-span-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-4">
-          <p className="font-sans text-sm font-medium text-[var(--admin-ink)]">How it works</p>
-          <p className="mt-1 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
-            Products marked as <strong className="font-medium text-[var(--admin-ink)]">Bestseller</strong> in their
-            Shop display tab automatically appear here. Up to 8 show on the homepage. No manual pinning needed.
-          </p>
-        </div>
       </CmsFormGrid>
+      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-3">
+        <p className="font-sans text-xs text-[var(--admin-muted)]">
+          Product order is managed from <strong className="font-medium text-[var(--admin-ink)]">Page Builder → Collections → Product ordering</strong>. The same order applies here.
+        </p>
+      </div>
     </div>
   );
 
@@ -182,14 +181,12 @@ export function ContentEditorNewInHomePanel() {
             onChange={(e) => setHp({ ...hp, newIn: { ...hp.newIn, ctaHref: e.target.value } })}
           />
         </AdminField>
-        <div className="md:col-span-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-4">
-          <p className="font-sans text-sm font-medium text-[var(--admin-ink)]">How it works</p>
-          <p className="mt-1 font-sans text-xs leading-relaxed text-[var(--admin-muted)]">
-            Products marked as <strong className="font-medium text-[var(--admin-ink)]">New In</strong> in their
-            Shop display tab automatically appear here. Up to 8 show on the homepage. No manual pinning needed.
-          </p>
-        </div>
       </CmsFormGrid>
+      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-3">
+        <p className="font-sans text-xs text-[var(--admin-muted)]">
+          Product order is managed from <strong className="font-medium text-[var(--admin-ink)]">Page Builder → Collections → Product ordering</strong>. The same order applies here.
+        </p>
+      </div>
     </div>
   );
 
@@ -470,7 +467,7 @@ export function ContentEditorCategoriesPanel() {
 }
 
 export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?: boolean }) {
-  const { hp, setHp, token, updateCollectionsCategory } = useHomepageEditor();
+  const { hp, setHp, token, updateCollectionsCategory, patchGlobalCategories } = useHomepageEditor();
   if (!hp) return null;
 
   const cp = hp.collectionsPage;
@@ -822,6 +819,58 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
               ))}
           </ul>
         ) : null}
+      </CmsFieldGroup>
+
+      {/* ═══ Product ordering per tab ═══ */}
+      <CmsFieldGroup title="Product ordering">
+        <p className="mt-2 font-sans text-xs text-[var(--admin-muted)]">
+          Set the display order for each tab. This order applies everywhere — homepage rails, collections page, and the new-in page. First 4 show on homepage, all show on collection pages.
+        </p>
+
+        <div className="mt-5 space-y-6">
+          {/* Bestselling order */}
+          <ProductPinEditor
+            token={token}
+            pinnedIds={hp.bestsellers.productIds ?? []}
+            onChange={(productIds) =>
+              setHp({ ...hp, bestsellers: { ...hp.bestsellers, productIds } })
+            }
+            max={BESTSELLERS_RAIL_MAX}
+            label="Bestselling order"
+            hint="Controls order in homepage bestsellers rail + collections 'Bestselling' tab."
+          />
+
+          {/* New In order */}
+          <ProductPinEditor
+            token={token}
+            pinnedIds={hp.newIn.productIds ?? []}
+            onChange={(productIds) =>
+              setHp({ ...hp, newIn: { ...hp.newIn, productIds } })
+            }
+            max={20}
+            label="New In order"
+            hint="Controls order in homepage new-in rail + collections 'New In' tab + /new-in page."
+          />
+
+          {/* Per-category order */}
+          {getGlobalCategories(hp)
+            .filter((g) => g.enabled && g.collections)
+            .map((cat) => (
+              <ProductPinEditor
+                key={cat.id}
+                token={token}
+                pinnedIds={cat.pinnedProductIds ?? []}
+                onChange={(productIds) =>
+                  patchGlobalCategories((list) =>
+                    list.map((c) => c.id === cat.id ? { ...c, pinnedProductIds: productIds } : c)
+                  )
+                }
+                max={20}
+                label={`${cat.name} order`}
+                hint={`Controls display order for the "${cat.name}" tab on collections page.`}
+              />
+            ))}
+        </div>
       </CmsFieldGroup>
     </CmsPageEditorShell>
   );
