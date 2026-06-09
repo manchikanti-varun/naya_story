@@ -14,7 +14,7 @@ type LinkItem = {
   description: string;
 };
 
-type CategoryInfo = { name: string; slug: string };
+type CategoryInfo = { name: string; slug: string; id: string };
 type ProductInfo = { name: string; slug: string };
 
 function CopyButton({ text }: { text: string }) {
@@ -91,7 +91,7 @@ export default function AdminLinksPage() {
         setCategories(
           (siteData.settings.homepage.globalCategories ?? [])
             .filter((c: any) => c.enabled !== false)
-            .map((c: any) => ({ name: c.name, slug: c.slug })),
+            .map((c: any) => ({ name: c.name, slug: c.slug, id: c.id })),
         );
         setProducts((productData.products ?? []).map((p) => ({ name: p.name, slug: p.slug })));
       } catch {
@@ -125,7 +125,7 @@ export default function AdminLinksPage() {
 
   const categoryLinks: LinkItem[] = categories.map((c) => ({
     label: c.name,
-    path: `/collections?tab=cat-${encodeURIComponent(c.slug)}`,
+    path: `/collections?tab=${encodeURIComponent(c.id)}`,
     description: `${c.name} category tab`,
   }));
 

@@ -672,6 +672,84 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
         >
           Add price band
         </button>
+
+        <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/60 p-3">
+          <p className="mb-2 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-400">
+            Suggested presets
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 font-sans text-[10px] text-slate-600 hover:border-slate-400 hover:text-slate-900"
+              onClick={() =>
+                patchFilters({
+                  priceBands: [
+                    { id: "band-1", label: "Under \u20B91,000", min: 0, max: 1000, enabled: true },
+                    { id: "band-2", label: "\u20B91,000 \u2013 \u20B93,000", min: 1000, max: 3000, enabled: true },
+                    { id: "band-3", label: "\u20B93,000 \u2013 \u20B95,000", min: 3000, max: 5000, enabled: true },
+                    { id: "band-4", label: "\u20B95,000 \u2013 \u20B910,000", min: 5000, max: 10000, enabled: true },
+                    { id: "band-5", label: "Over \u20B910,000", min: 10000, max: 100000, enabled: true },
+                  ],
+                })
+              }
+            >
+              Budget (₹1K–₹10K)
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 font-sans text-[10px] text-slate-600 hover:border-slate-400 hover:text-slate-900"
+              onClick={() =>
+                patchFilters({
+                  priceBands: [
+                    { id: "band-1", label: "Under \u20B95,000", min: 0, max: 5000, enabled: true },
+                    { id: "band-2", label: "\u20B95,000 \u2013 \u20B910,000", min: 5000, max: 10000, enabled: true },
+                    { id: "band-3", label: "\u20B910,000 \u2013 \u20B925,000", min: 10000, max: 25000, enabled: true },
+                    { id: "band-4", label: "\u20B925,000 \u2013 \u20B950,000", min: 25000, max: 50000, enabled: true },
+                    { id: "band-5", label: "Over \u20B950,000", min: 50000, max: 500000, enabled: true },
+                  ],
+                })
+              }
+            >
+              Mid-range (₹5K–₹50K)
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 font-sans text-[10px] text-slate-600 hover:border-slate-400 hover:text-slate-900"
+              onClick={() =>
+                patchFilters({
+                  priceBands: [
+                    { id: "band-1", label: "Under \u20B910,000", min: 0, max: 10000, enabled: true },
+                    { id: "band-2", label: "\u20B910,000 \u2013 \u20B925,000", min: 10000, max: 25000, enabled: true },
+                    { id: "band-3", label: "\u20B925,000 \u2013 \u20B950,000", min: 25000, max: 50000, enabled: true },
+                    { id: "band-4", label: "\u20B950,000 \u2013 \u20B91,00,000", min: 50000, max: 100000, enabled: true },
+                    { id: "band-5", label: "Over \u20B91,00,000", min: 100000, max: 1000000, enabled: true },
+                  ],
+                })
+              }
+            >
+              Luxury (₹10K–₹1L+)
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 font-sans text-[10px] text-slate-600 hover:border-slate-400 hover:text-slate-900"
+              onClick={() =>
+                patchFilters({
+                  priceBands: [
+                    { id: "band-1", label: "Under \u20B92,000", min: 0, max: 2000, enabled: true },
+                    { id: "band-2", label: "\u20B92,000 \u2013 \u20B95,000", min: 2000, max: 5000, enabled: true },
+                    { id: "band-3", label: "\u20B95,000 \u2013 \u20B910,000", min: 5000, max: 10000, enabled: true },
+                    { id: "band-4", label: "Over \u20B910,000", min: 10000, max: 100000, enabled: true },
+                  ],
+                })
+              }
+            >
+              Simple (4 bands)
+            </button>
+          </div>
+          <p className="mt-2 font-sans text-[10px] text-slate-400">
+            Clicking a preset replaces all current bands.
+          </p>
+        </div>
       </div>
 
       <div className="mt-6 space-y-3">
@@ -827,9 +905,21 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
       {/* Product ordering per tab */}
       <CmsFieldGroup title="Product ordering">
         <p className="mt-2 font-sans text-xs text-[var(--admin-muted)]">
-          Set the display order for each tab. This order applies everywhere &mdash; homepage rails, collections page, and the new-in page.
+          Set the display order for each tab. Only pinned products will show on that tab. For the All tab, pinned products appear first followed by the rest.
         </p>
         <div className="mt-5 space-y-6">
+          {/* All products order */}
+          <ProductPinEditor
+            token={token}
+            pinnedIds={cp.pinnedProductIds ?? []}
+            onChange={(productIds) =>
+              patchCollections({ usePinnedProducts: productIds.length > 0, pinnedProductIds: productIds })
+            }
+            max={40}
+            label="All products order"
+            hint="Pinned products appear first on the All tab. Remaining products follow in default order."
+          />
+
           {/* Bestselling order */}
           <ProductPinEditor
             token={token}
@@ -839,7 +929,8 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
             }
             max={BESTSELLERS_RAIL_MAX}
             label="Bestselling order"
-            hint="Controls order in homepage bestsellers rail + collections Bestselling tab."
+            hint="Only these products will show on the Bestselling tab + homepage bestsellers rail."
+            pickerFilter="bestseller=true"
           />
 
           {/* New In order */}
@@ -851,7 +942,8 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
             }
             max={20}
             label="New In order"
-            hint="Controls order in homepage new-in rail + collections New In tab + /new-in page."
+            hint="Only these products will show on the New In tab + homepage new-in rail."
+            pickerFilter="newIn=true"
           />
 
           {/* Per-category order */}
@@ -869,7 +961,8 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
                 }
                 max={20}
                 label={`${cat.name} order`}
-                hint={`Controls display order for the ${cat.name} tab on collections page.`}
+                hint={`Only these products will show on the ${cat.name} tab.`}
+                pickerFilter={`category=${encodeURIComponent(cat.slug)}`}
               />
             ))}
         </div>

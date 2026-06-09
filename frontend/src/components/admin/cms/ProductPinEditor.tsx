@@ -20,6 +20,8 @@ type Props = {
   /** Label shown above the list */
   label?: string;
   hint?: string;
+  /** Optional query string filter for the product picker (e.g. "bestseller=true" or "category=mini") */
+  pickerFilter?: string;
 };
 
 type ProductInfo = {
@@ -38,6 +40,7 @@ export function ProductPinEditor({
   max = 20,
   label = "Pinned products",
   hint = "Drag to reorder. Products appear on the storefront in this exact order.",
+  pickerFilter,
 }: Props) {
   const [products, setProducts] = useState<ProductInfo[]>([]);
   const [allProducts, setAllProducts] = useState<ProductInfo[]>([]);
@@ -69,13 +72,14 @@ export function ProductPinEditor({
     return () => { cancelled = true; };
   }, [token, pinnedIds]);
 
-  // Load all products for picker
+  // Load products for picker (filtered if pickerFilter is set)
   const loadAll = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
+      const filterParam = pickerFilter ? `&${pickerFilter}` : "";
       const data = await apiFetch<{ products: ProductInfo[] }>(
-        "/products?limit=200&sort=newest",
+        `/products?limit=200&sort=newest${filterParam}`,
         { token },
       );
       setAllProducts(data.products ?? []);
@@ -84,7 +88,7 @@ export function ProductPinEditor({
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, pickerFilter]);
 
   useEffect(() => {
     if (showPicker) void loadAll();

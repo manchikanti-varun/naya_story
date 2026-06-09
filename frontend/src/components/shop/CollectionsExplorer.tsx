@@ -171,29 +171,25 @@ export function CollectionsExplorer() {
         }
 
         if (pins.length > 0) {
-          // Use pins to reorder: pinned products that exist in the filtered list come first,
-          // then remaining filtered products that weren't pinned follow after.
-          const listById = new Map(list.map((p) => [p._id, p]));
-          const ordered: Product[] = [];
-          const usedIds = new Set<string>();
-
-          // First: add pinned products in pin order (only if they're in the filtered results)
-          for (const pinId of pins) {
-            const p = listById.get(pinId);
-            if (p) {
-              ordered.push(p);
-              usedIds.add(pinId);
+          if (activeTab?.type === "all") {
+            // "All" tab: pinned products first, then remaining from API fill in after
+            const pinRes = await apiFetch<{ products: Product[] }>(
+              `/products?ids=${pins.map((id) => encodeURIComponent(id)).join(",")}`,
+            );
+            const pinList = pinRes.products ?? [];
+            const pinSet = new Set(pinList.map((p) => p._id));
+            const merged: Product[] = [...pinList];
+            for (const p of list) {
+              if (!pinSet.has(p._id)) merged.push(p);
             }
+            list = merged.slice(0, lim);
+          } else {
+            // Bestselling / New In / Category tabs: show ONLY the pinned products in order
+            const pinRes = await apiFetch<{ products: Product[] }>(
+              `/products?ids=${pins.map((id) => encodeURIComponent(id)).join(",")}`,
+            );
+            list = pinRes.products ?? [];
           }
-
-          // Then: add remaining products that weren't pinned
-          for (const p of list) {
-            if (!usedIds.has(p._id)) {
-              ordered.push(p);
-            }
-          }
-
-          list = ordered;
         }
 
         if (!cancelled) {
