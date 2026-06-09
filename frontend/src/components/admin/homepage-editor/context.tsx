@@ -66,6 +66,7 @@ type HomepageEditorContextValue = {
     id: string,
     patch: Partial<HomepageConfig["collectionsPage"]["categories"][number]>,
   ) => void;
+  loadError: string | null;
 };
 
 const HomepageEditorContext = createContext<HomepageEditorContextValue | null>(null);
@@ -77,8 +78,10 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
   const [cmsMeta, setCmsMeta] = useState<HomepageCmsMeta | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setLoadError(null);
     const data = await apiFetch<{
       settings: { homepage: HomepageConfig; cms?: HomepageCmsMeta };
     }>("/content/site", { token: token ?? undefined });
@@ -91,10 +94,11 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
   }, [token]);
 
   useEffect(() => {
-    void load().catch(() => {
+    void load().catch((e) => {
       setHp(null);
       setCommittedHp(null);
       setCmsMeta(null);
+      setLoadError((e as Error).message ?? "Failed to load homepage data");
     });
   }, [load]);
 
@@ -352,6 +356,7 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       updateCategory,
       patchGlobalCategories,
       updateCollectionsCategory,
+      loadError,
     }),
     [
       hp,
@@ -376,6 +381,7 @@ export function HomepageEditorProvider({ children }: { children: ReactNode }) {
       updateCategory,
       patchGlobalCategories,
       updateCollectionsCategory,
+      loadError,
     ],
   );
 
