@@ -42,6 +42,7 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
   const { token, wishlistIds, updateWishlistLocal } = useAuth();
   const { ids: recentIds, track } = useRecentlyViewed();
   const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [suggested, setSuggested] = useState<Product[]>([]);
   const [suggestedLabel, setSuggestedLabel] = useState("Suggested for you");
   const [sizeGuide, setSizeGuide] = useState<SizeGuideConfig | null>(null);
@@ -59,6 +60,7 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     void (async () => {
       try {
         const path = adminPreviewToken
@@ -88,6 +90,8 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
         }
       } catch {
         if (!cancelled) setProduct(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
@@ -232,6 +236,16 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
     io.observe(el);
     return () => io.disconnect();
   }, [product]);
+
+  if (loading) {
+    return (
+      <div className="lux-shell py-32 text-center">
+        <p className="font-sans text-sm font-light text-ink-muted animate-pulse">
+          Loading piece…
+        </p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (

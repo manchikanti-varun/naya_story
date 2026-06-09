@@ -47,7 +47,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
         storePageFlags={storePageFlags}
         navCategories={navCategories}
       />
-      <main className="min-h-screen overflow-x-hidden bg-ivory pt-[calc(var(--store-nav-pad)+var(--store-promo-bar-h))] lux-grain">
+      <main className="min-h-screen bg-ivory pt-[calc(var(--store-nav-pad)+var(--store-promo-bar-h))] lux-grain [overflow-x:clip]">
         {children}
       </main>
       <StoreFooter footer={footer} legalPages={legalPages} logoRev={logoRev} />

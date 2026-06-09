@@ -123,6 +123,21 @@ export function MobileMenu({ open, onClose, onOpenCart, storePageFlags, navCateg
                               >
                                 All Collections
                               </Link>
+                              <Link
+                                href="/collections?tab=bestselling"
+                                onClick={onClose}
+                                className="block py-2.5 font-sans text-base font-light text-ink-muted transition-colors hover:text-gold"
+                              >
+                                Bestselling
+                              </Link>
+                              <Link
+                                href="/new-in"
+                                onClick={onClose}
+                                className="block py-2.5 font-sans text-base font-light text-ink-muted transition-colors hover:text-gold"
+                              >
+                                New In
+                              </Link>
+                              <div className="my-2 ml-0 mr-4 h-px bg-ivory-deep/40" />
                               {navCategories!.map((cat) => (
                                 <Link
                                   key={cat.slug}

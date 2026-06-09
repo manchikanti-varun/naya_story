@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { buildStorePrimaryNav, type StoreNavRow } from "@/lib/store-nav";
@@ -79,7 +80,7 @@ export function StoreNavLinks({
               <Link
                 href={item.href}
                 className={cn(
-                  "group relative font-sans text-[12px] font-normal uppercase tracking-[0.22em] antialiased transition-colors duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                  "group relative inline-flex items-center gap-1 font-sans text-[12px] font-normal uppercase tracking-[0.22em] antialiased transition-colors duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
                   "text-ink hover:text-gold",
                   active && "text-ink",
                 )}
@@ -94,6 +95,14 @@ export function StoreNavLinks({
                     aria-hidden
                   />
                 </span>
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 text-ink-soft transition-transform duration-300",
+                    dropdownOpen && "rotate-180",
+                  )}
+                  strokeWidth={1.5}
+                  aria-hidden
+                />
               </Link>
 
               {/* Dropdown */}
@@ -105,21 +114,37 @@ export function StoreNavLinks({
                     : "pointer-events-none opacity-0 -translate-y-1",
                 )}
               >
-                <div className="min-w-[180px] rounded-lg border border-ivory-deep/50 bg-ivory/98 px-1 py-2 shadow-[0_8px_40px_-10px_rgba(44,40,37,0.12)] backdrop-blur-xl">
+                <div className="min-w-[200px] rounded-lg border border-ivory-deep/50 bg-ivory/98 px-1 py-2 shadow-[0_8px_40px_-10px_rgba(44,40,37,0.12)] backdrop-blur-xl">
                   <Link
                     href="/collections"
-                    className="block rounded-md px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:bg-ivory-soft hover:text-gold"
+                    className="flex items-center justify-between rounded-md px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:bg-ivory-soft hover:text-gold"
                   >
-                    All Collections
+                    <span>All Collections</span>
+                    <ChevronRight className="h-3 w-3 text-ink-soft/60" strokeWidth={1.5} />
                   </Link>
-                  <div className="mx-3 my-1 h-px bg-ivory-deep/40" />
+                  <Link
+                    href="/collections?tab=bestselling"
+                    className="flex items-center justify-between rounded-md px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:bg-ivory-soft hover:text-gold"
+                  >
+                    <span>Bestselling</span>
+                    <ChevronRight className="h-3 w-3 text-ink-soft/60" strokeWidth={1.5} />
+                  </Link>
+                  <Link
+                    href="/new-in"
+                    className="flex items-center justify-between rounded-md px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:bg-ivory-soft hover:text-gold"
+                  >
+                    <span>New In</span>
+                    <ChevronRight className="h-3 w-3 text-ink-soft/60" strokeWidth={1.5} />
+                  </Link>
+                  <div className="mx-3 my-1.5 h-px bg-ivory-deep/40" />
                   {navCategories!.map((cat) => (
                     <Link
                       key={cat.slug}
                       href={cat.href}
-                      className="block rounded-md px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-ink-muted transition-colors duration-300 hover:bg-ivory-soft hover:text-gold"
+                      className="flex items-center justify-between rounded-md px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-ink-muted transition-colors duration-300 hover:bg-ivory-soft hover:text-gold"
                     >
-                      {cat.name}
+                      <span>{cat.name}</span>
+                      <ChevronRight className="h-3 w-3 text-ink-soft/40" strokeWidth={1.5} />
                     </Link>
                   ))}
                 </div>
