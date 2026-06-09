@@ -138,7 +138,10 @@ export function ProductEditor({
       try {
         const data = await apiFetch<{ product: Product }>(`/products/slug/${productSlug}`, { token });
         const p = data.product;
-        if (!p || cancelled) return;
+        if (!p || cancelled) {
+          if (!cancelled) setMsg("Product not found.");
+          return;
+        }
         setProductId(p._id);
         setForm({
           ...p,
@@ -150,6 +153,10 @@ export function ProductEditor({
           imageCaptions: p.imageCaptions ?? [],
           variants: p.variants?.length ? p.variants : [defaultVariant()],
         });
+      } catch (e) {
+        if (!cancelled) {
+          setMsg(`Failed to load product: ${(e as Error).message ?? "Unknown error"}`);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
