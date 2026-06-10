@@ -275,6 +275,14 @@ export function HeroSlideEditorFields({
                   onChange={(e) => onUpdate({ kicker: e.target.value })}
                 />
               </AdminField>
+              <label className="flex items-center gap-2 font-sans text-sm text-[var(--admin-ink)]">
+                <input
+                  type="checkbox"
+                  checked={slide.showKicker !== false}
+                  onChange={(e) => onUpdate({ showKicker: e.target.checked })}
+                />
+                Show kicker on storefront
+              </label>
               <AdminField label="Meta label (right side)">
                 <AdminInput
                   placeholder="Season IV"
@@ -282,6 +290,14 @@ export function HeroSlideEditorFields({
                   onChange={(e) => onUpdate({ metaLabel: e.target.value })}
                 />
               </AdminField>
+              <label className="flex items-center gap-2 font-sans text-sm text-[var(--admin-ink)]">
+                <input
+                  type="checkbox"
+                  checked={slide.showMetaLabel !== false}
+                  onChange={(e) => onUpdate({ showMetaLabel: e.target.checked })}
+                />
+                Show meta label on storefront
+              </label>
             </SlideSection>
           </div>
         ) : (

@@ -114,7 +114,7 @@ export function StoreNavLinks({
                     : "pointer-events-none opacity-0 -translate-y-1",
                 )}
               >
-                <div className="min-w-[200px] rounded-lg border border-ivory-deep/50 bg-ivory/98 px-1 py-2 shadow-[0_8px_40px_-10px_rgba(44,40,37,0.12)] backdrop-blur-xl">
+                <div className="min-w-[200px] rounded-lg border border-ivory-deep/60 bg-ivory px-1 py-2 shadow-[0_12px_48px_-8px_rgba(44,40,37,0.18)] backdrop-blur-2xl">
                   <Link
                     href="/collections"
                     className="flex items-center justify-between rounded-md px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:bg-ivory-soft hover:text-gold"

@@ -113,7 +113,7 @@ export function HomeProductRail({
 
         {cta ? (
           <div className="mt-12 flex flex-col items-center gap-2">
-            {hasMore ? (
+            {products.length > 0 ? (
               <p className="font-sans text-xs text-ink-muted">
                 Showing {cap} of {products.length}
               </p>

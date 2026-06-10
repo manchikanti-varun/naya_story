@@ -105,16 +105,26 @@ export function applyGlobalCategories(
     }));
 
   const [allTab, bestTab, newInTab] = systemCollectionTabs(hp);
+
+  // Preserve existing customizations (order, label, enabled) for category tabs
+  const existingCategoryTabs = (hp.collectionsPage?.categories ?? []).filter(
+    (c) => c.type === "category",
+  );
+  const existingTabMap = new Map(existingCategoryTabs.map((t) => [t.id, t]));
+
   const catalogTabs = sorted
     .filter((g) => g.enabled && g.collections)
-    .map((g, i) => ({
-      id: g.id,
-      label: g.name,
-      type: "category" as const,
-      value: g.slug,
-      enabled: true,
-      order: 3 + i,
-    }));
+    .map((g, i) => {
+      const existing = existingTabMap.get(g.id);
+      return {
+        id: g.id,
+        label: existing?.label ?? g.name,
+        type: "category" as const,
+        value: g.slug,
+        enabled: existing?.enabled ?? true,
+        order: existing?.order ?? (3 + i),
+      };
+    });
 
   return {
     ...hp,
@@ -126,9 +136,9 @@ export function applyGlobalCategories(
     collectionsPage: {
       ...hp.collectionsPage,
       categories: [
-        { ...allTab, order: 0 },
-        { ...bestTab, order: 1 },
-        { ...newInTab, order: 2 },
+        { ...allTab, order: allTab.order ?? 0 },
+        { ...bestTab, order: bestTab.order ?? 1 },
+        { ...newInTab, order: newInTab.order ?? 2 },
         ...catalogTabs,
       ],
     },

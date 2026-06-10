@@ -21,6 +21,11 @@ export type SizeGuideConfig = {
   subtitle?: string;
   columns: SizeGuideColumn[];
   rows: SizeGuideRow[];
+  /** Separate inch measurements — when provided, a toggle appears on storefront. */
+  inchColumns?: SizeGuideColumn[];
+  inchRows?: SizeGuideRow[];
+  /** Default unit shown to customer. */
+  defaultUnit?: "cm" | "inch";
 };
 
 export type StorefrontSettings = {

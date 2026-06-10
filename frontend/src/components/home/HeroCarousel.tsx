@@ -95,7 +95,9 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
   const hasHeroImage = isValidImageSrc(desktop) || isValidImageSrc(mobile);
   const imgSrc = isValidImageSrc(desktop) ? desktop : mobile;
   const SITE_NAME = "Naya Story";
-  const kickerText = slide.kicker?.trim() || `${SITE_NAME} — ${String(safeIndex + 1).padStart(2, "0")}`;
+  const kickerText = slide.showKicker !== false
+    ? (slide.kicker?.trim() || `${SITE_NAME} — ${String(safeIndex + 1).padStart(2, "0")}`)
+    : null;
   const alignClass =
     slideDesign?.align === "center"
       ? "text-center items-center"
@@ -192,12 +194,14 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
             )}
             style={slideDesign?.maxWidth ? { maxWidth: slideDesign.maxWidth } : undefined}
           >
-            <p
-              className="lux-hero-kicker [text-shadow:0_1px_24px_rgba(0,0,0,0.35)]"
-              style={heroKickerStyle(slideDesign, st.kicker)}
-            >
-              {kickerText}
-            </p>
+            {kickerText ? (
+              <p
+                className="lux-hero-kicker [text-shadow:0_1px_24px_rgba(0,0,0,0.35)]"
+                style={heroKickerStyle(slideDesign, st.kicker)}
+              >
+                {kickerText}
+              </p>
+            ) : null}
             <h1
               className="lux-hero-title mt-3 sm:mt-4 [text-shadow:0_2px_40px_rgba(0,0,0,0.35)]"
               style={heroHeadingStyle(slideDesign, st.heading)}
@@ -225,7 +229,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
             ) : null}
           </motion.div>
         </AnimatePresence>
-        {slide.metaLabel?.trim() ? (
+        {slide.showMetaLabel !== false && slide.metaLabel?.trim() ? (
           <motion.div
             key={slide.id + "-meta"}
             initial={{ opacity: 0 }}

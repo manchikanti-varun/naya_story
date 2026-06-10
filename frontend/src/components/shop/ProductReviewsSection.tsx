@@ -246,28 +246,35 @@ export function ProductReviewsSection({ productId, productName, className }: Pro
         <p className="mt-2 font-sans text-xs text-ink-soft">No published reviews yet</p>
       )}
 
-      {/* Reviews list */}
+      {/* Reviews marquee */}
       {reviews.length > 0 && (
-        <div className="mx-auto mt-6 max-w-lg space-y-4 text-left">
-          {reviews.map((review) => (
-            <div
-              key={review._id}
-              className="rounded-md border border-ivory-deep bg-white p-4"
-            >
-              <div className="flex items-center gap-2">
-                <div className="flex gap-0.5">{renderStars(review.rating, "h-3.5 w-3.5")}</div>
-                <span className="font-sans text-xs text-ink-soft">
+        <div className="group/marquee relative mt-8 overflow-hidden">
+          {/* Fade edges */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-ivory to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-ivory to-transparent" />
+
+          <div className="flex animate-marquee gap-5 group-hover/marquee:[animation-play-state:paused]">
+            {/* Duplicate reviews for seamless loop */}
+            {[...reviews, ...reviews].map((review, i) => (
+              <div
+                key={`${review._id}-${i}`}
+                className="w-[300px] shrink-0 rounded-xl border border-ivory-deep/60 bg-white/80 p-5 backdrop-blur-sm"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex gap-0.5">{renderStars(review.rating, "h-3.5 w-3.5")}</div>
+                  <span className="font-sans text-[10px] text-ink-muted">
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="mt-3 line-clamp-3 font-sans text-sm font-light leading-relaxed text-ink">
+                  {review.body}
+                </p>
+                <p className="mt-3 font-sans text-xs font-medium text-ink-soft">
                   {review.user?.name || "Anonymous"}
-                </span>
+                </p>
               </div>
-              <p className="mt-2 font-sans text-sm font-light text-ink">
-                {review.body}
-              </p>
-              <p className="mt-1 font-sans text-[10px] text-ink-muted">
-                {new Date(review.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 

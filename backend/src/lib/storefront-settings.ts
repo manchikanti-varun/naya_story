@@ -1,4 +1,4 @@
-import type { StorefrontSettings, SizeGuideConfig, SizeGuideRow } from "../types/storefront-settings.js";
+import type { StorefrontSettings, SizeGuideConfig, SizeGuideColumn, SizeGuideRow } from "../types/storefront-settings.js";
 
 const DEFAULT_SIZE_GUIDE: SizeGuideConfig = {
   title: "Size chart",
@@ -64,6 +64,35 @@ export function mergeStorefrontSettings(raw: unknown): StorefrontSettings {
         .filter((row) => row.size.trim())
     : DEFAULT_SIZE_GUIDE.rows;
 
+  // Inch table (separate, not merged with CM)
+  let inchColumns: SizeGuideColumn[] | undefined;
+  let inchRows: SizeGuideRow[] | undefined;
+  if (Array.isArray(sg.inchColumns) && (sg.inchColumns as unknown[]).length > 0) {
+    inchColumns = (sg.inchColumns as Record<string, unknown>[])
+      .filter((c) => c && typeof c === "object")
+      .map((c, i) => ({
+        id: String(c.id ?? `icol-${i}`),
+        label: String(c.label ?? ""),
+      }))
+      .filter((c) => c.label.trim());
+
+    if (inchColumns.length > 0 && Array.isArray(sg.inchRows)) {
+      const inchColIds = inchColumns.map((c) => c.id);
+      inchRows = (sg.inchRows as Record<string, unknown>[])
+        .filter((row) => row && typeof row === "object")
+        .map((row) => {
+          const out: SizeGuideRow = { size: String(row.size ?? "") };
+          for (const id of inchColIds) {
+            if (id === "size") continue;
+            out[id] = String(row[id] ?? "");
+          }
+          return out;
+        });
+    }
+  }
+
+  const defaultUnit = sg.defaultUnit === "inch" ? "inch" as const : "cm" as const;
+
   return {
     pdpSuggestedMode,
     sizeGuide: {
@@ -71,6 +100,9 @@ export function mergeStorefrontSettings(raw: unknown): StorefrontSettings {
       subtitle: typeof sg.subtitle === "string" ? sg.subtitle : DEFAULT_SIZE_GUIDE.subtitle,
       columns: columns.length ? columns : DEFAULT_SIZE_GUIDE.columns,
       rows: rows.length ? rows : DEFAULT_SIZE_GUIDE.rows,
+      ...(inchColumns && inchColumns.length > 0 ? { inchColumns } : {}),
+      ...(inchRows && inchRows.length > 0 ? { inchRows } : {}),
+      defaultUnit,
     },
   };
 }

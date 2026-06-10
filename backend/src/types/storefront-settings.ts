@@ -21,6 +21,9 @@ export type SizeGuideConfig = {
   subtitle?: string;
   columns: SizeGuideColumn[];
   rows: SizeGuideRow[];
+  inchColumns?: SizeGuideColumn[];
+  inchRows?: SizeGuideRow[];
+  defaultUnit?: "cm" | "inch";
 };
 
 export type StorefrontSettings = {

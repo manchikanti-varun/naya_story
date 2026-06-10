@@ -17,8 +17,12 @@ type Props = {
 export function SizeGuideModal({ open, onClose, config }: Props) {
   const [mounted, setMounted] = useState(false);
   const guide = config ?? DEFAULT_SIZE_GUIDE;
-  const columns = guide.columns?.length ? guide.columns : DEFAULT_SIZE_GUIDE.columns;
-  const rows = guide.rows?.length ? guide.rows : DEFAULT_SIZE_GUIDE.rows;
+  const defaultUnit = guide.defaultUnit ?? "cm";
+  const [unit, setUnit] = useState<"cm" | "inch">(defaultUnit);
+
+  const hasInch = guide.inchColumns && guide.inchColumns.length > 0 && guide.inchRows && guide.inchRows.length > 0;
+  const columns = unit === "inch" && hasInch ? guide.inchColumns! : (guide.columns?.length ? guide.columns : DEFAULT_SIZE_GUIDE.columns);
+  const rows = unit === "inch" && hasInch ? guide.inchRows! : (guide.rows?.length ? guide.rows : DEFAULT_SIZE_GUIDE.rows);
 
   useEffect(() => {
     setMounted(true);
@@ -90,6 +94,37 @@ export function SizeGuideModal({ open, onClose, config }: Props) {
                   <X className="h-5 w-5" strokeWidth={1.25} />
                 </button>
               </div>
+
+              {/* Unit toggle */}
+              {hasInch ? (
+                <div className="mt-5 flex items-center justify-center gap-1 rounded-full border border-ivory-deep/60 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setUnit("cm")}
+                    className={cn(
+                      "rounded-full px-5 py-1.5 font-sans text-[11px] uppercase tracking-[0.18em] transition-all duration-300",
+                      unit === "cm"
+                        ? "bg-ink text-ivory shadow-sm"
+                        : "text-ink-muted hover:text-ink",
+                    )}
+                  >
+                    CM
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUnit("inch")}
+                    className={cn(
+                      "rounded-full px-5 py-1.5 font-sans text-[11px] uppercase tracking-[0.18em] transition-all duration-300",
+                      unit === "inch"
+                        ? "bg-ink text-ivory shadow-sm"
+                        : "text-ink-muted hover:text-ink",
+                    )}
+                  >
+                    Inches
+                  </button>
+                </div>
+              ) : null}
+
               <div className="mt-6 -mx-1 overflow-x-auto sm:mt-8">
                 <table className="min-w-[320px] w-full text-left font-sans text-sm">
                   <thead>

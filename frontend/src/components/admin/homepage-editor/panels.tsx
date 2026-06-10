@@ -838,18 +838,13 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
 
       <CmsFieldGroup title="Collection tabs">
         <p className="mt-2 font-sans text-xs text-slate-500">
-          Catalog category tabs are synced from{" "}
-          <a href={homepageSectionEditUrl("categories")} className="font-medium text-[var(--admin-accent)] underline-offset-2 hover:underline">
-            Shop by category
-          </a>
-          . Edit All / Bestselling below.
+          Rearrange all tabs freely. Use the arrows to move tabs up/down. The storefront shows them in this order.
         </p>
-        <div className="mt-4 space-y-3">
-          {cp.categories
-            .filter((cat) => cat.type === "all" || cat.type === "bestselling" || cat.type === "newIn")
+        <div className="mt-4 space-y-2">
+          {[...cp.categories]
             .sort((a, b) => a.order - b.order)
             .map((cat, idx, arr) => (
-              <div key={cat.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 p-4">
+              <div key={cat.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3">
                 <div className="flex flex-col gap-0.5">
                   <button
                     type="button"
@@ -857,13 +852,15 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
                     onClick={() => {
                       const prev = arr[idx - 1];
                       if (!prev) return;
-                      updateCollectionsCategory(cat.id, { order: prev.order });
-                      updateCollectionsCategory(prev.id, { order: cat.order });
+                      const prevOrder = prev.order;
+                      const curOrder = cat.order;
+                      updateCollectionsCategory(cat.id, { order: prevOrder });
+                      updateCollectionsCategory(prev.id, { order: curOrder });
                     }}
-                    className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
+                    className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
                     aria-label="Move up"
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 2L1 7h8L5 2z" fill="currentColor"/></svg>
+                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M5 2L1 7h8L5 2z" fill="currentColor"/></svg>
                   </button>
                   <button
                     type="button"
@@ -871,103 +868,43 @@ export function ContentEditorCollectionsPanel({ embedded = false }: { embedded?:
                     onClick={() => {
                       const next = arr[idx + 1];
                       if (!next) return;
-                      updateCollectionsCategory(cat.id, { order: next.order });
-                      updateCollectionsCategory(next.id, { order: cat.order });
+                      const nextOrder = next.order;
+                      const curOrder = cat.order;
+                      updateCollectionsCategory(cat.id, { order: nextOrder });
+                      updateCollectionsCategory(next.id, { order: curOrder });
                     }}
-                    className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
+                    className="flex h-5 w-5 items-center justify-center rounded border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
                     aria-label="Move down"
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 8L1 3h8L5 8z" fill="currentColor"/></svg>
+                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M5 8L1 3h8L5 8z" fill="currentColor"/></svg>
                   </button>
                 </div>
-                <div className="flex flex-1 flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <input
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Label"
-                      value={cat.label}
-                      onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
-                    />
-                    <span className="font-sans text-[10px] uppercase tracking-[0.18em] text-slate-400">
-                      {cat.type === "all" ? "All" : cat.type === "bestselling" ? "Bestselling" : "New In"}
-                    </span>
-                  </div>
-                  <label className="flex items-center gap-2 text-xs text-slate-600">
-                    <input
-                      type="checkbox"
-                      checked={cat.enabled}
-                      onChange={(e) =>
-                        updateCollectionsCategory(cat.id, { enabled: e.target.checked })
-                      }
-                    />
-                    Enabled
-                  </label>
+                <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded bg-slate-100 px-1 font-mono text-[10px] text-slate-400">
+                  {idx + 1}
+                </span>
+                <div className="flex flex-1 flex-wrap items-center gap-3">
+                  <input
+                    className="w-32 rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+                    value={cat.label}
+                    onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
+                  />
+                  <span className="rounded bg-slate-50 px-2 py-0.5 font-mono text-[10px] uppercase text-slate-400">
+                    {cat.type === "category" ? cat.value : cat.type}
+                  </span>
                 </div>
+                <label className="flex shrink-0 items-center gap-1.5 text-[11px] text-slate-500">
+                  <input
+                    type="checkbox"
+                    checked={cat.enabled}
+                    onChange={(e) =>
+                      updateCollectionsCategory(cat.id, { enabled: e.target.checked })
+                    }
+                  />
+                  On
+                </label>
               </div>
             ))}
         </div>
-        {cp.categories.filter((c) => c.type === "category").length > 0 ? (
-          <div className="mt-5 space-y-3">
-            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Category tabs
-            </p>
-            {cp.categories
-              .filter((c) => c.type === "category")
-              .sort((a, b) => a.order - b.order)
-              .map((cat, idx, arr) => (
-                <div key={cat.id} className="flex items-center gap-3 rounded-2xl border border-slate-100 p-4">
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => {
-                        const prev = arr[idx - 1];
-                        if (!prev) return;
-                        updateCollectionsCategory(cat.id, { order: prev.order });
-                        updateCollectionsCategory(prev.id, { order: cat.order });
-                      }}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label="Move up"
-                    >
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 2L1 7h8L5 2z" fill="currentColor"/></svg>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === arr.length - 1}
-                      onClick={() => {
-                        const next = arr[idx + 1];
-                        if (!next) return;
-                        updateCollectionsCategory(cat.id, { order: next.order });
-                        updateCollectionsCategory(next.id, { order: cat.order });
-                      }}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition hover:border-slate-400 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
-                      aria-label="Move down"
-                    >
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 8L1 3h8L5 8z" fill="currentColor"/></svg>
-                    </button>
-                  </div>
-                  <div className="flex flex-1 flex-wrap items-center justify-between gap-3">
-                    <input
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      placeholder="Label"
-                      value={cat.label}
-                      onChange={(e) => updateCollectionsCategory(cat.id, { label: e.target.value })}
-                    />
-                    <label className="flex items-center gap-2 text-xs text-slate-600">
-                      <input
-                        type="checkbox"
-                        checked={cat.enabled}
-                        onChange={(e) =>
-                          updateCollectionsCategory(cat.id, { enabled: e.target.checked })
-                        }
-                      />
-                      Enabled
-                    </label>
-                  </div>
-                </div>
-              ))}
-          </div>
-        ) : null}
       </CmsFieldGroup>
 
       {/* Product ordering per tab */}

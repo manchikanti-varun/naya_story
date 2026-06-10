@@ -78,12 +78,17 @@ export default {
           "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(200%)" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "slow-zoom": "slow-zoom 22s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "scroll-line": "scroll-line 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite",
         shimmer: "shimmer 2.4s linear infinite",
+        marquee: "marquee 30s linear infinite",
       },
     },
   },

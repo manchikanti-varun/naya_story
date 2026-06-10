@@ -55,6 +55,13 @@ export function mergeStorefrontSettings(raw: unknown): StorefrontSettings {
       subtitle: typeof sg.subtitle === "string" ? sg.subtitle : DEFAULT_SIZE_GUIDE.subtitle,
       columns: cols.length ? cols : DEFAULT_SIZE_GUIDE.columns,
       rows: rows.length ? rows : DEFAULT_SIZE_GUIDE.rows,
+      ...(Array.isArray(sg.inchColumns) && (sg.inchColumns as unknown[]).length > 0
+        ? { inchColumns: sg.inchColumns as SizeGuideConfig["inchColumns"] }
+        : {}),
+      ...(Array.isArray(sg.inchRows) && (sg.inchRows as unknown[]).length > 0
+        ? { inchRows: sg.inchRows as SizeGuideConfig["inchRows"] }
+        : {}),
+      defaultUnit: (sg as Record<string, unknown>).defaultUnit === "inch" ? "inch" : "cm",
     };
   }
 

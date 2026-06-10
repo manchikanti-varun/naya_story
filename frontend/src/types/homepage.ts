@@ -6,12 +6,16 @@ export type HeroSlide = {
   mobileImage?: string;
   /** Eyebrow above heading; blank = site name + slide index. */
   kicker?: string;
+  /** When false, hides the kicker line on the storefront. Default true. */
+  showKicker?: boolean;
   heading: string;
   subheading?: string;
   ctaLabel?: string;
   ctaHref: string;
   /** Small label on the right column (e.g. season tag). */
   metaLabel?: string;
+  /** When false, hides the meta label on the storefront. Default true. */
+  showMetaLabel?: boolean;
   /** Per-slide colors, overlay, typography, and layout overrides. */
   styles?: SectionDesign;
   /** Per-slide text color overrides (heading, subheading, CTA, kicker). */
