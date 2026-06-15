@@ -3,16 +3,28 @@
  * Defines valid transitions and provides validation.
  */
 
-export type OrderStatus = "pending" | "confirmed" | "packed" | "shipped" | "delivered" | "cancelled";
+export type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "packed"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "return_requested"
+  | "return_approved"
+  | "refunded";
 
 /** Map of current status → allowed next statuses */
 const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   pending: ["confirmed", "cancelled"],
   confirmed: ["packed", "cancelled"],
-  packed: ["shipped"],
+  packed: ["shipped", "cancelled"],
   shipped: ["delivered"],
-  delivered: [],
+  delivered: ["return_requested"],
   cancelled: [],
+  return_requested: ["return_approved", "delivered"], // admin can approve or reject (back to delivered)
+  return_approved: ["refunded"],
+  refunded: [],
 };
 
 /**

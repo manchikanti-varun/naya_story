@@ -47,7 +47,7 @@ const OrderSchema = new mongoose.Schema(
     guestEmail: String,
     status: {
       type: String,
-      enum: ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"],
+      enum: ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "return_requested", "return_approved", "refunded"],
       default: "pending",
     },
     items: { type: [OrderItemSchema], required: true },
@@ -79,6 +79,12 @@ const OrderSchema = new mongoose.Schema(
       generatedAt: Date,
       url: String,
     },
+    /** Return/refund details */
+    returnReason: String,
+    returnRequestedAt: Date,
+    refundAmount: { type: Number, default: 0 },
+    refundId: String,
+    refundedAt: Date,
   },
   { timestamps: true },
 );

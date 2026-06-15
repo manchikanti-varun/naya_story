@@ -9,6 +9,23 @@ export function createIntegrationsRouter(env: {
 }) {
   const r = Router();
 
+  // GET /payment-methods — returns available payment methods for the storefront
+  r.get("/payment-methods", (_req, res) => {
+    const methods: { id: string; name: string; enabled: boolean }[] = [];
+
+    if (env.stripeSecret) {
+      methods.push({ id: "stripe", name: "Card / UPI (Stripe)", enabled: true });
+    }
+    if (env.razorpayKeyId && env.razorpayKeySecret) {
+      methods.push({ id: "razorpay", name: "Razorpay (UPI / Card / Netbanking)", enabled: true });
+    }
+
+    const codEnabled = process.env.COD_ENABLED === "true";
+    methods.push({ id: "cod", name: "Cash on Delivery", enabled: codEnabled });
+
+    res.json({ methods });
+  });
+
   // Lazy-initialize Stripe SDK only when secret is available
   let stripe: Stripe | null = null;
   function getStripe(): Stripe | null {

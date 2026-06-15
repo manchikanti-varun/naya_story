@@ -88,5 +88,34 @@ export function createOrdersRouter(secret: string) {
     }),
   );
 
+  // POST /:id/return — Customer requests a return
+  r.post(
+    "/:id/return",
+    requireAuth(secret),
+    asyncHandler(async (req, res) => {
+      const { reason } = req.body as { reason?: string };
+      if (!reason?.trim()) {
+        return res.status(400).json({ message: "Return reason is required." });
+      }
+      const order = await orderService.requestReturn(
+        req.params.id,
+        String(req.user!._id),
+        reason.trim(),
+      );
+      res.json({ order });
+    }),
+  );
+
+  // POST /admin/release-stale — Admin: release stock from stale unpaid orders
+  r.post(
+    "/admin/release-stale",
+    ...(requireAdmin(secret) as RequestHandler[]),
+    asyncHandler(async (req, res) => {
+      const timeoutMinutes = Number(req.body?.timeoutMinutes) || 30;
+      const result = await orderService.releaseStaleOrders(timeoutMinutes);
+      res.json({ ...result, message: `Released ${result.released} stale orders.` });
+    }),
+  );
+
   return r;
 }

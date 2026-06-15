@@ -1,14 +1,26 @@
 import type { Order } from "@/types";
 
 export function formatOrderStatus(status: string) {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  const labels: Record<string, string> = {
+    pending: "Pending",
+    confirmed: "Confirmed",
+    packed: "Packed",
+    shipped: "Shipped",
+    delivered: "Delivered",
+    cancelled: "Cancelled",
+    return_requested: "Return Requested",
+    return_approved: "Return Approved",
+    refunded: "Refunded",
+  };
+  return labels[status] ?? status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 export function orderStatusTone(status: string): "success" | "warning" | "danger" | "neutral" {
   if (status === "delivered") return "success";
   if (status === "shipped" || status === "packed" || status === "confirmed") return "neutral";
   if (status === "pending") return "warning";
-  if (status === "cancelled") return "danger";
+  if (status === "cancelled" || status === "refunded") return "danger";
+  if (status === "return_requested" || status === "return_approved") return "warning";
   return "neutral";
 }
 

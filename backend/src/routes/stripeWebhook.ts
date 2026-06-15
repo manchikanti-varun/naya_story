@@ -69,6 +69,9 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent, reque
   }
 
   await transitionOrderStatus(order, "confirmed", paymentIntent.id);
+  // Mark payment as paid
+  order.paymentStatus = "paid";
+  await order.save();
 
   console.log(
     JSON.stringify({
@@ -125,6 +128,7 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent, requestI
   await releaseStock(stockItems);
 
   order.status = "cancelled";
+  order.paymentStatus = "failed";
   order.timeline!.push({ status: "cancelled", at: new Date() });
   await order.save();
 

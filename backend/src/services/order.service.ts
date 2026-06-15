@@ -168,6 +168,18 @@ export const orderService = {
       }
     }
 
+    // If refunded, release stock back
+    if (targetStatus === "refunded") {
+      const stockItems = (order.items ?? []).map((item: { productId: unknown; sku: unknown; quantity: unknown }) => ({
+        productId: String(item.productId),
+        sku: String(item.sku),
+        quantity: Number(item.quantity),
+      }));
+      await releaseStock(stockItems);
+      order.refundAmount = order.total;
+      order.refundedAt = new Date();
+    }
+
     order.status = targetStatus;
     if (trackingNumber) order.trackingNumber = trackingNumber;
     if (shippingCarrier) order.shippingCarrier = shippingCarrier;
@@ -175,5 +187,61 @@ export const orderService = {
     await order.save();
 
     return order;
+  },
+
+  /**
+   * Request a return (customer-initiated).
+   */
+  async requestReturn(orderId: string, userId: string, reason: string) {
+    const order = await Order.findById(orderId);
+    if (!order) throw new HttpError(404, "Not found");
+    if (String(order.user) !== userId) throw new HttpError(403, "Forbidden");
+
+    const currentStatus = order.status as OrderStatus;
+    const error = validateTransition(currentStatus, "return_requested");
+    if (error) throw new HttpError(422, error);
+
+    order.status = "return_requested";
+    order.returnReason = reason;
+    order.returnRequestedAt = new Date();
+    order.timeline!.push({ status: "return_requested", at: new Date() });
+    await order.save();
+
+    return order;
+  },
+
+  /**
+   * Release stock for stale pending orders (payment not received within timeout).
+   * Called by a cron/scheduler or on-demand by admin.
+   */
+  async releaseStaleOrders(timeoutMinutes = 30) {
+    const cutoff = new Date(Date.now() - timeoutMinutes * 60 * 1000);
+    const staleOrders = await Order.find({
+      status: "pending",
+      paymentStatus: { $ne: "paid" },
+      createdAt: { $lt: cutoff },
+    });
+
+    let released = 0;
+    for (const order of staleOrders) {
+      const stockItems = (order.items ?? []).map((item: { productId: unknown; sku: unknown; quantity: unknown }) => ({
+        productId: String(item.productId),
+        sku: String(item.sku),
+        quantity: Number(item.quantity),
+      }));
+      await releaseStock(stockItems);
+
+      if (order.couponCode) {
+        await couponRepository.decrementUsage(order.couponCode);
+      }
+
+      order.status = "cancelled";
+      order.paymentStatus = "failed";
+      order.timeline!.push({ status: "cancelled", at: new Date() });
+      await order.save();
+      released++;
+    }
+
+    return { released, checked: staleOrders.length };
   },
 };

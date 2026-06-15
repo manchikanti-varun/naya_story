@@ -53,4 +53,7 @@ export const ORDER_STATUSES = [
   "shipped",
   "delivered",
   "cancelled",
+  "return_requested",
+  "return_approved",
+  "refunded",
 ] as const;

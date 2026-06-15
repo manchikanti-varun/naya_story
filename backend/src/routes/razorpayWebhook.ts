@@ -107,6 +107,7 @@ async function handlePaymentCaptured(body: RazorpayWebhookBody, requestId?: stri
 
   order.status = "confirmed";
   order.paymentReference = payment.id;
+  order.paymentStatus = "paid";
   order.timeline!.push({ status: "confirmed", at: new Date() });
   await order.save();
 
@@ -168,6 +169,7 @@ async function handlePaymentFailed(body: RazorpayWebhookBody, requestId?: string
   await releaseStock(stockItems);
 
   order.status = "cancelled";
+  order.paymentStatus = "failed";
   order.timeline!.push({ status: "cancelled", at: new Date() });
   await order.save();
 
