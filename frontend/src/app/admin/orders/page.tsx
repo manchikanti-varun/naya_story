@@ -7,6 +7,7 @@ import { useAuth } from "@/context/auth-context";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
 import { ORDER_STATUSES } from "@/lib/constants";
 import type { Order } from "@/types";
+import type { InvoiceData } from "@/components/admin/InvoiceTemplate";
 import {
   formatOrderStatus,
   orderCustomerLabel,
@@ -223,16 +224,77 @@ function OrderDetail({ order, onUpdateStatus, onRefresh }: { order: Order; onUpd
   async function downloadInvoice() {
     if (!token) return;
     try {
-      const data = await apiFetch<{ invoice: unknown }>(`/invoices/orders/${order._id}/invoice`, { token });
-      // Create a downloadable JSON invoice (can be rendered as PDF on client)
-      const blob = new Blob([JSON.stringify(data.invoice, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `invoice-${order.orderNumber}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("Invoice downloaded");
+      const data = await apiFetch<{ invoice: InvoiceData }>(`/invoices/orders/${order._id}/invoice`, { token });
+      // Open a print-ready invoice window using the same template
+      const win = window.open("", "_blank");
+      if (!win) { toast.error("Popup blocked — allow popups for this site"); return; }
+      const inv = data.invoice;
+      const fmt = (n: number) => n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      const itemRows = inv.items.map((item, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td><strong>${item.name}</strong><br><span class="text-gray">${[item.size, item.color].filter(Boolean).join(" / ")} — SKU: ${item.sku}</span></td>
+          <td>${item.hsnCode || "—"}</td>
+          <td class="text-right">${item.quantity}</td>
+          <td class="text-right">₹${fmt(item.mrp)}</td>
+          <td class="text-right">₹${fmt(item.taxableValue)}</td>
+          <td class="text-right">${Math.round(item.gstRate * 100)}%</td>
+          <td class="text-right">₹${fmt(item.cgst)}</td>
+          <td class="text-right">₹${fmt(item.sgst)}</td>
+          <td class="text-right"><strong>₹${fmt(item.lineTotal)}</strong></td>
+        </tr>
+      `).join("");
+      win.document.write(`<!DOCTYPE html><html><head><title>Invoice ${inv.invoiceNumber}</title>
+        <style>
+          *{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;color:#111;padding:32px}
+          table{width:100%;border-collapse:collapse}th,td{padding:6px 8px;text-align:left}
+          th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#666;border-bottom:1px solid #ddd}
+          td{border-bottom:1px solid #f5f5f5}.text-right{text-align:right}.text-gray{color:#888;font-size:10px}
+          .header{display:flex;justify-content:space-between;border-bottom:1px solid #e5e7eb;padding-bottom:20px;margin-bottom:20px}
+          .totals{margin-left:auto;width:280px}.totals .row{display:flex;justify-content:space-between;margin-bottom:4px}
+          .grand{border-top:2px solid #333;padding-top:8px;font-size:14px;font-weight:700}
+          .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:20px 0}
+          @media print{body{padding:16px}}
+        </style></head><body>
+        <div class="header"><div><h1 style="font-size:20px">${inv.store.name}</h1>
+          <p style="color:#666;margin-top:4px">${inv.store.address}</p>
+          ${inv.store.gstin ? `<p style="color:#666">GSTIN: ${inv.store.gstin}</p>` : ""}
+          ${inv.store.phone ? `<p style="color:#666">Phone: ${inv.store.phone}</p>` : ""}
+        </div><div style="text-align:right"><p style="font-size:16px;font-weight:600">TAX INVOICE</p>
+          <p style="color:#666;margin-top:8px">Invoice #: <strong>${inv.invoiceNumber}</strong></p>
+          <p style="color:#666">Date: ${fmtDate(inv.invoiceDate)}</p>
+          <p style="color:#666">Order #: <strong>${inv.orderNumber}</strong></p>
+          <p style="color:#666">Order Date: ${fmtDate(inv.orderDate)}</p>
+        </div></div>
+        <div class="grid"><div><p style="font-size:10px;text-transform:uppercase;color:#999;letter-spacing:.05em">Bill To</p>
+          <p style="margin-top:6px;font-weight:500">${inv.customer.name}</p>
+          <p style="color:#666">${inv.customer.email}</p>
+          ${inv.customer.phone ? `<p style="color:#666">${inv.customer.phone}</p>` : ""}
+        </div><div><p style="font-size:10px;text-transform:uppercase;color:#999;letter-spacing:.05em">Ship To</p>
+          <p style="margin-top:6px;color:#444">${inv.shippingAddress.line1}</p>
+          ${inv.shippingAddress.line2 ? `<p style="color:#444">${inv.shippingAddress.line2}</p>` : ""}
+          <p style="color:#444">${inv.shippingAddress.city}, ${inv.shippingAddress.state} — ${inv.shippingAddress.postalCode}</p>
+          <p style="color:#444">${inv.shippingAddress.country}</p>
+        </div></div>
+        <table style="margin-top:16px"><thead><tr><th>#</th><th>Item</th><th>HSN</th><th class="text-right">Qty</th><th class="text-right">MRP</th><th class="text-right">Taxable</th><th class="text-right">GST%</th><th class="text-right">CGST</th><th class="text-right">SGST</th><th class="text-right">Total</th></tr></thead>
+        <tbody>${itemRows}</tbody></table>
+        <div class="totals" style="margin-top:20px">
+          <div class="row"><span style="color:#666">Subtotal</span><span>₹${fmt(inv.subtotal)}</span></div>
+          ${inv.totalDiscount > 0 ? `<div class="row"><span style="color:#666">Discount</span><span style="color:#15803d">−₹${fmt(inv.totalDiscount)}</span></div>` : ""}
+          <div class="row"><span style="color:#666">Taxable Value</span><span>₹${fmt(inv.totalTaxableValue)}</span></div>
+          <div class="row"><span style="color:#666">CGST</span><span>₹${fmt(inv.totalCgst)}</span></div>
+          <div class="row"><span style="color:#666">SGST</span><span>₹${fmt(inv.totalSgst)}</span></div>
+          ${inv.shippingCharge > 0 ? `<div class="row"><span style="color:#666">Shipping</span><span>₹${fmt(inv.shippingCharge)}</span></div>` : ""}
+          <div class="row grand"><span>Grand Total</span><span>₹${fmt(inv.grandTotal)}</span></div>
+        </div>
+        <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:12px;display:flex;justify-content:space-between;color:#666">
+          <p>Payment: <strong>${inv.paymentMethod.toUpperCase()}</strong> — <strong style="color:${inv.paymentStatus === "paid" ? "#15803d" : "#b45309"}">${inv.paymentStatus.toUpperCase()}</strong></p>
+          <p>Computer-generated invoice</p>
+        </div></body></html>`);
+      win.document.close();
+      setTimeout(() => win.print(), 300);
+      toast.success("Invoice ready — use Print > Save as PDF");
     } catch (e) {
       toast.error((e as Error).message ?? "Failed to download invoice");
     }
