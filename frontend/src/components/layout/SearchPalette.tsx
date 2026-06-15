@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import type { Product } from "@/types";
 import { cn } from "@/lib/cn";
@@ -45,8 +45,49 @@ export function SearchPalette({ open, onClose }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [recent, setRecent] = useState<string[]>([]);
+  const [categories, setCategories] = useState<{ name: string; slug: string }[]>([]);
+  const [trending, setTrending] = useState<string[]>([]);
 
   const refreshRecent = useCallback(() => setRecent(readRecent()), []);
+
+  // Fetch real categories and trending product names on first open
+  useEffect(() => {
+    if (!open || categories.length > 0) return;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        // Fetch site settings to get real categories
+        const settings = await apiFetch<{ settings: { homepage: { globalCategories?: Array<{ name: string; slug: string; enabled?: boolean }> } } }>(
+          "/content/site",
+        );
+        if (!cancelled && settings.settings.homepage.globalCategories) {
+          const cats = settings.settings.homepage.globalCategories
+            .filter((c) => c.enabled !== false)
+            .slice(0, 6)
+            .map((c) => ({ name: c.name, slug: c.slug }));
+          setCategories(cats);
+        }
+      } catch {
+        // Fallback: do nothing, categories stays empty
+      }
+
+      try {
+        // Fetch popular/bestseller products for trending suggestions
+        const data = await apiFetch<{ products: Product[] }>(
+          "/products?bestseller=true&limit=6",
+        );
+        if (!cancelled && data.products.length > 0) {
+          const names = data.products.map((p) => p.name).slice(0, 4);
+          setTrending(names);
+        }
+      } catch {
+        // Fallback: do nothing
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [open, categories.length]);
 
   useEffect(() => {
     if (!open) {
@@ -90,8 +131,6 @@ export function SearchPalette({ open, onClose }: Props) {
   }, [open, onClose]);
 
   const hasQuery = query.trim().length > 0;
-
-  const trending = useMemo(() => ["Silk slip", "Evening drape", "Tailored coat"], []);
 
   const applyPhrase = (phrase: string) => {
     setQuery(phrase);
@@ -285,33 +324,17 @@ export function SearchPalette({ open, onClose }: Props) {
                         Categories
                       </p>
                       <ul className="mt-3 space-y-2 font-display text-lg font-light text-ink-muted">
-                        <li>
-                          <Link
-                            href="/collections?category=dresses"
-                            onClick={onClose}
-                            className="transition-colors duration-500 hover:text-gold"
-                          >
-                            Dresses
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            href="/collections?category=tops"
-                            onClick={onClose}
-                            className="transition-colors duration-500 hover:text-gold"
-                          >
-                            Tops & shirts
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            href="/collections?category=outerwear"
-                            onClick={onClose}
-                            className="transition-colors duration-500 hover:text-gold"
-                          >
-                            Outerwear
-                          </Link>
-                        </li>
+                        {categories.map((cat) => (
+                          <li key={cat.slug}>
+                            <Link
+                              href={`/collections?category=${encodeURIComponent(cat.slug)}`}
+                              onClick={onClose}
+                              className="transition-colors duration-500 hover:text-gold"
+                            >
+                              {cat.name}
+                            </Link>
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   </div>
