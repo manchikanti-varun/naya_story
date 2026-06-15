@@ -1,11 +1,26 @@
 import { clerkMiddleware } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-export default clerkMiddleware()
+const ADMIN_GATE_COOKIE = "naya_admin_gate";
+
+export default clerkMiddleware((_auth, req: NextRequest) => {
+  const { pathname } = req.nextUrl;
+
+  // Admin gate protection
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !pathname.startsWith("/admin/login/")) {
+    const gate = req.cookies.get(ADMIN_GATE_COOKIE)?.value;
+    if (gate !== "1") {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
+    }
+  }
+
+  return NextResponse.next();
+})
 
 export const config = {
   matcher: [
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for Clerk's auto-proxy path
     '/__clerk/:path*',
     '/(api|trpc)(.*)',
   ],
