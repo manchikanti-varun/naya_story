@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Clock, Copy, MapPin, Package, Search, Send, Truck, User } from "lucide-react";
+import { Clock, Copy, Download, MapPin, Package, Search, Send, Truck, User } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
@@ -11,7 +11,6 @@ import {
   formatOrderStatus,
   orderCustomerLabel,
   orderItemCount,
-  orderItemsPreview,
   orderStatusTone,
 } from "@/lib/admin/order-utils";
 import { AdminBadge } from "@/components/admin/ui/AdminBadge";
@@ -36,11 +35,11 @@ const ORDER_STEPS: StepperStep[] = [
   { id: "delivered", label: "Delivered" },
 ];
 
-function matchesSearch(o: Order, q: string) {
-  const n = q.trim().toLowerCase();
-  if (!n) return true;
-  return o.orderNumber.toLowerCase().includes(n) || (o.guestEmail?.toLowerCase().includes(n) ?? false) || (o.trackingNumber?.toLowerCase().includes(n) ?? false) || o.shippingAddress?.city?.toLowerCase().includes(n) || o.status.toLowerCase().includes(n);
-}
+const PAYMENT_STATUS_TONE: Record<string, "success" | "warning" | "danger"> = {
+  paid: "success",
+  pending: "warning",
+  failed: "danger",
+};
 
 function TableSkeleton() {
   return (
@@ -58,6 +57,24 @@ function TableSkeleton() {
   );
 }
 
+function getCustomerName(o: Order): string {
+  if (o.customerName) return o.customerName;
+  if (typeof o.user === "object" && o.user?.name) return o.user.name;
+  return orderCustomerLabel(o);
+}
+
+function getCustomerEmail(o: Order): string {
+  if (o.guestEmail) return o.guestEmail;
+  if (typeof o.user === "object" && o.user?.email) return o.user.email;
+  return "";
+}
+
+function getCustomerPhone(o: Order): string {
+  if (o.customerPhone) return o.customerPhone;
+  if (typeof o.user === "object" && o.user?.phone) return o.user.phone;
+  return "";
+}
+
 export default function AdminOrdersPage() {
   const { token } = useAuth();
   const toast = useToast();
@@ -65,32 +82,44 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const refresh = useCallback(async () => {
     if (!token) return;
     setLoading(true);
-    try { const data = await apiFetch<{ orders: Order[] }>("/orders", { token }); setOrders(data.orders); }
-    catch { setOrders([]); }
-    finally { setLoading(false); }
-  }, [token]);
+    try {
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_SIZE));
+      if (statusFilter) params.set("status", statusFilter);
+      if (paymentFilter) params.set("paymentStatus", paymentFilter);
+      if (q.trim()) params.set("q", q.trim());
+
+      const data = await apiFetch<{ orders: Order[]; total: number; pages: number }>(`/orders?${params.toString()}`, { token });
+      setOrders(data.orders);
+      setTotalPages(data.pages);
+      setTotalItems(data.total);
+    } catch {
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, page, statusFilter, paymentFilter, q]);
 
   useEffect(() => { void refresh(); }, [refresh]);
-  useEffect(() => { setPage(1); }, [q, statusFilter]);
+  useEffect(() => { setPage(1); }, [q, statusFilter, paymentFilter]);
 
-  const filtered = useMemo(() => orders.filter((o) => {
-    if (statusFilter && o.status !== statusFilter) return false;
-    return matchesSearch(o, q);
-  }), [orders, q, statusFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  async function updateStatus(orderId: string, status: string) {
+  async function updateStatus(orderId: string, status: string, trackingNumber?: string, shippingCarrier?: string) {
     if (!token) return;
     try {
-      await apiFetch(`/orders/${orderId}/status`, { method: "PATCH", token, body: JSON.stringify({ status }) });
+      const body: Record<string, string> = { status };
+      if (trackingNumber) body.trackingNumber = trackingNumber;
+      if (shippingCarrier) body.shippingCarrier = shippingCarrier;
+      await apiFetch(`/orders/${orderId}/status`, { method: "PATCH", token, body: JSON.stringify(body) });
       publishStorefrontSettingsChanged();
       toast.success(`Updated to ${formatOrderStatus(status)}`);
       await refresh();
@@ -104,41 +133,61 @@ export default function AdminOrdersPage() {
       title="Orders"
       description={pendingCount > 0 ? `${pendingCount} need fulfillment` : undefined}
       toolbar={
-        <div className="flex w-full items-center gap-3">
+        <div className="flex w-full flex-wrap items-center gap-3">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--admin-faint)]" strokeWidth={1.75} />
-            <AdminInput className="!mt-0 pl-9" placeholder="Search orders…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <AdminInput className="!mt-0 pl-9" placeholder="Search orders, customer, tracking…" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           <select className="admin-input w-auto shrink-0" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter status">
             <option value="">All statuses</option>
             {ORDER_STATUSES.map((s) => <option key={s} value={s}>{formatOrderStatus(s)}</option>)}
           </select>
+          <select className="admin-input w-auto shrink-0" value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} aria-label="Filter payment">
+            <option value="">All payments</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+          </select>
         </div>
       }
     >
-      {loading ? <TableSkeleton /> : filtered.length === 0 ? (
+      {loading ? <TableSkeleton /> : orders.length === 0 ? (
         <AdminEmptyState
-          title={orders.length === 0 ? "No orders yet" : "No matching orders"}
-          description={orders.length === 0 ? "Orders will appear here when customers complete checkout." : "Try adjusting your search or filter."}
+          title={!q && !statusFilter && !paymentFilter ? "No orders yet" : "No matching orders"}
+          description={!q && !statusFilter && !paymentFilter ? "Orders will appear here when customers complete checkout." : "Try adjusting your search or filter."}
         />
       ) : (
         <>
           <AdminTable>
             <table className="admin-table">
               <thead><tr>
-                <th>Order</th><th>Date</th><th>Customer</th><th>Status</th><th className="text-right">Total</th>
+                <th>Order</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th className="text-right">Total</th>
               </tr></thead>
               <tbody>
-                {pageRows.map((o) => (
+                {orders.map((o) => (
                   <tr key={o._id} className="cursor-pointer" onClick={() => setSelectedOrder(o)}>
                     <td>
                       <p className="font-medium text-[var(--admin-ink)]">{o.orderNumber}</p>
-                      <p className="mt-0.5 text-[11px] text-[var(--admin-faint)]">{orderItemCount(o)} items</p>
                     </td>
                     <td className="whitespace-nowrap text-[var(--admin-muted)]">
-                      {new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      {new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </td>
-                    <td className="max-w-[10rem] truncate text-[var(--admin-muted)]">{orderCustomerLabel(o)}</td>
+                    <td className="max-w-[10rem]">
+                      <p className="truncate text-[var(--admin-ink)]">{getCustomerName(o)}</p>
+                      <p className="truncate text-[10px] text-[var(--admin-faint)]">{getCustomerEmail(o)}</p>
+                    </td>
+                    <td className="text-[var(--admin-muted)]">{orderItemCount(o)} items</td>
+                    <td>
+                      <AdminBadge tone={PAYMENT_STATUS_TONE[o.paymentStatus ?? "pending"] ?? "warning"}>
+                        {(o.paymentStatus ?? "pending").charAt(0).toUpperCase() + (o.paymentStatus ?? "pending").slice(1)}
+                      </AdminBadge>
+                    </td>
                     <td><AdminBadge tone={orderStatusTone(o.status)}>{formatOrderStatus(o.status)}</AdminBadge></td>
                     <td className="text-right font-medium tabular-nums">₹{o.total.toLocaleString("en-IN")}</td>
                   </tr>
@@ -146,20 +195,21 @@ export default function AdminOrdersPage() {
               </tbody>
             </table>
           </AdminTable>
-          {filtered.length > PAGE_SIZE && <AdminPagination page={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />}
+          {totalItems > PAGE_SIZE && <AdminPagination page={page} totalPages={totalPages} totalItems={totalItems} pageSize={PAGE_SIZE} onPageChange={setPage} />}
         </>
       )}
 
       {/* Order Detail Drawer */}
       <AdminDrawer open={!!selectedOrder} onClose={() => setSelectedOrder(null)} title={selectedOrder?.orderNumber ?? ""} description={selectedOrder ? `Placed ${new Date(selectedOrder.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}` : undefined}>
-        {selectedOrder && <OrderDetail order={selectedOrder} onUpdateStatus={updateStatus} />}
+        {selectedOrder && <OrderDetail order={selectedOrder} onUpdateStatus={updateStatus} onRefresh={refresh} />}
       </AdminDrawer>
     </AdminPageLayout>
   );
 }
 
-function OrderDetail({ order, onUpdateStatus }: { order: Order; onUpdateStatus: (id: string, s: string) => Promise<void> }) {
+function OrderDetail({ order, onUpdateStatus, onRefresh }: { order: Order; onUpdateStatus: (id: string, s: string, t?: string, c?: string) => Promise<void>; onRefresh: () => Promise<void> }) {
   const [trackingInput, setTrackingInput] = useState(order.trackingNumber ?? "");
+  const [carrierInput, setCarrierInput] = useState(order.shippingCarrier ?? "");
   const { token } = useAuth();
   const toast = useToast();
   const isCancelled = order.status === "cancelled";
@@ -169,6 +219,24 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order; onUpdateStatus: 
     const idx = flow.indexOf(order.status);
     return idx >= 0 && idx < flow.length - 1 ? flow[idx + 1] : null;
   }, [order.status]);
+
+  async function downloadInvoice() {
+    if (!token) return;
+    try {
+      const data = await apiFetch<{ invoice: unknown }>(`/invoices/orders/${order._id}/invoice`, { token });
+      // Create a downloadable JSON invoice (can be rendered as PDF on client)
+      const blob = new Blob([JSON.stringify(data.invoice, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${order.orderNumber}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded");
+    } catch (e) {
+      toast.error((e as Error).message ?? "Failed to download invoice");
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -185,21 +253,37 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order; onUpdateStatus: 
         </div>
       )}
 
-      {/* Customer & Address */}
+      {/* Customer info */}
       <div className="grid gap-3 sm:grid-cols-2">
         <AdminCard padding="sm">
           <p className="mb-1.5 text-[11px] font-medium text-[var(--admin-muted)]">Customer</p>
-          <p className="text-sm font-medium text-[var(--admin-ink)]">{orderCustomerLabel(order)}</p>
-          {order.guestEmail && <p className="mt-0.5 text-xs text-[var(--admin-faint)]">{order.guestEmail}</p>}
+          <p className="text-sm font-medium text-[var(--admin-ink)]">{getCustomerName(order)}</p>
+          <p className="mt-0.5 text-xs text-[var(--admin-faint)]">{getCustomerEmail(order)}</p>
+          {getCustomerPhone(order) && <p className="mt-0.5 text-xs text-[var(--admin-faint)]">📱 {getCustomerPhone(order)}</p>}
         </AdminCard>
         {order.shippingAddress && (
           <AdminCard padding="sm">
-            <p className="mb-1.5 text-[11px] font-medium text-[var(--admin-muted)]">Shipping</p>
+            <p className="mb-1.5 text-[11px] font-medium text-[var(--admin-muted)]">Shipping Address</p>
             <p className="text-sm text-[var(--admin-ink)]">{order.shippingAddress.line1}</p>
+            {order.shippingAddress.line2 && <p className="text-xs text-[var(--admin-ink)]">{order.shippingAddress.line2}</p>}
             <p className="text-xs text-[var(--admin-faint)]">{[order.shippingAddress.city, order.shippingAddress.state, order.shippingAddress.postalCode].filter(Boolean).join(", ")}</p>
+            <p className="text-xs text-[var(--admin-faint)]">{order.shippingAddress.country}</p>
           </AdminCard>
         )}
       </div>
+
+      {/* Payment info */}
+      <AdminCard padding="sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-medium text-[var(--admin-muted)]">Payment</p>
+            <p className="mt-1 text-sm text-[var(--admin-ink)]">{(order.paymentProvider ?? "stripe").toUpperCase()}</p>
+          </div>
+          <AdminBadge tone={PAYMENT_STATUS_TONE[order.paymentStatus ?? "pending"] ?? "warning"}>
+            {(order.paymentStatus ?? "pending").charAt(0).toUpperCase() + (order.paymentStatus ?? "pending").slice(1)}
+          </AdminBadge>
+        </div>
+      </AdminCard>
 
       {/* Items */}
       <div>
@@ -208,8 +292,10 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order; onUpdateStatus: 
           {order.items.map((item, i) => (
             <div key={i} className="flex items-center justify-between gap-3 rounded-[var(--admin-radius-xs)] border border-[var(--admin-border)] px-3 py-2">
               <div className="min-w-0">
-                <p className="truncate text-sm text-[var(--admin-ink)]">{item.name}</p>
-                <p className="text-[11px] text-[var(--admin-faint)]">{[item.size, item.color].filter(Boolean).join(" · ")} × {item.quantity}</p>
+                <p className="truncate text-sm font-medium text-[var(--admin-ink)]">{item.name}</p>
+                <p className="text-[11px] text-[var(--admin-faint)]">
+                  {[item.size, item.color].filter(Boolean).join(" · ")} — SKU: {item.sku} — Qty: {item.quantity}
+                </p>
               </div>
               <p className="shrink-0 text-sm font-medium tabular-nums">₹{((item.unitPrice ?? 0) * (item.quantity ?? 1)).toLocaleString("en-IN")}</p>
             </div>
@@ -220,30 +306,40 @@ function OrderDetail({ order, onUpdateStatus }: { order: Order; onUpdateStatus: 
       {/* Summary */}
       <div className="space-y-1.5 border-t border-[var(--admin-border)] pt-4 text-sm">
         <div className="flex justify-between"><span className="text-[var(--admin-muted)]">Subtotal</span><span className="tabular-nums">₹{order.subtotal.toLocaleString("en-IN")}</span></div>
-        {order.discount > 0 && <div className="flex justify-between"><span className="text-[var(--admin-muted)]">Discount</span><span className="tabular-nums text-emerald-700">−₹{order.discount.toLocaleString("en-IN")}</span></div>}
+        {order.discount > 0 && <div className="flex justify-between"><span className="text-[var(--admin-muted)]">Discount{order.couponCode ? ` (${order.couponCode})` : ""}</span><span className="tabular-nums text-emerald-700">−₹{order.discount.toLocaleString("en-IN")}</span></div>}
         <div className="flex justify-between"><span className="text-[var(--admin-muted)]">Shipping</span><span className="tabular-nums">{order.shipping === 0 ? "Free" : `₹${order.shipping.toLocaleString("en-IN")}`}</span></div>
         <div className="flex justify-between border-t border-[var(--admin-border)] pt-2 font-semibold"><span>Total</span><span className="tabular-nums">₹{order.total.toLocaleString("en-IN")}</span></div>
       </div>
 
-      {/* Tracking */}
+      {/* Tracking & Shipping */}
       <div>
-        <p className="mb-2 text-[11px] font-medium text-[var(--admin-muted)]">Tracking</p>
+        <p className="mb-2 text-[11px] font-medium text-[var(--admin-muted)]">Shipping & Tracking</p>
         {order.trackingNumber && (
           <button type="button" onClick={() => { void navigator.clipboard.writeText(order.trackingNumber!); toast.success("Copied"); }}
             className="mb-2 inline-flex items-center gap-1.5 font-mono text-sm text-[var(--admin-accent)] hover:underline" title="Click to copy">
-            {order.trackingNumber} <Copy className="h-3 w-3" strokeWidth={1.75} />
+            {order.shippingCarrier ? `${order.shippingCarrier}: ` : ""}{order.trackingNumber} <Copy className="h-3 w-3" strokeWidth={1.75} />
           </button>
         )}
-        <form className="flex gap-2" onSubmit={async (e) => {
+        <form className="space-y-2" onSubmit={async (e) => {
           e.preventDefault();
           if (!token || !trackingInput.trim()) return;
-          await apiFetch(`/orders/${order._id}/status`, { method: "PATCH", token, body: JSON.stringify({ status: "shipped", trackingNumber: trackingInput.trim() }) });
-          publishStorefrontSettingsChanged();
-          toast.success("Tracking saved");
+          await onUpdateStatus(order._id, "shipped", trackingInput.trim(), carrierInput.trim() || undefined);
         }}>
-          <AdminInput className="!mt-0 flex-1" placeholder="Add tracking number…" value={trackingInput} onChange={(e) => setTrackingInput(e.target.value)} />
-          <AdminButton type="submit" variant="secondary" size="sm">Save</AdminButton>
+          <div className="flex gap-2">
+            <AdminInput className="!mt-0 flex-1" placeholder="Carrier (e.g. BlueDart, DTDC)" value={carrierInput} onChange={(e) => setCarrierInput(e.target.value)} />
+          </div>
+          <div className="flex gap-2">
+            <AdminInput className="!mt-0 flex-1" placeholder="Tracking number" value={trackingInput} onChange={(e) => setTrackingInput(e.target.value)} />
+            <AdminButton type="submit" variant="secondary" size="sm">Save & Ship</AdminButton>
+          </div>
         </form>
+      </div>
+
+      {/* Download Invoice */}
+      <div>
+        <AdminButton variant="secondary" size="sm" onClick={downloadInvoice}>
+          <Download className="h-3.5 w-3.5" strokeWidth={1.75} /> Download Invoice
+        </AdminButton>
       </div>
 
       {/* Timeline */}

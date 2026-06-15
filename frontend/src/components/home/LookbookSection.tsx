@@ -16,11 +16,14 @@ export function LookbookSection({ config, sectionText }: Props) {
   const c = config ?? defaultHomepageEditorial().lookbook;
   if (c.enabled === false) return null;
   const text = sectionTextStyles(sectionText);
+  const align = c.styles?.align ?? "left";
+  const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
+  const subtitleAlign = align === "center" ? "mx-auto" : align === "right" ? "ml-auto" : "";
 
   return (
     <SectionShell id="lookbook" design={c.styles} className="bg-ivory py-section-sm sm:py-section">
       <div className="lux-shell">
-        <div className="mx-auto max-w-2xl text-center">
+        <div className={`mx-auto max-w-2xl ${alignClass}`}>
           <p className="lux-kicker text-gold/90" style={text.kicker}>
             {c.kicker}
           </p>
@@ -31,7 +34,7 @@ export function LookbookSection({ config, sectionText }: Props) {
             {c.title}
           </h2>
           <p
-            className="mt-4 font-sans text-sm leading-relaxed text-ink-muted md:text-base"
+            className={`mt-4 font-sans text-sm leading-relaxed text-ink-muted md:text-base ${subtitleAlign}`}
             style={text.subheading}
           >
             {c.subtitle}

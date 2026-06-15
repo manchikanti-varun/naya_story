@@ -54,6 +54,10 @@ const ProductSchema = new mongoose.Schema(
     lowStockDisplay: { type: String, enum: ["show", "hide"], default: "hide" },
     /** Global display order for manual sorting (lower = first). 0 means unset (uses default sort). */
     displayOrder: { type: Number, default: 0 },
+    /** GST rate as decimal (e.g. 0.05 for 5%, 0.12 for 12%, 0.18 for 18%). MRP is GST-inclusive. */
+    gstRate: { type: Number, default: 0.05 },
+    /** HSN code for GST classification. */
+    hsnCode: { type: String, default: "" },
   },
   { timestamps: true },
 );

@@ -49,6 +49,10 @@ export type Product = {
   lowStockDisplay?: "show" | "hide";
   /** Global display order for manual sorting (lower = first). */
   displayOrder?: number;
+  /** GST rate as decimal (e.g. 0.05 for 5%). MRP is GST-inclusive. */
+  gstRate?: number;
+  /** HSN code for GST classification. */
+  hsnCode?: string;
 };
 
 export type MediaAsset = {
@@ -105,14 +109,23 @@ export type Order = {
   _id: string;
   orderNumber: string;
   guestEmail?: string;
+  customerName?: string;
+  customerPhone?: string;
   status: string;
+  paymentStatus?: "paid" | "pending" | "failed";
+  paymentProvider?: string;
   items: OrderItem[];
   subtotal: number;
   shipping: number;
   discount: number;
   total: number;
+  couponCode?: string;
   shippingAddress: Address;
+  shippingCarrier?: string;
   trackingNumber?: string;
   timeline?: { status: string; at: string }[];
+  invoice?: { invoiceNumber?: string; generatedAt?: string; url?: string };
   createdAt: string;
+  /** Populated user reference (from admin queries) */
+  user?: { _id: string; name: string; email: string; phone?: string } | string;
 };

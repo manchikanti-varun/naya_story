@@ -18,6 +18,8 @@ export function BrandStory({ config, sectionText }: Props) {
   if (c.enabled === false) return null;
   const text = sectionTextStyles(sectionText);
   const titleLines = c.title.split("\n");
+  const align = c.styles?.align ?? "left";
+  const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
 
   return (
     <SectionShell id="story" design={c.styles} className="bg-ivory-soft py-section-sm sm:py-section">
@@ -46,7 +48,7 @@ export function BrandStory({ config, sectionText }: Props) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.9 }}
-          className="order-2 space-y-6 sm:space-y-8 lg:order-none"
+          className={`order-2 space-y-6 sm:space-y-8 lg:order-none ${alignClass}`}
         >
           <p className="lux-kicker text-gold/90" style={text.kicker}>
             {c.kicker}
@@ -63,7 +65,7 @@ export function BrandStory({ config, sectionText }: Props) {
             ))}
           </h2>
           {c.body.map((paragraph) => (
-            <p key={paragraph.slice(0, 24)} className="lux-copy max-w-xl" style={text.body}>
+            <p key={paragraph.slice(0, 24)} className={`lux-copy ${align === "center" ? "mx-auto" : ""} max-w-xl`} style={text.body}>
               {paragraph}
             </p>
           ))}

@@ -10,6 +10,10 @@ const OrderItemSchema = new mongoose.Schema(
     quantity: { type: Number, required: true, min: 1 },
     unitPrice: { type: Number, required: true, min: 0 },
     image: String,
+    /** GST rate at time of purchase (copied from product). */
+    gstRate: { type: Number, default: 0.05 },
+    /** HSN code at time of purchase (copied from product). */
+    hsnCode: { type: String, default: "" },
   },
   { _id: false },
 );
@@ -54,13 +58,27 @@ const OrderSchema = new mongoose.Schema(
     couponCode: String,
     shippingAddress: { type: AddressSchema, required: true },
     trackingNumber: String,
+    /** Shipping carrier name (e.g. BlueDart, DTDC, Delhivery). */
+    shippingCarrier: String,
     timeline: [TimelineSchema],
     paymentProvider: { type: String, enum: ["stripe", "razorpay", "cod"], default: "stripe" },
     paymentReference: String,
+    /** Payment status: paid, pending, failed. */
+    paymentStatus: { type: String, enum: ["paid", "pending", "failed"], default: "pending" },
     /** Stripe PaymentIntent ID for webhook correlation. */
     stripePaymentIntentId: { type: String, sparse: true },
     /** Razorpay Payment ID for webhook correlation. */
     razorpayPaymentId: { type: String, sparse: true },
+    /** Customer phone number for the order. */
+    customerPhone: String,
+    /** Customer name (for guest orders or snapshot). */
+    customerName: String,
+    /** Invoice metadata */
+    invoice: {
+      invoiceNumber: String,
+      generatedAt: Date,
+      url: String,
+    },
   },
   { timestamps: true },
 );

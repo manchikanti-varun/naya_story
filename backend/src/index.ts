@@ -20,6 +20,8 @@ import { createOrdersRouter } from "./routes/orders.js";
 import { createProductsRouter } from "./routes/products.js";
 import { createReviewsRouter } from "./routes/reviews.js";
 import { createUsersRouter } from "./routes/users.js";
+import { createInvoicesRouter } from "./routes/invoices.js";
+import { createClerkAuthRouter } from "./routes/clerkAuth.js";
 import { razorpayWebhookHandler } from "./routes/razorpayWebhook.js";
 import { stripeWebhookHandler } from "./routes/stripeWebhook.js";
 import { assertSafeProductionConfig } from "./lib/env.js";
@@ -128,6 +130,8 @@ async function main() {
   app.use("/api/coupons", createCouponsRouter(JWT_SECRET));
   app.use("/api/content", createContentRouter(JWT_SECRET));
   app.use("/api/legal-pages", createLegalPagesRouter(JWT_SECRET));
+  app.use("/api/invoices", createInvoicesRouter(JWT_SECRET));
+  app.use("/api/auth/clerk", createClerkAuthRouter(JWT_SECRET, CLIENT_ORIGIN));
   app.use(
     "/api/integrations",
     createIntegrationsRouter({

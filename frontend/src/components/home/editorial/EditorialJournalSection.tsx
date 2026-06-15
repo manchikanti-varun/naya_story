@@ -18,12 +18,14 @@ export function EditorialJournalSection({ config, sectionText }: Props) {
   const c = config ?? defaultHomepageEditorial().editorialJournal;
   if (c.enabled === false) return null;
   const text = sectionTextStyles(sectionText);
+  const align = c.styles?.align ?? "left";
+  const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
 
   return (
     <SectionShell design={c.styles} className="bg-ivory py-section-sm sm:py-section">
       <div className="lux-shell">
-        <Reveal className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div>
+        <Reveal className={`flex flex-col gap-6 md:flex-row md:items-end md:justify-between`}>
+          <div className={alignClass}>
             <p className="lux-kicker text-gold/90" style={text.kicker}>
               {c.kicker}
             </p>

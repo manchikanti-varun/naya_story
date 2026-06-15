@@ -17,7 +17,10 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true },
     passwordHash: { type: String },
     name: { type: String, required: true },
+    phone: { type: String },
     googleId: { type: String, sparse: true },
+    /** Clerk user ID for OTP / Clerk-based auth. */
+    clerkId: { type: String, sparse: true },
     role: { type: String, enum: ["customer", "admin"], default: "customer" },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
     addresses: [AddressSchema],

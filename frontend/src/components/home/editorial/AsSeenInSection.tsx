@@ -15,16 +15,19 @@ export function AsSeenInSection({ config, sectionText }: Props) {
   const c = config ?? defaultHomepageEditorial().asSeenIn;
   if (c.enabled === false) return null;
   const text = sectionTextStyles(sectionText);
+  const align = c.styles?.align ?? "left";
+  const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
+  const justifyClass = align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start";
 
   return (
     <SectionShell design={c.styles} className="bg-ivory py-section-sm sm:py-20 md:py-24">
       <div className="lux-shell">
-        <Reveal className="text-center">
+        <Reveal className={alignClass}>
           <p className="lux-kicker" style={text.kicker}>
             {c.kicker}
           </p>
         </Reveal>
-        <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-5 sm:mt-12 sm:gap-x-12 sm:gap-y-6 md:gap-x-16">
+        <ul className={`mt-8 flex flex-wrap items-center ${justifyClass} gap-x-6 gap-y-5 sm:mt-12 sm:gap-x-12 sm:gap-y-6 md:gap-x-16`}>
           {c.names.map((name, i) => (
             <Reveal key={name} delay={i * 0.05}>
               <li className="font-display text-[clamp(1.25rem,2.5vw,1.75rem)] font-normal tracking-[0.12em] text-ink/35 transition-colors duration-700 hover:text-ink/55">

@@ -5,6 +5,11 @@ import { ADMIN_GATE_COOKIE } from "@/lib/admin-gate";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Let Clerk's auto-proxy path through
+  if (pathname.startsWith("/__clerk")) {
+    return NextResponse.next();
+  }
+
   if (!pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
@@ -22,5 +27,9 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*"],
+  matcher: [
+    "/admin",
+    "/admin/:path*",
+    "/__clerk/:path*",
+  ],
 };

@@ -115,7 +115,32 @@ export const orderService = {
     return orderRepository.findAll(limit);
   },
 
-  async transitionStatus(orderId: string, targetStatus: OrderStatus, trackingNumber?: string) {
+  async getAllOrdersPaginated(opts: { page: number; limit: number; status?: string; paymentStatus?: string; q?: string }) {
+    const { page, limit, status, paymentStatus, q } = opts;
+    const filter: Record<string, unknown> = {};
+    if (status) filter.status = status;
+    if (paymentStatus) filter.paymentStatus = paymentStatus;
+    if (q?.trim()) {
+      const regex = new RegExp(q.trim(), "i");
+      filter.$or = [
+        { orderNumber: regex },
+        { guestEmail: regex },
+        { customerName: regex },
+        { customerPhone: regex },
+        { trackingNumber: regex },
+        { "shippingAddress.city": regex },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const [orders, total] = await Promise.all([
+      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate("user", "name email phone").lean(),
+      Order.countDocuments(filter),
+    ]);
+    return { orders, total, page, pages: Math.max(Math.ceil(total / limit), 1) };
+  },
+
+  async transitionStatus(orderId: string, targetStatus: OrderStatus, trackingNumber?: string, shippingCarrier?: string) {
     const order = await Order.findById(orderId);
     if (!order) throw new HttpError(404, "Not found");
 
@@ -145,6 +170,7 @@ export const orderService = {
 
     order.status = targetStatus;
     if (trackingNumber) order.trackingNumber = trackingNumber;
+    if (shippingCarrier) order.shippingCarrier = shippingCarrier;
     order.timeline!.push({ status: targetStatus, at: new Date() });
     await order.save();
 

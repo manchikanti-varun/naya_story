@@ -64,10 +64,15 @@ export function createOrdersRouter(secret: string) {
     res.json({ order });
   }));
 
-  // GET / — All orders (admin)
-  r.get("/", ...(requireAdmin(secret) as RequestHandler[]), asyncHandler(async (_req, res) => {
-    const orders = await orderService.getAllOrders();
-    res.json({ orders });
+  // GET / — All orders (admin) with pagination and filters
+  r.get("/", ...(requireAdmin(secret) as RequestHandler[]), asyncHandler(async (req, res) => {
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Number(req.query.limit) || 20, 200);
+    const status = req.query.status as string | undefined;
+    const paymentStatus = req.query.paymentStatus as string | undefined;
+    const q = req.query.q as string | undefined;
+    const orders = await orderService.getAllOrdersPaginated({ page, limit, status, paymentStatus, q });
+    res.json(orders);
   }));
 
   // PATCH /:id/status — Admin status transition
@@ -77,8 +82,8 @@ export function createOrdersRouter(secret: string) {
     ...updateStatusRules,
     handleValidationErrors,
     asyncHandler(async (req, res) => {
-      const { status, trackingNumber } = req.body as { status: OrderStatus; trackingNumber?: string };
-      const order = await orderService.transitionStatus(req.params.id, status, trackingNumber);
+      const { status, trackingNumber, shippingCarrier } = req.body as { status: OrderStatus; trackingNumber?: string; shippingCarrier?: string };
+      const order = await orderService.transitionStatus(req.params.id, status, trackingNumber, shippingCarrier);
       res.json({ order });
     }),
   );

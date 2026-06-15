@@ -24,7 +24,7 @@ const ALLOWED_PRODUCT_FIELDS = [
   "fabricDetails", "stylingSuggestions", "pdpPrintDisclaimer", "pdpDeliveryRange",
   "pdpFreeShippingNote", "pdpDeliveryAndCare", "featured", "bestseller", "trending",
   "newIn", "newInOrder", "newInHoverImage", "newInVisible", "storefrontVisible",
-  "lowStockDisplay", "displayOrder",
+  "lowStockDisplay", "displayOrder", "gstRate", "hsnCode",
 ];
 
 function sanitizeProductBody(raw: Record<string, unknown>): Record<string, unknown> {
@@ -87,7 +87,6 @@ export const productService = {
     if (featured === "true") filter.featured = true;
     if (newIn === "true") filter.newIn = true;
     if (visible === "true") filter.newInVisible = true;
-    if (q?.trim()) filter.$text = { $search: q.trim() };
     if (size) filter["variants.size"] = size;
     if (color) {
       const escapedColor = escapeRegex(color);
@@ -99,6 +98,12 @@ export const productService = {
       if (maxPrice) (filter.price as Record<string, number>).$lte = Number(maxPrice);
     }
     if (inStock === "true") filter["variants.stock"] = { $gt: 0 };
+
+    // Search: try $text first, fall back to regex for partial/prefix matching
+    const searchTerm = q?.trim();
+    if (searchTerm) {
+      filter.$text = { $search: searchTerm };
+    }
 
     // Sort
     let sortSpec: Record<string, 1 | -1> = { displayOrder: 1, featured: -1, createdAt: -1 };
@@ -113,7 +118,27 @@ export const productService = {
     const currentPage = Math.max(Number(page) || 1, 1);
     const skip = (currentPage - 1) * lim;
     const queryFilter = mergeStorefrontVisibility(filter, isAdmin);
-    const { products, total } = await productRepository.findPaginated(queryFilter, sortSpec, skip, lim);
+    let { products, total } = await productRepository.findPaginated(queryFilter, sortSpec, skip, lim);
+
+    // Fallback: if $text returned nothing, try regex-based partial match on name/description/tags
+    if (searchTerm && total === 0) {
+      const escaped = escapeRegex(searchTerm);
+      const regex = new RegExp(escaped, "i");
+      const regexFilter = { ...queryFilter } as Record<string, unknown>;
+      delete regexFilter.$text;
+      regexFilter.$or = [
+        { name: regex },
+        { description: regex },
+        { shortDescription: regex },
+        { tags: regex },
+        { collection: regex },
+        { category: regex },
+      ];
+      const fallback = await productRepository.findPaginated(regexFilter, sortSpec, skip, lim);
+      products = fallback.products;
+      total = fallback.total;
+    }
+
     return {
       products: products.map((p) => sanitizeProductMedia(p as Record<string, unknown>)),
       total,

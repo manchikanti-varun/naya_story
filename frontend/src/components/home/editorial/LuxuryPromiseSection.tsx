@@ -15,11 +15,14 @@ export function LuxuryPromiseSection({ config, sectionText }: Props) {
   const c = config ?? defaultHomepageEditorial().luxuryPromise;
   if (c.enabled === false) return null;
   const text = sectionTextStyles(sectionText);
+  const align = c.styles?.align ?? "left";
+  const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
+  const headerMx = align === "center" ? "mx-auto" : align === "right" ? "ml-auto" : "";
 
   return (
     <SectionShell design={c.styles} className="border-y border-sand/60 bg-ivory-soft/50">
       <div className="lux-shell py-section-sm sm:py-section">
-        <Reveal className="mx-auto max-w-2xl text-center">
+        <Reveal className={`max-w-2xl ${headerMx} ${alignClass}`}>
           <p className="lux-kicker text-gold/90" style={text.kicker}>
             {c.kicker}
           </p>

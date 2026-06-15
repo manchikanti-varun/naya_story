@@ -26,15 +26,17 @@ export function NewsletterSection({
   design,
 }: Props) {
   const st = sectionTextStyles(textColors);
+  const align = design?.align ?? "left";
+  const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
   return (
     <SectionShell
       design={design}
       className={`border-y border-ivory-deep/20 ${!design?.backgroundColor ? "bg-ivory-muted" : ""} ${compactTop ? "pt-10 pb-16 sm:pb-20 md:pt-14 md:pb-28" : "py-14 sm:py-20 md:py-28"}`}
     >
-      <div className="lux-shell mx-auto max-w-[720px]">
+      <div className={`lux-shell mx-auto max-w-[720px] ${alignClass}`}>
         <NewsletterInline
           dense
-          layout="centered"
+          layout={align === "center" ? "centered" : "split"}
           title={title}
           description={description}
           placeholder={placeholder}
@@ -42,7 +44,7 @@ export function NewsletterSection({
           textColors={textColors}
         />
         {cta ? (
-          <div className="mt-8 flex justify-center">
+          <div className={`mt-8 flex ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
             <Link
               href={cta.href}
               className="lux-btn-outline px-7 py-3 tracking-[0.22em]"

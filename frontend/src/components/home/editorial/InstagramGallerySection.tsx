@@ -23,11 +23,13 @@ export function InstagramGallerySection({ config, sectionText }: Props) {
   const c = config ?? defaultHomepageEditorial().instagramGallery;
   if (c.enabled === false) return null;
   const text = sectionTextStyles(sectionText);
+  const align = c.styles?.align ?? "left";
+  const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
 
   return (
     <SectionShell design={c.styles} className="overflow-hidden bg-ivory-muted/60 py-section-sm sm:py-section">
       <div className="lux-shell">
-        <Reveal className="text-center">
+        <Reveal className={alignClass}>
           <p className="lux-kicker text-gold/90" style={text.kicker}>
             {c.kicker}
           </p>

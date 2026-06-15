@@ -53,7 +53,7 @@ export function ShopByCategorySection({
           kicker={kicker}
           title={title}
           subtitle={subtitle}
-          align="center"
+          align={design?.align ?? "left"}
           design={design}
           sectionText={sectionText}
           className="mb-8 sm:mb-10 md:mb-12"
