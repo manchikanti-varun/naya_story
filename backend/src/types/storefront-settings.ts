@@ -26,7 +26,14 @@ export type SizeGuideConfig = {
   defaultUnit?: "cm" | "inch";
 };
 
+export type PaymentMethodConfig = {
+  codEnabled?: boolean;
+  stripeEnabled?: boolean;
+  razorpayEnabled?: boolean;
+};
+
 export type StorefrontSettings = {
   pdpSuggestedMode?: PdpSuggestedMode;
   sizeGuide?: SizeGuideConfig;
+  paymentMethods?: PaymentMethodConfig;
 };

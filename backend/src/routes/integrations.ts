@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { body, validationResult } from "express-validator";
 import Stripe from "stripe";
+import { settingsRepository } from "../repositories/settings.repository.js";
+import { mergeStorefrontSettings } from "../lib/storefront-settings.js";
 
 export function createIntegrationsRouter(env: {
   stripeSecret?: string;
@@ -10,17 +12,25 @@ export function createIntegrationsRouter(env: {
   const r = Router();
 
   // GET /payment-methods — returns available payment methods for the storefront
-  r.get("/payment-methods", (_req, res) => {
+  r.get("/payment-methods", async (_req, res) => {
     const methods: { id: string; name: string; enabled: boolean }[] = [];
 
+    // Read payment config from database
+    let paymentConfig: { codEnabled?: boolean; stripeEnabled?: boolean; razorpayEnabled?: boolean } = {};
+    try {
+      const doc = await settingsRepository.findOne();
+      const storefront = mergeStorefrontSettings(doc?.storefront);
+      paymentConfig = (storefront as { paymentMethods?: typeof paymentConfig }).paymentMethods ?? {};
+    } catch { /* use defaults */ }
+
     if (env.stripeSecret) {
-      methods.push({ id: "stripe", name: "Card / UPI (Stripe)", enabled: true });
+      methods.push({ id: "stripe", name: "Card / UPI (Stripe)", enabled: paymentConfig.stripeEnabled !== false });
     }
     if (env.razorpayKeyId && env.razorpayKeySecret) {
-      methods.push({ id: "razorpay", name: "Razorpay (UPI / Card / Netbanking)", enabled: true });
+      methods.push({ id: "razorpay", name: "Razorpay (UPI / Card / Netbanking)", enabled: paymentConfig.razorpayEnabled !== false });
     }
 
-    const codEnabled = process.env.COD_ENABLED === "true";
+    const codEnabled = paymentConfig.codEnabled === true;
     methods.push({ id: "cod", name: "Cash on Delivery", enabled: codEnabled });
 
     res.json({ methods });
