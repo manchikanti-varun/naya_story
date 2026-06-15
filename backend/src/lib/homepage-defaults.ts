@@ -296,11 +296,13 @@ function mergeSlides(raw: unknown): HeroSlide[] {
         desktopImage: stripUnsplashUrl(String(s.desktopImage || base.desktopImage)),
         mobileImage: stripUnsplashUrl(String(s.mobileImage ?? "")),
         kicker: typeof s.kicker === "string" ? s.kicker : "",
+        showKicker: s.showKicker !== false,
         heading: String(s.heading || base.heading),
         subheading: String(s.subheading ?? base.subheading ?? ""),
         ctaLabel: String(s.ctaLabel ?? base.ctaLabel ?? ""),
         ctaHref: String(s.ctaHref || base.ctaHref),
         metaLabel: typeof s.metaLabel === "string" ? s.metaLabel : "",
+        showMetaLabel: s.showMetaLabel !== false,
         styles:
           s.styles && typeof s.styles === "object"
             ? (s.styles as HeroSlide["styles"])

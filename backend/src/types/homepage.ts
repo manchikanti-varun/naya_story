@@ -5,11 +5,15 @@ export type HeroSlide = {
   desktopImage: string;
   mobileImage?: string;
   kicker?: string;
+  /** When false, hides the kicker line on the storefront. Default true. */
+  showKicker?: boolean;
   heading: string;
   subheading?: string;
   ctaLabel?: string;
   ctaHref: string;
   metaLabel?: string;
+  /** When false, hides the meta label on the storefront. Default true. */
+  showMetaLabel?: boolean;
   styles?: SectionDesign;
   textColors?: SectionTextColors;
   matchPreviousSlideStyles?: boolean;
