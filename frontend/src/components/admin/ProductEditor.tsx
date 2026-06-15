@@ -87,6 +87,8 @@ const emptyProduct = (): Partial<Product> & {
   storefrontVisible: true,
   lowStockDisplay: "hide" as const,
   displayOrder: 0,
+  gstRate: 0.05,
+  hsnCode: "",
 });
 
 export function ProductEditor({
@@ -191,7 +193,9 @@ export function ProductEditor({
         form.compareAtPrice === undefined || form.compareAtPrice === null
           ? undefined
           : Number(form.compareAtPrice),
-      taxRate: Number(form.taxRate) || 0,
+      taxRate: Number(form.gstRate) || 0.05,
+      gstRate: Number(form.gstRate) || 0.05,
+      hsnCode: form.hsnCode ?? "",
       discountPercent: Number(form.discountPercent) || 0,
       newInOrder: Number(form.newInOrder) || 0,
       displayOrder: Number(form.displayOrder) || 0,
@@ -351,13 +355,13 @@ export function ProductEditor({
         {tab === "commerce" ? (
           <div className="space-y-6">
             <p className="text-xs leading-relaxed text-[var(--admin-muted)]">
-              <strong className="font-medium text-[var(--admin-ink)]">Price</strong> — what the customer pays.{" "}
-              <strong className="font-medium text-[var(--admin-ink)]">Compare at</strong> — original/MRP price shown crossed out (leave blank if no discount).{" "}
-              <strong className="font-medium text-[var(--admin-ink)]">Tax %</strong> — GST rate added at checkout.{" "}
-              <strong className="font-medium text-[var(--admin-ink)]">Discount %</strong> — auto-calculated off the selling price (used for badge display).
+              <strong className="font-medium text-[var(--admin-ink)]">MRP</strong> — the price displayed to customers (GST inclusive, never added on top).{" "}
+              <strong className="font-medium text-[var(--admin-ink)]">Compare at</strong> — original price shown crossed out (leave blank if no discount).{" "}
+              <strong className="font-medium text-[var(--admin-ink)]">Discount %</strong> — applied on MRP first, GST extracted afterward for invoices.{" "}
+              <strong className="font-medium text-[var(--admin-ink)]">GST Rate</strong> — for invoice extraction only (not added to price).
             </p>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Selling price (₹)">
+              <Field label="MRP (₹) — GST inclusive">
                 <input
                   type="number"
                   className={inputClass}
@@ -366,7 +370,6 @@ export function ProductEditor({
                     const price = Number(e.target.value) || 0;
                     setForm((f) => {
                       const compareAt = f.compareAtPrice;
-                      // Auto-calculate discount % from compare at and new selling price
                       if (compareAt && compareAt > 0 && price > 0 && price < compareAt) {
                         const disc = Math.round(((compareAt - price) / compareAt) * 100);
                         return { ...f, price, discountPercent: disc };
@@ -376,7 +379,7 @@ export function ProductEditor({
                   }}
                 />
               </Field>
-              <Field label="Compare at (MRP)">
+              <Field label="Compare at (original MRP)">
                 <input
                   type="number"
                   className={inputClass}
@@ -388,12 +391,10 @@ export function ProductEditor({
                       if (!compareAt || compareAt <= 0) {
                         return { ...f, compareAtPrice: undefined, discountPercent: 0 };
                       }
-                      // If discount % exists, auto-calculate selling price
                       if (f.discountPercent && f.discountPercent > 0) {
                         const price = Math.round(compareAt * (1 - f.discountPercent / 100));
                         return { ...f, compareAtPrice: compareAt, price };
                       }
-                      // If selling price exists, auto-calculate discount %
                       if (f.price > 0 && f.price < compareAt) {
                         const disc = Math.round(((compareAt - f.price) / compareAt) * 100);
                         return { ...f, compareAtPrice: compareAt, discountPercent: disc };
@@ -401,14 +402,6 @@ export function ProductEditor({
                       return { ...f, compareAtPrice: compareAt };
                     });
                   }}
-                />
-              </Field>
-              <Field label="Tax %">
-                <input
-                  type="number"
-                  className={inputClass}
-                  value={form.taxRate ?? 0}
-                  onChange={(e) => setForm((f) => ({ ...f, taxRate: Number(e.target.value) }))}
                 />
               </Field>
               <Field label="Discount %">
@@ -420,12 +413,10 @@ export function ProductEditor({
                     const disc = Number(e.target.value) || 0;
                     setForm((f) => {
                       const compareAt = f.compareAtPrice;
-                      // Auto-calculate selling price from compare at and discount
                       if (compareAt && compareAt > 0 && disc > 0 && disc < 100) {
                         const price = Math.round(compareAt * (1 - disc / 100));
                         return { ...f, discountPercent: disc, price };
                       }
-                      // Auto-calculate compare at from selling price and discount
                       if (!compareAt && f.price > 0 && disc > 0 && disc < 100) {
                         const mrp = Math.round(f.price / (1 - disc / 100));
                         return { ...f, discountPercent: disc, compareAtPrice: mrp };
@@ -435,13 +426,53 @@ export function ProductEditor({
                   }}
                 />
               </Field>
+              <Field label="GST Rate % (for invoices)">
+                <select
+                  className={inputClass}
+                  value={form.gstRate ?? 0.05}
+                  onChange={(e) => setForm((f) => ({ ...f, gstRate: Number(e.target.value) }))}
+                >
+                  <option value={0}>0% (Exempt)</option>
+                  <option value={0.05}>5%</option>
+                  <option value={0.12}>12%</option>
+                  <option value={0.18}>18%</option>
+                  <option value={0.28}>28%</option>
+                </select>
+              </Field>
             </div>
-            {form.compareAtPrice && form.price > 0 && form.compareAtPrice > form.price ? (
-              <p className="text-xs text-[var(--admin-muted)]">
-                Customer sees: <span className="line-through">₹{form.compareAtPrice.toLocaleString("en-IN")}</span>{" "}
-                <span className="font-semibold text-[var(--admin-ink)]">₹{form.price.toLocaleString("en-IN")}</span>{" "}
-                <span className="font-medium text-emerald-700">({form.discountPercent}% off)</span>
-              </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="HSN Code">
+                <input
+                  type="text"
+                  className={inputClass}
+                  placeholder="e.g. 6204 (apparel)"
+                  value={form.hsnCode ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, hsnCode: e.target.value }))}
+                />
+              </Field>
+            </div>
+            {form.price > 0 ? (
+              <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-surface-sunken)] px-4 py-3">
+                <p className="text-xs font-medium text-[var(--admin-ink)]">Pricing breakdown (for invoices)</p>
+                <div className="mt-2 grid gap-1 text-xs text-[var(--admin-muted)]">
+                  {form.compareAtPrice && form.compareAtPrice > form.price ? (
+                    <p>Original MRP: <span className="line-through">₹{form.compareAtPrice.toLocaleString("en-IN")}</span> → Selling price: <span className="font-semibold text-[var(--admin-ink)]">₹{form.price.toLocaleString("en-IN")}</span> <span className="text-emerald-700">({form.discountPercent}% off)</span></p>
+                  ) : (
+                    <p>MRP / Selling price: <span className="font-semibold text-[var(--admin-ink)]">₹{form.price.toLocaleString("en-IN")}</span></p>
+                  )}
+                  {(() => {
+                    const rate = Number(form.gstRate) || 0.05;
+                    const taxable = Math.round((form.price / (1 + rate)) * 100) / 100;
+                    const gst = Math.round((form.price - taxable) * 100) / 100;
+                    return (
+                      <>
+                        <p>Taxable value: ₹{taxable.toLocaleString("en-IN")} | GST ({Math.round(rate * 100)}%): ₹{gst.toLocaleString("en-IN")}</p>
+                        <p className="text-[10px] text-[var(--admin-faint)]">GST is extracted from MRP for invoice purposes only — never added on top.</p>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
             ) : null}
 
             <div>
