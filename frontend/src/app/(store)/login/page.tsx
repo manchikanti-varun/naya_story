@@ -6,11 +6,9 @@ import { Suspense, useEffect, useState } from "react";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AuthField, authInputClass } from "@/components/auth/AuthField";
 import { AuthShell } from "@/components/auth/AuthShell";
-import { ClerkOtpButton } from "@/components/auth/ClerkSignIn";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/context/auth-context";
-import { useClerkBridge } from "@/lib/use-clerk-auth";
 import {
   formatAuthError,
   normalizeEmail,
@@ -43,7 +41,6 @@ function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
   const { oauthLoading } = useGoogleOAuthCallback("/account");
-  useClerkBridge();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +164,6 @@ function LoginInner() {
         <AuthDivider />
         <div className="mt-6 space-y-4">
           <GoogleSignInButton disabled={submitting} />
-          <ClerkOtpButton disabled={submitting} />
         </div>
         <p className="mt-4 text-center font-sans text-xs leading-relaxed text-ink-soft">
           By continuing, you agree to our{" "}
