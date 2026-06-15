@@ -16,7 +16,11 @@ export function ClerkProviderWrapper({ children }: { children: React.ReactNode }
   }
 
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      signInUrl="/login"
+      signUpUrl="/register"
+      afterSignOutUrl="/"
+    >
       {children}
     </ClerkProvider>
   );

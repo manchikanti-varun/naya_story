@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AuthField, authInputClass } from "@/components/auth/AuthField";
 import { AuthShell } from "@/components/auth/AuthShell";
-import { ClerkSignIn } from "@/components/auth/ClerkSignIn";
+import { ClerkOtpButton } from "@/components/auth/ClerkSignIn";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/context/auth-context";
@@ -49,7 +49,6 @@ function LoginInner() {
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [authMode, setAuthMode] = useState<"credentials" | "otp">("credentials");
 
   useEffect(() => {
     const err = params.get("error");
@@ -167,31 +166,8 @@ function LoginInner() {
       <div className="mt-6">
         <AuthDivider />
         <div className="mt-6 space-y-4">
-          {authMode === "credentials" ? (
-            <>
-              <GoogleSignInButton disabled={submitting} />
-              {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && (
-                <button
-                  type="button"
-                  onClick={() => setAuthMode("otp")}
-                  className="w-full rounded-full border border-ivory-deep/60 bg-white/50 py-4 font-sans text-[11px] uppercase tracking-[0.3em] text-ink transition hover:border-gold/40 hover:text-gold"
-                >
-                  Sign in with Phone / Email OTP
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              <ClerkSignIn />
-              <button
-                type="button"
-                onClick={() => setAuthMode("credentials")}
-                className="w-full rounded-full border border-ivory-deep/60 bg-white/50 py-3 font-sans text-[11px] uppercase tracking-[0.2em] text-ink-muted transition hover:border-gold/40 hover:text-gold"
-              >
-                ← Back to email & password
-              </button>
-            </>
-          )}
+          <GoogleSignInButton disabled={submitting} />
+          <ClerkOtpButton disabled={submitting} />
         </div>
         <p className="mt-4 text-center font-sans text-xs leading-relaxed text-ink-soft">
           By continuing, you agree to our{" "}

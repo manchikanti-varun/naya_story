@@ -1,35 +1,25 @@
 "use client";
 
-import { SignIn } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
 
 /**
- * Clerk Sign-In component with phone OTP, email OTP, and Google support.
- * Renders inline in the login page alongside existing email/password form.
+ * Custom OTP sign-in trigger.
+ * Opens Clerk's sign-in modal (which supports phone OTP, email OTP, Google)
+ * without rendering inline. This keeps the existing login UI clean.
  */
-export function ClerkSignIn() {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  if (!publishableKey) return null;
+export function ClerkOtpButton({ disabled }: { disabled?: boolean }) {
+  const clerk = useClerk();
+
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) return null;
 
   return (
-    <div className="flex justify-center">
-      <SignIn
-        appearance={{
-          elements: {
-            rootBox: "w-full",
-            card: "shadow-none border border-ivory-deep/30 rounded-2xl bg-white/60",
-            headerTitle: "font-display text-xl text-ink",
-            headerSubtitle: "font-sans text-sm text-ink-muted",
-            formButtonPrimary: "bg-ink hover:bg-gold text-ivory font-sans text-[11px] uppercase tracking-[0.3em] rounded-full py-3",
-            formFieldInput: "rounded-xl border-ivory-deep/40 font-sans text-sm",
-            footerActionLink: "text-gold hover:text-gold/80",
-            dividerLine: "bg-ivory-deep/30",
-            dividerText: "text-ink-soft font-sans text-xs",
-          },
-        }}
-        routing="hash"
-        signUpUrl="/register"
-        forceRedirectUrl="/account"
-      />
-    </div>
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => clerk.openSignIn()}
+      className="w-full rounded-full border border-ivory-deep/60 bg-white/50 py-4 font-sans text-[11px] uppercase tracking-[0.3em] text-ink transition hover:border-gold/40 hover:text-gold disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      Sign in with Phone / Email OTP
+    </button>
   );
 }
