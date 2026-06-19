@@ -2,11 +2,10 @@
  * Order service — handles order creation, retrieval, and status management.
  */
 import crypto from "node:crypto";
-import mongoose from "mongoose";
 import { orderRepository } from "../repositories/order.repository.js";
 import { couponRepository } from "../repositories/coupon.repository.js";
 import { reserveStock, releaseStock } from "../lib/inventory.js";
-import { resolveCoupon } from "../lib/coupon-utils.js";
+import { claimCoupon, releaseCouponClaim } from "../lib/coupon-utils.js";
 import { validateTransition, allowedNextStatuses, type OrderStatus } from "../lib/order-status.js";
 import { escapeRegex } from "../lib/sanitize-input.js";
 import { isMongoDuplicateKey } from "../lib/webhookIdempotency.js";
@@ -23,20 +22,6 @@ function generateOrderNumber(): string {
   const timePart = Date.now().toString(36).toUpperCase();
   const randPart = crypto.randomBytes(3).toString("hex").toUpperCase();
   return `NS-${timePart}-${randPart}`;
-}
-
-/**
- * Start a MongoDB session for transactions. Returns null if the deployment
- * doesn't support transactions (standalone local dev without replica set).
- */
-async function startSessionSafe(): Promise<mongoose.ClientSession | null> {
-  try {
-    const session = await mongoose.startSession();
-    return session;
-  } catch {
-    // Standalone MongoDB (no replica set) — transactions unavailable
-    return null;
-  }
 }
 
 export type CreateOrderInput = {
@@ -72,20 +57,16 @@ export const orderService = {
 
     const { items: reservedItems, subtotal } = reservation;
 
-    // Coupon resolution
+    // Atomic coupon claim — validates AND increments usedCount in one operation.
+    // This eliminates the race condition where two concurrent requests both pass validation.
     const shipping = subtotal >= 15000 ? 0 : 299;
-    const { discount, couponCode: appliedCoupon, coupon } = await resolveCoupon(couponCode, subtotal);
+    const { discount, couponCode: appliedCoupon, coupon } = await claimCoupon(couponCode, subtotal);
     const total = Math.max(0, subtotal + shipping - discount);
 
-    // Order creation + coupon increment in a transaction (if replica set available).
-    // This ensures: if Order.create fails, coupon usage is NOT incremented.
-    // If no replica set (local dev), falls back to non-transactional (best-effort).
-    const session = await startSessionSafe();
+    // Order creation. If it fails, we release stock AND undo the coupon claim.
     let doc;
 
     try {
-      if (session) session.startTransaction();
-
       doc = await orderRepository.create({
         orderNumber: generateOrderNumber(),
         idempotencyKey: idempotencyKey || undefined,
@@ -104,29 +85,20 @@ export const orderService = {
         razorpayPaymentId: razorpayPaymentId || undefined,
         status: "pending",
       });
-
-      // Atomic coupon usage increment (inside transaction)
-      if (coupon) {
-        await couponRepository.incrementUsage(coupon._id);
-      }
-
-      if (session) await session.commitTransaction();
     } catch (err) {
-      if (session) {
-        try { await session.abortTransaction(); } catch { /* ignore abort errors */ }
-      }
-
       if (isMongoDuplicateKey(err) && idempotencyKey) {
         const existing = await orderRepository.findByIdempotencyKey(idempotencyKey);
         if (existing) {
           await releaseStock(items.map((i) => ({ productId: i.productId, sku: i.sku, quantity: i.quantity })));
+          // Release the coupon claim since we're returning a duplicate
+          if (coupon) await releaseCouponClaim(coupon._id);
           return { order: existing, duplicate: true };
         }
       }
       await releaseStock(items.map((i) => ({ productId: i.productId, sku: i.sku, quantity: i.quantity })));
+      // Release the coupon claim since order creation failed
+      if (coupon) await releaseCouponClaim(coupon._id);
       throw err;
-    } finally {
-      if (session) await session.endSession();
     }
 
     return { order: doc, duplicate: false };
@@ -176,10 +148,7 @@ export const orderService = {
     }
 
     const skip = (page - 1) * limit;
-    const [orders, total] = await Promise.all([
-      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate("user", "name email phone").lean(),
-      Order.countDocuments(filter),
-    ]);
+    const { orders, total } = await orderRepository.findFilteredPaginated(filter, skip, limit);
     return { orders, total, page, pages: Math.max(Math.ceil(total / limit), 1) };
   },
 

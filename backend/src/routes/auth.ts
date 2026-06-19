@@ -67,7 +67,7 @@ export function createAuthRouter(env: {
       const { email, password } = req.body;
 
       // Account lockout check
-      const lockStatus = getAccountLockStatus(email);
+      const lockStatus = await getAccountLockStatus(email);
       if (lockStatus.locked) {
         const mins = Math.ceil(lockStatus.remainingMs / 60000);
         throw new HttpError(429, `Account temporarily locked. Try again in ${mins} minute${mins > 1 ? "s" : ""}.`);
@@ -75,11 +75,11 @@ export function createAuthRouter(env: {
 
       try {
         const session = await authService.login(email, password, env.jwtSecret, res, secureCookie, false);
-        resetFailedAttempts(email);
+        await resetFailedAttempts(email);
         res.json({ token: session.access, refreshToken: session.refresh, user: session.user });
       } catch (err) {
         if (err instanceof HttpError && err.status === 401) {
-          recordFailedAttempt(email);
+          await recordFailedAttempt(email);
         }
         throw err;
       }
@@ -96,7 +96,7 @@ export function createAuthRouter(env: {
       const { email, password } = req.body;
 
       // Account lockout check
-      const lockStatus = getAccountLockStatus(email);
+      const lockStatus = await getAccountLockStatus(email);
       if (lockStatus.locked) {
         const mins = Math.ceil(lockStatus.remainingMs / 60000);
         throw new HttpError(429, `Account temporarily locked. Try again in ${mins} minute${mins > 1 ? "s" : ""}.`);
@@ -104,11 +104,11 @@ export function createAuthRouter(env: {
 
       try {
         const session = await authService.login(email, password, env.jwtSecret, res, secureCookie, true);
-        resetFailedAttempts(email);
+        await resetFailedAttempts(email);
         res.json({ token: session.access, refreshToken: session.refresh, user: session.user });
       } catch (err) {
         if (err instanceof HttpError && err.status === 401) {
-          recordFailedAttempt(email);
+          await recordFailedAttempt(email);
         }
         throw err;
       }

@@ -49,4 +49,11 @@ export function assertSafeProductionConfig(): void {
       "[env] RAZORPAY_KEY_ID is set but RAZORPAY_WEBHOOK_SECRET is missing. Razorpay webhooks cannot verify signatures.",
     );
   }
+
+  // Warn about missing Redis in production (critical for rate limiting + account lockout in multi-instance)
+  if (!process.env.UPSTASH_REDIS_REST_URL) {
+    console.warn(
+      "[env] UPSTASH_REDIS_REST_URL is not set. Rate limiting and account lockout will use in-memory storage (not shared across instances). This is a security risk in multi-instance/cluster deployments.",
+    );
+  }
 }

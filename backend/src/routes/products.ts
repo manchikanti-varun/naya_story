@@ -1,13 +1,11 @@
 import type { Request, RequestHandler } from "express";
 import { Router } from "express";
-import { validationResult } from "express-validator";
 import { requireAdmin } from "../middleware/auth.js";
-import { publicCache } from "../middleware/httpCache.js";
 import { asyncHandler } from "../middleware/httpError.js";
 import { verifyAccessToken } from "../lib/accessJwt.js";
 import { User } from "../models/User.js";
 import { productService, type ProductListQuery } from "../services/product.service.js";
-import { createProductRules } from "../validators/product.validator.js";
+import { createProductRules, updateProductRules } from "../validators/product.validator.js";
 import { handleValidationErrors } from "../validators/index.js";
 
 /**
@@ -67,10 +65,16 @@ export function createProductsRouter(secret: string) {
   );
 
   // PATCH /:id — Update product (admin)
-  r.patch("/:id", ...(requireAdmin(secret) as RequestHandler[]), asyncHandler(async (req, res) => {
-    const product = await productService.updateProduct(req.params.id, req.body as Record<string, unknown>);
-    res.json({ product });
-  }));
+  r.patch(
+    "/:id",
+    ...(requireAdmin(secret) as RequestHandler[]),
+    ...updateProductRules,
+    handleValidationErrors,
+    asyncHandler(async (req, res) => {
+      const product = await productService.updateProduct(req.params.id, req.body as Record<string, unknown>);
+      res.json({ product });
+    }),
+  );
 
   // DELETE /:id — Delete product (admin)
   r.delete("/:id", ...(requireAdmin(secret) as RequestHandler[]), asyncHandler(async (req, res) => {

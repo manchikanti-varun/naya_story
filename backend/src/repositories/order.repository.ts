@@ -56,6 +56,14 @@ export const orderRepository = {
     return Order.find().sort({ createdAt: -1 }).limit(limit).lean();
   },
 
+  async findFilteredPaginated(filter: Record<string, unknown>, skip: number, limit: number) {
+    const [orders, total] = await Promise.all([
+      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).populate("user", "name email phone").lean(),
+      Order.countDocuments(filter),
+    ]);
+    return { orders, total };
+  },
+
   async findByRazorpayPaymentId(paymentId: string) {
     return Order.findOne({ razorpayPaymentId: paymentId });
   },

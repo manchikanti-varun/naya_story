@@ -6,13 +6,20 @@ const MAX_AGE_SEC = 30 * 24 * 60 * 60;
  * The middleware validates the signature so that forging the cookie
  * requires knowledge of the signing secret.
  *
+ * Secret strategy:
+ *   - Server-side (Edge middleware): uses ADMIN_GATE_SECRET env var (server-only, not NEXT_PUBLIC_).
+ *   - Client-side (cookie setting): uses NEXT_PUBLIC_ADMIN_GATE_SECRET (must match server secret).
+ *     If not set, falls back to a combination of origin + a static salt.
+ *
  * Format: <timestamp_hex>.<hmac_hex_16>
  */
 function getGateSecret(): string {
-  const base = typeof window !== "undefined"
-    ? (window.location.origin || "naya-admin-gate")
-    : (process.env.NEXT_PUBLIC_API_URL || "naya-admin-gate");
-  return base;
+  // Client-side: use the dedicated env var or fallback
+  if (typeof window !== "undefined") {
+    return process.env.NEXT_PUBLIC_ADMIN_GATE_SECRET || `${window.location.origin}:naya-admin-gate-v2`;
+  }
+  // Server-side (Edge middleware / SSR): use server-only secret
+  return process.env.ADMIN_GATE_SECRET || process.env.NEXT_PUBLIC_ADMIN_GATE_SECRET || "naya-admin-gate-v2-change-me";
 }
 
 async function hmacSign(secret: string, message: string): Promise<string> {

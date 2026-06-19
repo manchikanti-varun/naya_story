@@ -41,7 +41,12 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_KEY = "naya_token";
+/**
+ * User profile is stored in localStorage for hydration on reload.
+ * The JWT access token is kept in MEMORY ONLY — never persisted to storage.
+ * This eliminates the XSS → token theft attack vector.
+ * On page reload, the token is restored via the httpOnly refresh cookie (/auth/refresh).
+ */
 const USER_KEY = "naya_user";
 const GUEST_WISHLIST_KEY = "naya_guest_wishlist_v1";
 
@@ -53,26 +58,24 @@ const SYNC_EVENT_KEY = "naya_auth_sync";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  // Token is stored ONLY in memory — never written to localStorage
   const [token, setToken] = useState<string | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [guestWishlist, setGuestWishlist] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Deduplication: prevent parallel /me calls across re-renders
+  // Deduplication: prevent parallel refresh/me calls across re-renders
   const profileFetchRef = useRef<Promise<void> | null>(null);
   const hasFetchedProfile = useRef(false);
 
+  // Hydrate user profile from localStorage (for immediate UI), then refresh token
   useEffect(() => {
     try {
-      const t = localStorage.getItem(TOKEN_KEY);
       const u = localStorage.getItem(USER_KEY);
-      if (t) {
-        setToken(t);
-        if (u) {
-          const parsed = JSON.parse(u) as User;
-          setUser(parsed);
-          if (parsed.role === "admin") setAdminGateCookie();
-        }
+      if (u) {
+        const parsed = JSON.parse(u) as User;
+        setUser(parsed);
+        if (parsed.role === "admin") setAdminGateCookie();
       }
       const gw = localStorage.getItem(GUEST_WISHLIST_KEY);
       if (gw) {
@@ -85,10 +88,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
+  /**
+   * Persist user profile (NOT the token) and set in-memory token.
+   */
   const persist = useCallback((t: string, u: User) => {
-    localStorage.setItem(TOKEN_KEY, t);
     localStorage.setItem(USER_KEY, JSON.stringify(u));
-    // Notify other tabs
+    // Notify other tabs of login
     localStorage.setItem(SYNC_EVENT_KEY, `login:${Date.now()}`);
     setToken(t);
     setUser(u);
@@ -96,8 +101,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     else clearAdminGateCookie();
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
+  const logout = useCallback(async () => {
+    // Call backend to clear httpOnly cookie
+    try {
+      await apiFetch("/auth/logout", { method: "POST", token });
+    } catch {
+      /* best effort */
+    }
     localStorage.removeItem(USER_KEY);
     // Notify other tabs
     localStorage.setItem(SYNC_EVENT_KEY, `logout:${Date.now()}`);
@@ -106,25 +116,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setAddresses([]);
     hasFetchedProfile.current = false;
+  }, [token]);
+
+  /**
+   * Silent token refresh using httpOnly cookie.
+   * Called on page load and when a 401 is received.
+   */
+  const silentRefresh = useCallback(async (): Promise<string | null> => {
+    try {
+      const res = await apiFetch<{ token: string; user: User }>("/auth/refresh", {
+        method: "POST",
+      });
+      setToken(res.token);
+      setUser(res.user);
+      localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+      if (res.user.role === "admin") setAdminGateCookie();
+      else clearAdminGateCookie();
+      hasFetchedProfile.current = true;
+      return res.token;
+    } catch {
+      // Refresh failed — user is logged out
+      localStorage.removeItem(USER_KEY);
+      clearAdminGateCookie();
+      setToken(null);
+      setUser(null);
+      setAddresses([]);
+      return null;
+    }
   }, []);
+
+  // On mount: if we have a cached user (suggesting a prior session), attempt silent refresh
+  useEffect(() => {
+    const cachedUser = localStorage.getItem(USER_KEY);
+    if (!cachedUser) return;
+    if (hasFetchedProfile.current) return;
+    if (profileFetchRef.current) return;
+
+    let cancelled = false;
+    const fetchPromise = (async () => {
+      try {
+        const newToken = await silentRefresh();
+        if (cancelled || !newToken) return;
+
+        // Fetch full profile with addresses
+        const me = await apiFetch<{ user: User & { addresses?: Address[] } }>(
+          "/auth/me",
+          { token: newToken },
+        );
+        if (cancelled) return;
+        setUser(me.user);
+        localStorage.setItem(USER_KEY, JSON.stringify(me.user));
+        setAddresses(me.user.addresses ?? []);
+        hasFetchedProfile.current = true;
+      } catch {
+        if (!cancelled) {
+          localStorage.removeItem(USER_KEY);
+          clearAdminGateCookie();
+          setToken(null);
+          setUser(null);
+        }
+      } finally {
+        profileFetchRef.current = null;
+      }
+    })();
+
+    profileFetchRef.current = fetchPromise;
+    return () => {
+      cancelled = true;
+    };
+  }, [silentRefresh]);
 
   // Sync state when another tab writes to localStorage
   useEffect(() => {
     function handleStorageChange(e: StorageEvent) {
-      if (e.key === TOKEN_KEY) {
-        if (!e.newValue) {
-          // Another tab logged out
+      if (e.key === SYNC_EVENT_KEY) {
+        if (e.newValue?.startsWith("logout")) {
           setToken(null);
           setUser(null);
           setAddresses([]);
           clearAdminGateCookie();
-        } else {
-          // Another tab logged in
-          setToken(e.newValue);
-          try {
-            const raw = localStorage.getItem(USER_KEY);
-            if (raw) setUser(JSON.parse(raw) as User);
-          } catch { /* ignore */ }
+        } else if (e.newValue?.startsWith("login")) {
+          // Another tab logged in — attempt silent refresh in this tab
+          void silentRefresh();
         }
       }
       if (e.key === USER_KEY && e.newValue) {
@@ -132,10 +205,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(JSON.parse(e.newValue) as User);
         } catch { /* ignore */ }
       }
+      if (e.key === USER_KEY && !e.newValue) {
+        setToken(null);
+        setUser(null);
+        setAddresses([]);
+        clearAdminGateCookie();
+      }
     }
     window.addEventListener("storage", handleStorageChange);
     return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
+  }, [silentRefresh]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -229,41 +308,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => (token ? (user?.wishlist ?? []) : guestWishlist),
     [token, user?.wishlist, guestWishlist],
   );
-
-  // Fetch profile once on mount (deduplicated across renders and parallel tabs)
-  useEffect(() => {
-    if (!token) return;
-    // Skip if we already fetched during this session (login/register already gave us fresh data)
-    if (hasFetchedProfile.current) return;
-    // Deduplicate: if a fetch is already in progress, don't start another
-    if (profileFetchRef.current) return;
-
-    let cancelled = false;
-    const fetchPromise = (async () => {
-      try {
-        const me = await apiFetch<{ user: User & { addresses?: Address[] } }>(
-          "/auth/me",
-          { token },
-        );
-        if (cancelled) return;
-        setUser(me.user);
-        localStorage.setItem(USER_KEY, JSON.stringify(me.user));
-        setAddresses(me.user.addresses ?? []);
-        if (me.user.role === "admin") setAdminGateCookie();
-        else clearAdminGateCookie();
-        hasFetchedProfile.current = true;
-      } catch {
-        if (!cancelled) logout();
-      } finally {
-        profileFetchRef.current = null;
-      }
-    })();
-
-    profileFetchRef.current = fetchPromise;
-    return () => {
-      cancelled = true;
-    };
-  }, [token, logout]);
 
   const value = useMemo(
     () => ({
