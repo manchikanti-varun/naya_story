@@ -12,6 +12,13 @@ import { storePageFlagsFromHomepage } from "@/lib/store-page-flags";
 import { getGlobalCategories } from "@/lib/cms/global-categories";
 import "../store-theme.css";
 
+/**
+ * Force dynamic rendering for the store layout.
+ * The layout fetches site settings from the API, which isn't available at build time
+ * (Railway builds frontend before backend is running). ISR handles caching at runtime.
+ */
+export const dynamic = "force-dynamic";
+
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const [data, legalPages] = await Promise.all([getSiteSettings(), getPublishedLegalPages()]);
   const logoRev = getLogoCacheRev();
