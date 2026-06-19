@@ -1,6 +1,9 @@
 import { HomePageView } from "@/components/home/HomePageView";
 import { getBestsellerProducts, getNewInProducts, getSiteSettings } from "@/lib/server-content";
 
+/** ISR: regenerate homepage every 60 seconds in the background. */
+export const revalidate = 60;
+
 export default async function HomePage() {
   const { settings } = await getSiteSettings();
   const hp = settings.homepage;

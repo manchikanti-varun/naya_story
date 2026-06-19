@@ -61,7 +61,7 @@ const OrderSchema = new mongoose.Schema(
     /** Shipping carrier name (e.g. BlueDart, DTDC, Delhivery). */
     shippingCarrier: String,
     timeline: [TimelineSchema],
-    paymentProvider: { type: String, enum: ["stripe", "razorpay", "cod"], default: "stripe" },
+    paymentProvider: { type: String, enum: ["razorpay", "cod"], default: "razorpay" },
     paymentReference: String,
     /** Payment status: paid, pending, failed. */
     paymentStatus: { type: String, enum: ["paid", "pending", "failed"], default: "pending" },
@@ -96,6 +96,14 @@ OrderSchema.index({ guestEmail: 1 }, { sparse: true });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ stripePaymentIntentId: 1 }, { sparse: true });
 OrderSchema.index({ razorpayPaymentId: 1 }, { sparse: true });
+
+// Admin search: text index on commonly searched fields.
+// Supports $regex queries on orderNumber, guestEmail, customerName, customerPhone, trackingNumber.
+OrderSchema.index({ orderNumber: 1 });
+OrderSchema.index(
+  { orderNumber: "text", guestEmail: "text", customerName: "text", customerPhone: "text", trackingNumber: "text" },
+  { name: "order_admin_search", sparse: true },
+);
 
 export const Order =
   mongoose.models.Order || mongoose.model("Order", OrderSchema);

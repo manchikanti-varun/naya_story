@@ -43,7 +43,12 @@ export async function reserveStock(items: StockReservationItem[]): Promise<Reser
       return { success: false, error: "Invalid product ID", sku: line.sku };
     }
 
-    // Atomic decrement: only succeeds if stock >= requested quantity
+    // Atomic decrement: only succeeds if stock >= requested quantity.
+    //
+    // IMPORTANT: `{ new: false }` returns the PRE-UPDATE document intentionally.
+    // We need the original product data (name, price, images) to build the order line items.
+    // DO NOT change to `{ new: true }` — that would return post-decrement stock values
+    // and break the product info extraction below.
     const updated = await Product.findOneAndUpdate(
       {
         _id: line.productId,
@@ -53,7 +58,7 @@ export async function reserveStock(items: StockReservationItem[]): Promise<Reser
       {
         $inc: { "variants.$.stock": -line.quantity },
       },
-      { new: false }, // return pre-update doc to read product info
+      { new: false },
     ).lean();
 
     if (!updated) {

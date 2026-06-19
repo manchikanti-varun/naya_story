@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { stripUnsplashUrl } from "@/lib/strip-unsplash";
@@ -15,21 +16,31 @@ function sanitizeCartLine(line: CartLine): CartLine {
   return { ...line, image: stripUnsplashUrl(line.image) };
 }
 
-type CartContextValue = {
+// --- Types ---
+
+type CartDataContextValue = {
   lines: CartLine[];
-  isOpen: boolean;
   coupon?: string;
-  openCart: () => void;
-  closeCart: () => void;
+  subtotal: number;
   addLine: (line: Omit<CartLine, "quantity"> & { quantity?: number }) => void;
   updateQty: (key: string, quantity: number) => void;
   removeLine: (key: string) => void;
   setCoupon: (code: string | undefined) => void;
-  subtotal: number;
   clear: () => void;
 };
 
-const CartContext = createContext<CartContextValue | null>(null);
+type CartUIContextValue = {
+  isOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+};
+
+// --- Contexts ---
+
+const CartDataContext = createContext<CartDataContextValue | null>(null);
+const CartUIContext = createContext<CartUIContextValue | null>(null);
+
+// --- Helpers ---
 
 const STORAGE_KEY = "naya_cart_v1";
 
@@ -37,11 +48,16 @@ export function lineKey(line: Pick<CartLine, "productId" | "sku">) {
   return `${line.productId}:${line.sku}`;
 }
 
+// --- Provider ---
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [coupon, setCoupon] = useState<string | undefined>();
   const [isOpen, setOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+
+  // Ref so addLine can trigger drawer open without depending on UI state
+  const openCartRef = useRef(() => setOpen(true));
 
   useEffect(() => {
     try {
@@ -62,9 +78,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ lines, coupon }));
   }, [lines, coupon, hydrated]);
 
+  // --- UI actions (stable references) ---
   const openCart = useCallback(() => setOpen(true), []);
   const closeCart = useCallback(() => setOpen(false), []);
 
+  // --- Data actions ---
   const addLine = useCallback(
     (input: Omit<CartLine, "quantity"> & { quantity?: number }) => {
       const qty = input.quantity ?? 1;
@@ -78,7 +96,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         next[idx] = { ...next[idx], quantity: next[idx].quantity + qty };
         return next;
       });
-      setOpen(true);
+      // Auto-open the cart drawer when adding an item
+      openCartRef.current();
     },
     [],
   );
@@ -105,39 +124,58 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [lines],
   );
 
-  const value = useMemo(
+  // --- Memoized context values (separate to prevent cross-renders) ---
+  const dataValue = useMemo<CartDataContextValue>(
     () => ({
       lines,
-      isOpen,
       coupon,
-      openCart,
-      closeCart,
+      subtotal,
       addLine,
       updateQty,
       removeLine,
       setCoupon,
-      subtotal,
       clear,
     }),
-    [
-      lines,
-      isOpen,
-      coupon,
-      openCart,
-      closeCart,
-      addLine,
-      updateQty,
-      removeLine,
-      subtotal,
-      clear,
-    ],
+    [lines, coupon, subtotal, addLine, updateQty, removeLine, clear],
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  const uiValue = useMemo<CartUIContextValue>(
+    () => ({ isOpen, openCart, closeCart }),
+    [isOpen, openCart, closeCart],
+  );
+
+  return (
+    <CartDataContext.Provider value={dataValue}>
+      <CartUIContext.Provider value={uiValue}>
+        {children}
+      </CartUIContext.Provider>
+    </CartDataContext.Provider>
+  );
 }
 
-export function useCart() {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used within CartProvider");
+// --- Hooks ---
+
+/** Cart data (lines, subtotal, coupon, mutations). Does NOT re-render on drawer open/close. */
+export function useCartData() {
+  const ctx = useContext(CartDataContext);
+  if (!ctx) throw new Error("useCartData must be used within CartProvider");
   return ctx;
+}
+
+/** Cart UI state (isOpen, openCart, closeCart). Does NOT re-render on data changes. */
+export function useCartUI() {
+  const ctx = useContext(CartUIContext);
+  if (!ctx) throw new Error("useCartUI must be used within CartProvider");
+  return ctx;
+}
+
+/**
+ * Legacy combined hook — returns both data and UI context merged.
+ * Use useCartData() or useCartUI() directly for better performance.
+ * @deprecated Prefer useCartData() / useCartUI() for granular subscriptions.
+ */
+export function useCart() {
+  const data = useCartData();
+  const ui = useCartUI();
+  return { ...data, ...ui };
 }

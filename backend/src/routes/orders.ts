@@ -12,12 +12,37 @@ import type { OrderStatus } from "../lib/order-status.js";
 export function createOrdersRouter(secret: string) {
   const r = Router();
 
+  /**
+   * Order creation rate limiter.
+   *
+   * Uses a composite key: authenticated userId OR IP address.
+   * This prevents:
+   *   - Single user spamming orders (per-user limit)
+   *   - Bots from a single IP (per-IP limit for guests)
+   *   - False positives on shared networks (offices/universities) since
+   *     authenticated users get their own bucket.
+   *
+   * Configurable via env for flash sales:
+   *   ORDER_RATE_LIMIT_MAX=50 (raise during flash sales)
+   *   ORDER_RATE_LIMIT_WINDOW_MS=900000 (15 min default)
+   */
   const orderCreateLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 20,
+    windowMs: Number(process.env.ORDER_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    max: Number(process.env.ORDER_RATE_LIMIT_MAX) || 20,
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Too many orders. Please try again later." },
+    keyGenerator: (req) => {
+      // Use userId if authenticated, otherwise fall back to IP
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith("Bearer ")) {
+        try {
+          const payload = verifyAccessToken(authHeader.slice(7), secret);
+          return `user:${payload.sub}`;
+        } catch { /* fall through to IP */ }
+      }
+      return `ip:${req.ip ?? "unknown"}`;
+    },
   });
 
   // POST / — Create order
@@ -27,7 +52,7 @@ export function createOrdersRouter(secret: string) {
     ...createOrderRules,
     handleValidationErrors,
     asyncHandler(async (req, res) => {
-      const { items, shippingAddress, couponCode, guestEmail, idempotencyKey, paymentProvider, stripePaymentIntentId, razorpayPaymentId } = req.body;
+      const { items, shippingAddress, couponCode, guestEmail, idempotencyKey, paymentProvider, razorpayPaymentId } = req.body;
 
       // Extract optional user ID from auth header
       let userId: string | undefined;
@@ -41,17 +66,19 @@ export function createOrdersRouter(secret: string) {
 
       const result = await orderService.createOrder({
         items, shippingAddress, couponCode, guestEmail,
-        idempotencyKey, paymentProvider, stripePaymentIntentId, razorpayPaymentId, userId,
+        idempotencyKey, paymentProvider, razorpayPaymentId, userId,
       });
 
       res.status(201).json({ order: result.order, ...(result.duplicate ? { duplicate: true } : {}) });
     }),
   );
 
-  // GET /mine — User's orders
+  // GET /mine — User's orders (paginated)
   r.get("/mine", requireAuth(secret), asyncHandler(async (req, res) => {
-    const orders = await orderService.getOrdersByUser(String(req.user!._id));
-    res.json({ orders });
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Number(req.query.limit) || 20, 100);
+    const result = await orderService.getOrdersByUser(String(req.user!._id), page, limit);
+    res.json(result);
   }));
 
   // GET /:id — Single order (user or admin)

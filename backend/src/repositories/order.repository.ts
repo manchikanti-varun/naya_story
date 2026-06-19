@@ -16,7 +16,6 @@ export type CreateOrderData = {
   timeline: { status: string; at: Date }[];
   paymentProvider: string;
   paymentReference?: string;
-  stripePaymentIntentId?: string;
   razorpayPaymentId?: string;
   status: string;
 };
@@ -44,12 +43,17 @@ export const orderRepository = {
     return Order.find({ user: userId }).sort({ createdAt: -1 }).lean();
   },
 
-  async findAll(limit = 200) {
-    return Order.find().sort({ createdAt: -1 }).limit(limit).lean();
+  async findByUserPaginated(userId: string, skip: number, limit: number) {
+    const filter = { user: userId };
+    const [orders, total] = await Promise.all([
+      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Order.countDocuments(filter),
+    ]);
+    return { orders, total };
   },
 
-  async findByStripePaymentIntentId(paymentIntentId: string) {
-    return Order.findOne({ stripePaymentIntentId: paymentIntentId });
+  async findAll(limit = 200) {
+    return Order.find().sort({ createdAt: -1 }).limit(limit).lean();
   },
 
   async findByRazorpayPaymentId(paymentId: string) {

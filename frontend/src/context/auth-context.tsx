@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { apiFetch } from "@/lib/api";
@@ -44,12 +45,22 @@ const TOKEN_KEY = "naya_token";
 const USER_KEY = "naya_user";
 const GUEST_WISHLIST_KEY = "naya_guest_wishlist_v1";
 
+/**
+ * Cross-tab synchronization key. When another tab logs in/out, this tab
+ * picks up the change via the `storage` event (no redundant API calls).
+ */
+const SYNC_EVENT_KEY = "naya_auth_sync";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [guestWishlist, setGuestWishlist] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Deduplication: prevent parallel /me calls across re-renders
+  const profileFetchRef = useRef<Promise<void> | null>(null);
+  const hasFetchedProfile = useRef(false);
 
   useEffect(() => {
     try {
@@ -77,6 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const persist = useCallback((t: string, u: User) => {
     localStorage.setItem(TOKEN_KEY, t);
     localStorage.setItem(USER_KEY, JSON.stringify(u));
+    // Notify other tabs
+    localStorage.setItem(SYNC_EVENT_KEY, `login:${Date.now()}`);
     setToken(t);
     setUser(u);
     if (u.role === "admin") setAdminGateCookie();
@@ -86,10 +99,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    // Notify other tabs
+    localStorage.setItem(SYNC_EVENT_KEY, `logout:${Date.now()}`);
     clearAdminGateCookie();
     setToken(null);
     setUser(null);
     setAddresses([]);
+    hasFetchedProfile.current = false;
+  }, []);
+
+  // Sync state when another tab writes to localStorage
+  useEffect(() => {
+    function handleStorageChange(e: StorageEvent) {
+      if (e.key === TOKEN_KEY) {
+        if (!e.newValue) {
+          // Another tab logged out
+          setToken(null);
+          setUser(null);
+          setAddresses([]);
+          clearAdminGateCookie();
+        } else {
+          // Another tab logged in
+          setToken(e.newValue);
+          try {
+            const raw = localStorage.getItem(USER_KEY);
+            if (raw) setUser(JSON.parse(raw) as User);
+          } catch { /* ignore */ }
+        }
+      }
+      if (e.key === USER_KEY && e.newValue) {
+        try {
+          setUser(JSON.parse(e.newValue) as User);
+        } catch { /* ignore */ }
+      }
+    }
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const login = useCallback(
@@ -99,6 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
       persist(res.token, res.user);
+      hasFetchedProfile.current = true;
       return res.user;
     },
     [persist],
@@ -111,6 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
       persist(res.token, res.user);
+      hasFetchedProfile.current = true;
       return res.user;
     },
     [persist],
@@ -123,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(payload),
       });
       persist(res.token, res.user);
+      hasFetchedProfile.current = true;
     },
     [persist],
   );
@@ -148,6 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       persist(accessToken, me.user);
       if (me.user.addresses) setAddresses(me.user.addresses as Address[]);
+      hasFetchedProfile.current = true;
       return me.user;
     },
     [persist],
@@ -181,10 +230,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [token, user?.wishlist, guestWishlist],
   );
 
+  // Fetch profile once on mount (deduplicated across renders and parallel tabs)
   useEffect(() => {
     if (!token) return;
+    // Skip if we already fetched during this session (login/register already gave us fresh data)
+    if (hasFetchedProfile.current) return;
+    // Deduplicate: if a fetch is already in progress, don't start another
+    if (profileFetchRef.current) return;
+
     let cancelled = false;
-    void (async () => {
+    const fetchPromise = (async () => {
       try {
         const me = await apiFetch<{ user: User & { addresses?: Address[] } }>(
           "/auth/me",
@@ -196,10 +251,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAddresses(me.user.addresses ?? []);
         if (me.user.role === "admin") setAdminGateCookie();
         else clearAdminGateCookie();
+        hasFetchedProfile.current = true;
       } catch {
         if (!cancelled) logout();
+      } finally {
+        profileFetchRef.current = null;
       }
     })();
+
+    profileFetchRef.current = fetchPromise;
     return () => {
       cancelled = true;
     };

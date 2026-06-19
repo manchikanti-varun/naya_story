@@ -7,20 +7,21 @@ import { cmsService } from "../services/cms.service.js";
 export function createContentRouter(secret: string) {
   const r = Router();
 
-  // GET /site — Public or admin site settings
+  // GET /site — Public or admin site settings (cacheable for public)
   r.get("/site", asyncHandler(async (req, res) => {
     const isAdmin = await isAdminRequest(req, secret);
-    try {
-      const settings = await cmsService.getSiteSettings(isAdmin);
-      res.json({ settings });
-    } catch (e) {
-      console.error("[CONTENT /site] Error:", (e as Error).message, (e as Error).stack);
-      throw e;
+    if (!isAdmin) {
+      res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=30");
+      res.removeHeader("Pragma");
     }
+    const settings = await cmsService.getSiteSettings(isAdmin);
+    res.json({ settings });
   }));
 
-  // GET /home — Public homepage data
+  // GET /home — Public homepage data (cacheable)
   r.get("/home", asyncHandler(async (_req, res) => {
+    res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=30");
+    res.removeHeader("Pragma");
     const data = await cmsService.getHomepage();
     res.json(data);
   }));

@@ -28,7 +28,6 @@ export type SizeGuideConfig = {
 
 export type PaymentMethodConfig = {
   codEnabled?: boolean;
-  stripeEnabled?: boolean;
   razorpayEnabled?: boolean;
 };
 

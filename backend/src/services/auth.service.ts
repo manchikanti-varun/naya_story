@@ -132,6 +132,54 @@ export const authService = {
     };
   },
 
+  /**
+   * Phone OTP login/register via Firebase.
+   * Finds existing user by firebaseUid or phone, or creates a new one.
+   * Returns a full session (same as email/Google login).
+   */
+  async loginWithPhone(
+    firebaseUid: string,
+    phone: string,
+    jwtSecret: string,
+    res: Response,
+    secureCookie: boolean,
+  ): Promise<AuthSession> {
+    // 1. Try finding by Firebase UID (most reliable)
+    let user = await userRepository.findByFirebaseUid(firebaseUid);
+
+    // 2. Try finding by phone number (user may have been created via checkout)
+    if (!user) {
+      user = await userRepository.findByPhone(phone);
+      if (user) {
+        // Link Firebase UID to existing user
+        (user as unknown as { firebaseUid: string }).firebaseUid = firebaseUid;
+        if (!user.phone) user.phone = phone;
+        await user.save();
+      }
+    }
+
+    // 3. Auto-create new user
+    if (!user) {
+      const name = `User ${phone.slice(-4)}`;
+      // Generate a placeholder email from phone (user can update later)
+      const email = `${phone.replace(/[^0-9]/g, "")}@phone.nayastory.local`;
+      user = await userRepository.create({
+        email,
+        name,
+        phone,
+        firebaseUid,
+        role: "customer",
+      });
+    }
+
+    // Block admin accounts from phone login
+    if (user.role === "admin") {
+      throw new HttpError(403, "Administrator accounts must sign in via the admin portal.");
+    }
+
+    return this.issueSession(user, jwtSecret, res, secureCookie);
+  },
+
   async issueSession(
     user: { _id: unknown; id?: string; email: string; name: string; role: string; wishlist?: unknown[] },
     jwtSecret: string,

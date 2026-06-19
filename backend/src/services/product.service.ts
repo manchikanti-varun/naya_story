@@ -14,6 +14,7 @@ import {
   slugifyCategoryName,
 } from "../lib/global-categories.js";
 import { HttpError } from "../middleware/httpError.js";
+import { eventBus } from "../lib/event-bus.js";
 import type { HomepageConfig } from "../types/homepage.js";
 
 // Product field whitelist for admin updates
@@ -189,14 +190,13 @@ export const productService = {
     const doc = await productRepository.create(sanitized);
     const productId = String(doc._id);
 
-    // Background sync (non-blocking, errors swallowed)
-    if (typeof sanitized.category === "string") {
-      await this.ensureCategoryExists(sanitized.category).catch(() => {});
-    }
-    await this.syncHomepagePins(productId, {
-      newIn: sanitized.newIn === true ? true : undefined,
-      bestseller: sanitized.bestseller === true ? true : undefined,
-    }).catch(() => {});
+    // Fire-and-forget via event bus (non-blocking, errors logged internally)
+    eventBus.emit("product.created", {
+      productId,
+      category: typeof sanitized.category === "string" ? sanitized.category : undefined,
+      newIn: sanitized.newIn === true,
+      bestseller: sanitized.bestseller === true,
+    });
 
     return sanitizeProductMedia(doc.toObject() as Record<string, unknown>);
   },
@@ -207,15 +207,13 @@ export const productService = {
     if (!doc) throw new HttpError(404, "Not found");
     const productId = String(doc._id);
 
-    if (typeof body.category === "string") {
-      await this.ensureCategoryExists(body.category).catch(() => {});
-    }
-    if ("newIn" in body || "bestseller" in body) {
-      await this.syncHomepagePins(productId, {
-        newIn: "newIn" in body ? (body.newIn === true ? true : false) : undefined,
-        bestseller: "bestseller" in body ? (body.bestseller === true ? true : false) : undefined,
-      }).catch(() => {});
-    }
+    // Fire-and-forget via event bus
+    eventBus.emit("product.updated", {
+      productId,
+      category: typeof body.category === "string" ? body.category : undefined,
+      newIn: "newIn" in body ? (body.newIn === true ? true : false) : undefined,
+      bestseller: "bestseller" in body ? (body.bestseller === true ? true : false) : undefined,
+    });
 
     return sanitizeProductMedia(doc.toObject() as Record<string, unknown>);
   },
@@ -332,18 +330,28 @@ export const productService = {
 
   async syncAllCategories() {
     const allCategories = await productRepository.distinctCategories();
-    let added = 0;
-    for (const cat of allCategories) {
-      if (!cat?.trim()) continue;
+
+    // Single DB read to determine which categories already exist
+    const doc = await settingsRepository.findOne();
+    const rawHp = (doc?.homepage ?? {}) as Record<string, unknown>;
+    const rawGlobals = Array.isArray(rawHp.globalCategories)
+      ? (rawHp.globalCategories as Array<Record<string, unknown>>)
+      : [];
+    const existingSlugs = new Set(
+      rawGlobals.map((g) => String(g.slug ?? "").toLowerCase()),
+    );
+
+    // Filter to only new categories
+    const newCategories = allCategories.filter((cat) => {
+      if (!cat?.trim()) return false;
       const slug = slugifyCategoryName(cat);
-      if (!slug) continue;
+      if (!slug) return false;
+      return !existingSlugs.has(slug.toLowerCase());
+    });
 
-      // Check if already exists using raw doc (no mergeHomepageConfig dependency)
-      const doc = await settingsRepository.findOne();
-      const rawHp = (doc?.homepage ?? {}) as Record<string, unknown>;
-      const rawGlobals = Array.isArray(rawHp.globalCategories) ? rawHp.globalCategories as Array<Record<string, unknown>> : [];
-      if (rawGlobals.some((g) => String(g.slug ?? "").toLowerCase() === slug.toLowerCase())) continue;
-
+    // Sync new categories (each call still does a DB write, but we avoid redundant reads)
+    let added = 0;
+    for (const cat of newCategories) {
       await this.ensureCategoryExists(cat);
       added++;
     }

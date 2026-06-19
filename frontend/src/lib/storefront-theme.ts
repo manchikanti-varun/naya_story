@@ -15,11 +15,20 @@ export function sanitizeHexColor(input: string): string | null {
 export function storefrontThemeCssString(theme: StorefrontTheme | undefined): string {
   if (!theme || typeof theme !== "object") return "";
   const parts: string[] = [];
-  if (theme.textInk) parts.push(`--color-ink:${theme.textInk}`);
-  if (theme.textInkMuted) parts.push(`--color-ink-muted:${theme.textInkMuted}`);
-  if (theme.textInkSoft) parts.push(`--color-ink-soft:${theme.textInkSoft}`);
-  if (theme.accentGold) parts.push(`--color-gold:${theme.accentGold}`);
-  if (theme.foreground) parts.push(`--foreground:${theme.foreground}`);
+
+  // Only inject validated hex colors — prevents CSS injection from corrupted CMS data
+  const tryAdd = (varName: string, raw: string | undefined) => {
+    if (!raw) return;
+    const safe = sanitizeHexColor(raw);
+    if (safe) parts.push(`${varName}:${safe}`);
+  };
+
+  tryAdd("--color-ink", theme.textInk);
+  tryAdd("--color-ink-muted", theme.textInkMuted);
+  tryAdd("--color-ink-soft", theme.textInkSoft);
+  tryAdd("--color-gold", theme.accentGold);
+  tryAdd("--foreground", theme.foreground);
+
   if (parts.length === 0) return "";
   return `:root{${parts.join(";")}}`;
 }

@@ -6,7 +6,9 @@ export type CreateUserData = {
   email: string;
   passwordHash?: string;
   name: string;
+  phone?: string;
   googleId?: string;
+  firebaseUid?: string;
   role: "customer" | "admin";
 };
 
@@ -38,6 +40,14 @@ export const userRepository = {
 
   async findByGoogleId(googleId: string) {
     return User.findOne({ googleId });
+  },
+
+  async findByPhone(phone: string) {
+    return User.findOne({ phone });
+  },
+
+  async findByFirebaseUid(uid: string) {
+    return User.findOne({ firebaseUid: uid });
   },
 
   async create(data: CreateUserData) {

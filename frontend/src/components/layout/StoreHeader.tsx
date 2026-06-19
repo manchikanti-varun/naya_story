@@ -21,7 +21,7 @@ import { ProfileMenu } from "@/components/layout/store-header/profile-menu";
 import { StoreNavLinks } from "@/components/layout/store-header/nav-links";
 import { WishlistPop } from "@/components/layout/store-header/wishlist-pop";
 import { useAuth } from "@/context/auth-context";
-import { useCart } from "@/context/cart-context";
+import { useCartData, useCartUI } from "@/context/cart-context";
 import { SITE_NAME, STORE_LOGO_PUBLIC_PATH } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import type { StorePageFlags } from "@/lib/store-page-flags";
@@ -59,7 +59,8 @@ export function StoreHeader({
   navCategories?: Array<{ name: string; slug: string; href: string }>;
 }) {
   const pathname = usePathname();
-  const { openCart, lines } = useCart();
+  const { openCart } = useCartUI();
+  const { lines } = useCartData();
   const { user, wishlistIds } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);

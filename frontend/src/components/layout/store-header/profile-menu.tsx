@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
-import { FiLogOut } from "react-icons/fi";
+import { LogOut } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/cn";
 
@@ -86,7 +86,7 @@ export function ProfileMenu({ open, onClose }: Props) {
                   onClose();
                 }}
               >
-                <FiLogOut className="h-4 w-4 shrink-0" aria-hidden />
+                <LogOut className="h-4 w-4 shrink-0" aria-hidden />
                 Sign out
               </button>
             </>

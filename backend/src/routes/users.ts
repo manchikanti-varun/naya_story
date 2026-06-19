@@ -50,5 +50,36 @@ export function createUsersRouter(secret: string) {
     }),
   );
 
+  // --- Cart Sync (cross-device cart for authenticated users) ---
+
+  // GET /cart — Load server-side cart
+  r.get("/cart", requireAuth(secret), asyncHandler(async (req, res) => {
+    const cart = await customerService.getCart(String(req.user!._id));
+    res.json({ cart });
+  }));
+
+  // PUT /cart — Save/replace cart (full sync from client)
+  r.put(
+    "/cart",
+    requireAuth(secret),
+    body("lines").isArray({ max: 50 }),
+    body("lines.*.productId").notEmpty(),
+    body("lines.*.sku").notEmpty(),
+    body("lines.*.quantity").isInt({ min: 1, max: 50 }),
+    body("lines.*.name").trim().notEmpty(),
+    body("lines.*.slug").trim().notEmpty(),
+    body("lines.*.price").isNumeric(),
+    body("lines.*.size").optional().isString(),
+    body("lines.*.color").optional().isString(),
+    body("lines.*.image").optional().isString(),
+    body("coupon").optional({ values: "falsy" }).trim().isLength({ max: 50 }),
+    handleValidationErrors,
+    asyncHandler(async (req, res) => {
+      const { lines, coupon } = req.body;
+      const cart = await customerService.saveCart(String(req.user!._id), lines, coupon);
+      res.json({ cart });
+    }),
+  );
+
   return r;
 }

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
-import { useCart } from "@/context/cart-context";
+import { useCartData, useCartUI } from "@/context/cart-context";
 import { useRecentlyViewed } from "@/lib/use-recently-viewed";
 import type { Product } from "@/types";
 import { cn } from "@/lib/cn";
@@ -38,7 +38,8 @@ type Props = {
 
 export function ProductDetail({ slug, adminPreviewToken }: Props) {
   const router = useRouter();
-  const { addLine, openCart } = useCart();
+  const { addLine } = useCartData();
+  const { openCart } = useCartUI();
   const { token, wishlistIds, updateWishlistLocal } = useAuth();
   const { ids: recentIds, track } = useRecentlyViewed();
   const [product, setProduct] = useState<Product | null>(null);
@@ -239,10 +240,39 @@ export function ProductDetail({ slug, adminPreviewToken }: Props) {
 
   if (loading) {
     return (
-      <div className="lux-shell py-32 text-center">
-        <p className="font-sans text-sm font-light text-ink-muted animate-pulse">
-          Loading piece…
-        </p>
+      <div className="lux-shell py-12 md:py-16">
+        {/* Skeleton mimics the PDP layout */}
+        <div className="mb-4 flex gap-2">
+          <div className="h-3 w-10 animate-pulse rounded bg-ivory-deep/60" />
+          <div className="h-3 w-3 animate-pulse rounded bg-ivory-deep/40" />
+          <div className="h-3 w-16 animate-pulse rounded bg-ivory-deep/60" />
+          <div className="h-3 w-3 animate-pulse rounded bg-ivory-deep/40" />
+          <div className="h-3 w-14 animate-pulse rounded bg-ivory-deep/60" />
+        </div>
+        <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-10">
+          {/* Gallery skeleton */}
+          <div className="aspect-[3/4] w-full animate-pulse rounded-lux bg-ivory-deep/50" />
+          {/* Info skeleton */}
+          <div className="space-y-4 lg:max-w-md lg:justify-self-end lg:w-full">
+            <div className="h-3 w-20 animate-pulse rounded bg-ivory-deep/60" />
+            <div className="h-7 w-3/4 animate-pulse rounded bg-ivory-deep/70" />
+            <div className="space-y-2 pt-2">
+              <div className="h-3 w-full animate-pulse rounded bg-ivory-deep/40" />
+              <div className="h-3 w-5/6 animate-pulse rounded bg-ivory-deep/40" />
+              <div className="h-3 w-2/3 animate-pulse rounded bg-ivory-deep/40" />
+            </div>
+            <div className="h-6 w-24 animate-pulse rounded bg-ivory-deep/60 pt-4" />
+            <div className="flex gap-2 pt-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-9 w-12 animate-pulse rounded-md bg-ivory-deep/50" />
+              ))}
+            </div>
+            <div className="space-y-2.5 pt-6">
+              <div className="h-12 w-full animate-pulse rounded-md bg-ivory-deep/40" />
+              <div className="h-12 w-full animate-pulse rounded-md bg-ink/10" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

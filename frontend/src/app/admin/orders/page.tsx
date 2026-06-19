@@ -339,7 +339,7 @@ function OrderDetail({ order, onUpdateStatus, onRefresh }: { order: Order; onUpd
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-medium text-[var(--admin-muted)]">Payment</p>
-            <p className="mt-1 text-sm text-[var(--admin-ink)]">{(order.paymentProvider ?? "stripe").toUpperCase()}</p>
+            <p className="mt-1 text-sm text-[var(--admin-ink)]">{(order.paymentProvider ?? "razorpay").toUpperCase()}</p>
           </div>
           <AdminBadge tone={PAYMENT_STATUS_TONE[order.paymentStatus ?? "pending"] ?? "warning"}>
             {(order.paymentStatus ?? "pending").charAt(0).toUpperCase() + (order.paymentStatus ?? "pending").slice(1)}

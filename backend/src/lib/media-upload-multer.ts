@@ -2,7 +2,17 @@ import multer from "multer";
 import { HttpError } from "../middleware/httpError.js";
 import { assertAllowedImageMime } from "./cloudinary.js";
 
-const MAX_BYTES = 10 * 1024 * 1024;
+/**
+ * Maximum file size for single uploads (10MB).
+ *
+ * SCALABILITY NOTE: Files are held in memory (multer.memoryStorage) while streaming
+ * to Cloudinary. At 10MB × 3 concurrent bulk uploads = ~300MB peak RAM.
+ * For high-traffic deployments, consider:
+ *   1. Reduce MAX_BYTES to 5MB (covers 99% of product photos)
+ *   2. Use Cloudinary's direct browser upload (signed URL) to bypass server entirely
+ *   3. Use disk storage with temp file cleanup for very large files
+ */
+const MAX_BYTES = Number(process.env.MAX_UPLOAD_BYTES) || 10 * 1024 * 1024;
 const MAX_BULK_FILES = 10;
 
 export const mediaUploadMulter = multer({

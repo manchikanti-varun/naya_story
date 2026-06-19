@@ -1,6 +1,16 @@
+/**
+ * Site settings repository — manages the singleton SiteSettings document.
+ *
+ * Legal pages and homepage revisions have been moved to their own repositories:
+ *   - legal-page.repository.ts
+ *   - revision.repository.ts
+ *
+ * For backward-compatibility, this module re-exports delegating methods so
+ * existing callers continue to work without changes. Migrate gradually.
+ */
 import { SiteSettings } from "../models/SiteSettings.js";
-import { HomepageRevision } from "../models/HomepageRevision.js";
-import { LegalPage } from "../models/LegalPage.js";
+import { legalPageRepository } from "./legal-page.repository.js";
+import { revisionRepository } from "./revision.repository.js";
 import type mongoose from "mongoose";
 
 export type SiteDoc = {
@@ -45,64 +55,56 @@ export const settingsRepository = {
     ).lean() as Promise<SiteDoc | null>;
   },
 
-  // Homepage Revisions
+  // --- Delegating methods (backward-compat) ---
+
+  // Homepage Revisions (delegate to revisionRepository)
   async createRevision(data: {
     cmsVersion: number;
     homepage: unknown;
     action: "publish" | "rollback";
     actorId: mongoose.Types.ObjectId | null;
   }) {
-    return HomepageRevision.create(data);
+    return revisionRepository.create(data);
   },
 
   async findRevisions(limit = 50) {
-    return HomepageRevision.find()
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .select("cmsVersion action actorId createdAt")
-      .lean();
+    return revisionRepository.findRecent(limit);
   },
 
   async findRevisionByVersion(version: number) {
-    const rev = await HomepageRevision.findOne({ cmsVersion: version }).lean();
-    if (!rev || Array.isArray(rev)) return null;
-    return rev as unknown as { homepage?: unknown; cmsVersion: number };
+    return revisionRepository.findByVersion(version);
   },
 
-  // Legal Pages
+  // Legal Pages (delegate to legalPageRepository)
   async findLegalPages(filter: Record<string, unknown>) {
-    return LegalPage.find(filter).sort({ order: 1, title: 1 }).lean();
+    return legalPageRepository.findAll(filter);
   },
 
   async findLegalPageBySlug(slug: string) {
-    return LegalPage.findOne({ slug }).lean();
+    return legalPageRepository.findBySlug(slug);
   },
 
   async findLegalPageById(id: string) {
-    return LegalPage.findById(id).lean();
+    return legalPageRepository.findById(id);
   },
 
   async createLegalPage(data: Record<string, unknown>) {
-    return LegalPage.create(data);
+    return legalPageRepository.create(data);
   },
 
   async updateLegalPage(id: string, data: Record<string, unknown>) {
-    return LegalPage.findByIdAndUpdate(id, { $set: data }, { new: true }).lean();
+    return legalPageRepository.updateById(id, data);
   },
 
   async deleteLegalPage(id: string) {
-    return LegalPage.findByIdAndDelete(id);
+    return legalPageRepository.deleteById(id);
   },
 
   async maxLegalPageOrder() {
-    const doc = await LegalPage.findOne().sort({ order: -1 }).select("order").lean();
-    return (doc as { order?: number } | null)?.order ?? -1;
+    return legalPageRepository.maxOrder();
   },
 
   async legalPageSlugExists(slug: string, excludeId?: string) {
-    const filter: Record<string, unknown> = { slug };
-    if (excludeId) filter._id = { $ne: excludeId };
-    const exists = await LegalPage.findOne(filter).select("_id").lean();
-    return Boolean(exists);
+    return legalPageRepository.slugExists(slug, excludeId);
   },
 };

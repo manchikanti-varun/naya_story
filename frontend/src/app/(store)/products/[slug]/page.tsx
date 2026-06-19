@@ -4,8 +4,11 @@ import { ProductDetail } from "@/components/shop/ProductDetail";
 import { SITE_NAME } from "@/lib/constants";
 import { fetchApi } from "@/lib/server-fetch";
 import { getSiteUrl } from "@/lib/site-url";
-import { buildProductJsonLd } from "@/lib/seo-product-jsonld";
+import { buildProductJsonLd, type ProductReviewStats } from "@/lib/seo-product-jsonld";
 import type { Product } from "@/types";
+
+/** ISR: regenerate product pages every 60 seconds. */
+export const revalidate = 60;
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -15,6 +18,17 @@ async function loadProduct(slug: string): Promise<Product | null> {
     if (!res.ok) return null;
     const data = (await res.json()) as { product: Product };
     return data.product ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadReviewStats(productId: string): Promise<ProductReviewStats | null> {
+  try {
+    const res = await fetchApi(`/api/reviews/${encodeURIComponent(productId)}/rating`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { average: number; count: number };
+    return { averageRating: data.average, totalCount: data.count };
   } catch {
     return null;
   }
@@ -57,7 +71,14 @@ export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const product = await getProductCached(slug);
   const siteUrl = getSiteUrl();
-  const jsonLd = product ? buildProductJsonLd(product, siteUrl) : null;
+
+  // Fetch review stats for rich snippet (AggregateRating schema)
+  let reviewStats: ProductReviewStats | null = null;
+  if (product) {
+    reviewStats = await loadReviewStats(product._id);
+  }
+
+  const jsonLd = product ? buildProductJsonLd(product, siteUrl, reviewStats) : null;
 
   return (
     <>

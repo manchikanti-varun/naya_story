@@ -30,6 +30,11 @@ export const metadata: Metadata = {
     template: `%s · ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: getSiteUrl(),
+    // i18n readiness: uncomment and extend when launching additional locales.
+    // languages: { "en-US": getSiteUrl(), "hi-IN": `${getSiteUrl()}/hi` },
+  },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
@@ -37,11 +42,20 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — Luxury Women’s Fashion`,
     description: SITE_DESCRIPTION,
     url: getSiteUrl(),
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Naya Story \u2014 Luxury Women\u2019s Fashion",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE_NAME} — Luxury Women’s Fashion`,
     description: SITE_DESCRIPTION,
+    images: ["/og-image.png"],
   },
   icons: {
     icon: [

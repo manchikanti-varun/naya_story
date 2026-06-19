@@ -7,6 +7,7 @@ import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AuthField, authInputClass } from "@/components/auth/AuthField";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PhoneSignIn } from "@/components/auth/PhoneSignIn";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/context/auth-context";
 import {
@@ -164,6 +165,7 @@ function LoginInner() {
         <AuthDivider />
         <div className="mt-6 space-y-4">
           <GoogleSignInButton disabled={submitting} />
+          <PhoneSignIn disabled={submitting} onSuccess={() => router.replace("/account")} />
         </div>
         <p className="mt-4 text-center font-sans text-xs leading-relaxed text-ink-soft">
           By continuing, you agree to our{" "}

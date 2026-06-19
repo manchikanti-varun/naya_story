@@ -14,11 +14,21 @@ export const createOrderRules = [
   body("guestEmail").optional().isEmail().normalizeEmail(),
   body("couponCode").optional().trim().isLength({ max: 50 }),
   body("idempotencyKey").optional().trim().isLength({ min: 1, max: 128 }),
-  body("paymentProvider").optional().isIn(["stripe", "razorpay", "cod"]),
-  body("stripePaymentIntentId").optional().trim().isLength({ max: 255 }),
+  body("paymentProvider").optional().isIn(["razorpay", "cod"]),
   body("razorpayPaymentId").optional().trim().isLength({ max: 255 }),
+  /**
+   * Honeypot field: must be empty or absent. Bots auto-fill hidden fields.
+   * The frontend renders this as a hidden field with tabindex=-1 and autocomplete=off.
+   * If a value is present, the order is silently rejected.
+   */
+  body("website").optional().custom((value) => {
+    if (value && String(value).trim().length > 0) {
+      throw new Error("Spam detected");
+    }
+    return true;
+  }),
 ];
 
 export const updateStatusRules = [
-  body("status").notEmpty().isIn(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"]),
+  body("status").notEmpty().isIn(["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "return_requested", "return_approved", "refunded"]),
 ];

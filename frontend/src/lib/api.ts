@@ -21,6 +21,8 @@ export class ApiError extends Error {
 function authHeaders(token?: string | null): HeadersInit {
   const h: Record<string, string> = {
     "Content-Type": "application/json",
+    // CSRF protection: custom header that cannot be set cross-origin without CORS preflight
+    "X-Requested-With": "XMLHttpRequest",
   };
   if (token) h.Authorization = `Bearer ${token}`;
   return h;

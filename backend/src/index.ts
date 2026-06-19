@@ -1,153 +1,106 @@
+/**
+ * Application entry point — bootstraps the server with graceful shutdown.
+ *
+ * Architecture:
+ *   index.ts (entry)  →  server.ts (app factory)  →  routes/  →  services/  →  repositories/
+ *   config/env.ts provides typed configuration injected into the app.
+ *   events/ registers async side-effect handlers via the event bus.
+ */
 import "dotenv/config";
 import "./lib/cloudinary-env.js";
-import cookieParser from "cookie-parser";
-import cors from "cors";
-import express, { type Request, type Response } from "express";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
+import type { Server } from "node:http";
 import mongoose from "mongoose";
-import passport from "passport";
 import { connectDb } from "./config/db.js";
-import { createCorsOptions } from "./lib/cors-config.js";
-import { createAdminRouter } from "./routes/admin.js";
-import { createAuthRouter } from "./routes/auth.js";
-import { createContentRouter } from "./routes/content.js";
-import { createCouponsRouter } from "./routes/coupons.js";
-import { createIntegrationsRouter } from "./routes/integrations.js";
-import { createLegalPagesRouter } from "./routes/legalPages.js";
-import { createMediaRouter } from "./routes/media.js";
-import { createOrdersRouter } from "./routes/orders.js";
-import { createProductsRouter } from "./routes/products.js";
-import { createReviewsRouter } from "./routes/reviews.js";
-import { createUsersRouter } from "./routes/users.js";
-import { createInvoicesRouter } from "./routes/invoices.js";
-import { razorpayWebhookHandler } from "./routes/razorpayWebhook.js";
-import { stripeWebhookHandler } from "./routes/stripeWebhook.js";
+import { loadConfig } from "./config/env.js";
 import { assertSafeProductionConfig } from "./lib/env.js";
-import { errorHandler } from "./middleware/httpError.js";
-import { requestIdMiddleware } from "./middleware/requestId.js";
-import { sanitizeBodyMiddleware } from "./middleware/sanitizeBody.js";
-
-const PORT = Number(process.env.PORT) || 4000;
-const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/naya-studio";
-const JWT_SECRET = process.env.JWT_SECRET ?? "dev-insecure-change-me";
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? "http://localhost:3000";
+import { logger } from "./lib/logger.js";
+import { initCache } from "./lib/cache.js";
+import { createApp } from "./server.js";
+import { registerProductEventHandlers } from "./events/product-events.js";
 
 async function main() {
   assertSafeProductionConfig();
-  await connectDb(MONGODB_URI);
 
-  const app = express();
-  if (process.env.NODE_ENV === "production") {
-    app.set("trust proxy", 1);
-  }
-  app.disable("x-powered-by");
-  app.use(requestIdMiddleware);
-  app.use(
-    helmet({
-      crossOriginResourcePolicy: { policy: "cross-origin" },
-      contentSecurityPolicy: process.env.NODE_ENV === "production" ? undefined : false,
-      hsts: process.env.NODE_ENV === "production"
-        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
-        : false,
-      referrerPolicy: { policy: "strict-origin-when-cross-origin" },
-    }),
-  );
-  app.use(cors(createCorsOptions(CLIENT_ORIGIN)));
-  app.use(
-    rateLimit({
-      windowMs: 60 * 1000,
-      max: 600,
-      standardHeaders: true,
-      legacyHeaders: false,
-    }),
-  );
-  app.use(cookieParser());
+  const config = loadConfig();
+  await connectDb(config.db.mongodbUri);
 
-  // Security: prevent browsers from caching authenticated API responses
-  app.use((_req, res, next) => {
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    next();
+  // Initialize cache layer (Upstash Redis if configured, otherwise in-memory)
+  await initCache();
+
+  // Register async event handlers
+  registerProductEventHandlers();
+
+  // Schedule stale order cleanup every 15 minutes
+  const STALE_ORDER_INTERVAL_MS = 15 * 60 * 1000;
+  const staleOrderTimer = setInterval(async () => {
+    try {
+      const { orderService } = await import("./services/order.service.js");
+      const result = await orderService.releaseStaleOrders(30);
+      if (result.released > 0) {
+        logger.info("stale_orders_released", { released: result.released, checked: result.checked });
+      }
+    } catch (err) {
+      logger.error("stale_order_cleanup_failed", { error: String(err) });
+    }
+  }, STALE_ORDER_INTERVAL_MS);
+  staleOrderTimer.unref();
+
+  const app = createApp(config);
+  const server: Server = app.listen(config.app.port, () => {
+    logger.info("server_started", { port: config.app.port, env: config.app.nodeEnv });
   });
 
-  /** Stripe webhooks require the raw body for signature verification. */
-  app.post(
-    "/api/integrations/webhooks/stripe",
-    express.raw({ type: "application/json" }),
-    (req, res, next) => {
-      void stripeWebhookHandler(req as Request, res as Response).catch(next);
-    },
-  );
+  // --- Graceful shutdown ---
+  setupGracefulShutdown(server);
+}
 
-  app.post(
-    "/api/integrations/webhooks/razorpay",
-    express.json({
-      limit: "4mb",
-      verify: (req, _res, buf) => {
-        (req as Request).rawBody = buf;
-      },
-    }),
-    (req, res, next) => {
-      void razorpayWebhookHandler(req as Request, res as Response).catch(next);
-    },
-  );
+function setupGracefulShutdown(server: Server) {
+  const SHUTDOWN_TIMEOUT_MS = 10_000;
+  let shuttingDown = false;
 
-  app.use(express.json({ limit: "4mb" }));
-  app.use(sanitizeBodyMiddleware);
-  app.use(passport.initialize());
+  async function shutdown(signal: string) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info("shutdown_initiated", { signal });
 
-  app.get("/api/health", (_req, res) => {
-    const dbState = mongoose.connection.readyState;
-    // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
-    const dbOk = dbState === 1;
-    res.status(dbOk ? 200 : 503).json({
-      ok: dbOk,
-      db: dbOk ? "connected" : `state=${dbState}`,
-      uptime: Math.floor(process.uptime()),
+    // Stop accepting new connections
+    server.close(() => {
+      logger.info("http_server_closed");
     });
+
+    // Wait for in-flight requests to complete (up to timeout)
+    const forceExit = setTimeout(() => {
+      logger.error("shutdown_timeout", { timeoutMs: SHUTDOWN_TIMEOUT_MS });
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS);
+    forceExit.unref();
+
+    try {
+      await mongoose.connection.close();
+      logger.info("db_connection_closed");
+    } catch (err) {
+      logger.error("db_close_error", { error: String(err) });
+    }
+
+    clearTimeout(forceExit);
+    process.exit(0);
+  }
+
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
+
+  // Handle uncaught errors gracefully
+  process.on("unhandledRejection", (reason) => {
+    logger.error("unhandled_rejection", { error: String(reason) });
   });
 
-  app.use(
-    "/api/auth",
-    createAuthRouter({
-      jwtSecret: JWT_SECRET,
-      googleClientId: process.env.GOOGLE_CLIENT_ID,
-      googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL,
-      clientOrigin: CLIENT_ORIGIN,
-    }),
-  );
-
-  app.use("/api/reviews", createReviewsRouter(JWT_SECRET));
-  app.use("/api/products", createProductsRouter(JWT_SECRET));
-  app.use("/api/orders", createOrdersRouter(JWT_SECRET));
-  app.use("/api/users", createUsersRouter(JWT_SECRET));
-  app.use("/api/admin", createAdminRouter(JWT_SECRET));
-  app.use("/api/media", createMediaRouter(JWT_SECRET));
-  app.use("/api/coupons", createCouponsRouter(JWT_SECRET));
-  app.use("/api/content", createContentRouter(JWT_SECRET));
-  app.use("/api/legal-pages", createLegalPagesRouter(JWT_SECRET));
-  app.use("/api/invoices", createInvoicesRouter(JWT_SECRET));
-  app.use(
-    "/api/integrations",
-    createIntegrationsRouter({
-      stripeSecret: process.env.STRIPE_SECRET_KEY,
-      razorpayKeyId: process.env.RAZORPAY_KEY_ID,
-      razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET,
-    }),
-  );
-
-  app.use((_req, res) => res.status(404).json({ message: "Not found" }));
-  app.use(errorHandler);
-
-  app.listen(PORT, () => {
-    console.log(`Naya API listening on http://localhost:${PORT}`);
+  process.on("uncaughtException", (err) => {
+    logger.error("uncaught_exception", { error: err.message, stack: err.stack });
+    void shutdown("uncaughtException");
   });
 }
 
 main().catch((err) => {
-  console.error(err);
+  logger.error("startup_failed", { error: String(err) });
   process.exit(1);
 });

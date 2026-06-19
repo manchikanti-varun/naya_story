@@ -2,29 +2,30 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/context/auth-context";
 
-/** Handles `?token=` after Google OAuth (API redirects to `/login` or `/register`). */
+/**
+ * Legacy OAuth callback handler for /login and /register pages.
+ *
+ * With the new opaque session code pattern, the backend now redirects to
+ * /auth/callback?code=<opaque> instead of /login?code=<jwt>.
+ *
+ * This hook exists for backward compatibility: if a stale redirect arrives
+ * at /login?code= it redirects to the proper callback page.
+ */
 export function useGoogleOAuthCallback(redirectTo = "/account") {
   const params = useSearchParams();
   const router = useRouter();
-  const { finishOAuthLogin } = useAuth();
   const [oauthLoading, setOauthLoading] = useState(false);
 
   useEffect(() => {
-    const token = params.get("token");
-    if (!token) return;
+    // If code arrives here (legacy behavior), redirect to the proper callback page
+    const code = params.get("code") || params.get("token");
+    if (!code) return;
 
     setOauthLoading(true);
-    void (async () => {
-      try {
-        await finishOAuthLogin(token);
-        router.replace(redirectTo);
-      } catch {
-        router.replace("/login?error=google");
-      }
-    })();
-  }, [params, router, finishOAuthLogin, redirectTo]);
+    // Redirect to the proper auth callback page which handles the exchange
+    router.replace(`/auth/callback?code=${encodeURIComponent(code)}`);
+  }, [params, router, redirectTo]);
 
-  return { oauthLoading: oauthLoading || Boolean(params.get("token")) };
+  return { oauthLoading: oauthLoading || Boolean(params.get("code") || params.get("token")) };
 }

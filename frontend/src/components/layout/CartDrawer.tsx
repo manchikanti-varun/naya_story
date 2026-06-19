@@ -5,25 +5,25 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { lineKey, useCart } from "@/context/cart-context";
+import { lineKey, useCartData, useCartUI } from "@/context/cart-context";
 import { validateCouponCode, useCouponDiscount } from "@/hooks/use-coupon-discount";
 import { cn } from "@/lib/cn";
 import { FREE_SHIPPING_THRESHOLD_INR } from "@/lib/store-shipping";
 import { MediaPlaceholder } from "@/components/ui/MediaPlaceholder";
+import { FreeShippingBar } from "@/components/cart/FreeShippingBar";
 import { isNextImageSrc } from "@/lib/image-src";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
 
 export function CartDrawer() {
   const {
-    isOpen,
-    closeCart,
     lines,
     updateQty,
     removeLine,
     subtotal,
     coupon,
     setCoupon,
-  } = useCart();
+  } = useCartData();
+  const { isOpen, closeCart } = useCartUI();
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
 
@@ -74,6 +74,8 @@ export function CartDrawer() {
                 <X className="h-5 w-5" strokeWidth={1.25} />
               </button>
             </div>
+
+            <FreeShippingBar subtotal={subtotal} />
 
             <div className="flex-1 overflow-y-auto px-6 py-6">
               {lines.length === 0 ? (

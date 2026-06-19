@@ -1,6 +1,11 @@
 /**
  * Centralized, strongly-typed configuration loaded from environment variables.
  * Validated at startup — the app fails fast if required config is missing in production.
+ *
+ * Usage:
+ *   const config = loadConfig(); // at startup
+ *   // Pass config explicitly to modules that need it (dependency injection)
+ *   // OR use getConfig() for convenience in non-test code.
  */
 
 export interface AppConfig {
@@ -23,8 +28,6 @@ export interface AuthConfig {
 }
 
 export interface PaymentsConfig {
-  stripeSecretKey?: string;
-  stripeWebhookSecret?: string;
   razorpayKeyId?: string;
   razorpayKeySecret?: string;
   razorpayWebhookSecret?: string;
@@ -57,6 +60,10 @@ function envInt(key: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+/**
+ * Build a Config object from the current environment.
+ * Always returns a fresh object — safe for testing with different env vars.
+ */
 export function loadConfig(): Config {
   const nodeEnv = env("NODE_ENV", "development");
   const isProduction = nodeEnv === "production";
@@ -71,7 +78,7 @@ export function loadConfig(): Config {
       mongodbUri: env("MONGODB_URI", "mongodb://127.0.0.1:27017/naya-studio"),
     },
     auth: {
-      jwtSecret: env("JWT_SECRET", "dev-insecure-change-me"),
+      jwtSecret: env("JWT_SECRET"),
       accessTokenTtl: env("ACCESS_TOKEN_TTL", "15m"),
       googleClientId: env("GOOGLE_CLIENT_ID") || undefined,
       googleClientSecret: env("GOOGLE_CLIENT_SECRET") || undefined,
@@ -79,8 +86,6 @@ export function loadConfig(): Config {
       clientOrigin: env("CLIENT_ORIGIN", "http://localhost:3000"),
     },
     payments: {
-      stripeSecretKey: env("STRIPE_SECRET_KEY") || undefined,
-      stripeWebhookSecret: env("STRIPE_WEBHOOK_SECRET") || undefined,
       razorpayKeyId: env("RAZORPAY_KEY_ID") || undefined,
       razorpayKeySecret: env("RAZORPAY_KEY_SECRET") || undefined,
       razorpayWebhookSecret: env("RAZORPAY_WEBHOOK_SECRET") || undefined,
@@ -95,10 +100,15 @@ export function loadConfig(): Config {
   };
 }
 
-/** Singleton config instance — call loadConfig() once at startup. */
+/** Lazily-initialized config for convenience. Use loadConfig() in tests for isolation. */
 let _config: Config | null = null;
 
 export function getConfig(): Config {
   if (!_config) _config = loadConfig();
   return _config;
+}
+
+/** Reset the singleton — call in test teardown only. */
+export function resetConfig(): void {
+  _config = null;
 }

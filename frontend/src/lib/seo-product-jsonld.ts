@@ -1,8 +1,17 @@
 import type { Product } from "@/types";
 import { SITE_NAME } from "@/lib/constants";
 
+export type ProductReviewStats = {
+  averageRating: number;
+  totalCount: number;
+};
+
 /** Google Merchant / schema.org Product JSON-LD for PDP. */
-export function buildProductJsonLd(product: Product, siteUrl: string): Record<string, unknown> {
+export function buildProductJsonLd(
+  product: Product,
+  siteUrl: string,
+  reviewStats?: ProductReviewStats | null,
+): Record<string, unknown> {
   const url = `${siteUrl.replace(/\/$/, "")}/products/${encodeURIComponent(product.slug)}`;
   const images = (product.images ?? []).filter(Boolean);
   const offers =
@@ -29,7 +38,20 @@ export function buildProductJsonLd(product: Product, siteUrl: string): Record<st
         name: "Shop",
         item: `${siteUrl.replace(/\/$/, "")}/collections`,
       },
-      { "@type": "ListItem", position: 3, name: product.name, item: url },
+      ...(product.category
+        ? [{
+            "@type": "ListItem",
+            position: 3,
+            name: product.category,
+            item: `${siteUrl.replace(/\/$/, "")}/collections?category=${encodeURIComponent(product.category)}`,
+          }]
+        : []),
+      {
+        "@type": "ListItem",
+        position: product.category ? 4 : 3,
+        name: product.name,
+        item: url,
+      },
     ],
   };
 
@@ -41,8 +63,21 @@ export function buildProductJsonLd(product: Product, siteUrl: string): Record<st
     sku: product.variants?.[0]?.sku,
     brand: { "@type": "Brand", name: SITE_NAME },
     url,
+    ...(product.category ? { category: product.category } : {}),
+    ...(product.material ? { material: product.material } : {}),
     ...(offers ? { offers } : {}),
   };
+
+  // Aggregate rating (from approved reviews)
+  if (reviewStats && reviewStats.totalCount > 0 && reviewStats.averageRating > 0) {
+    productNode.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: reviewStats.averageRating,
+      reviewCount: reviewStats.totalCount,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
 
   return {
     "@context": "https://schema.org",

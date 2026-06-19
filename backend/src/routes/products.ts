@@ -2,6 +2,7 @@ import type { Request, RequestHandler } from "express";
 import { Router } from "express";
 import { validationResult } from "express-validator";
 import { requireAdmin } from "../middleware/auth.js";
+import { publicCache } from "../middleware/httpCache.js";
 import { asyncHandler } from "../middleware/httpError.js";
 import { verifyAccessToken } from "../lib/accessJwt.js";
 import { User } from "../models/User.js";
@@ -9,6 +10,11 @@ import { productService, type ProductListQuery } from "../services/product.servi
 import { createProductRules } from "../validators/product.validator.js";
 import { handleValidationErrors } from "../validators/index.js";
 
+/**
+ * Check if the current request is from an admin user.
+ * Optimized: skips the DB lookup entirely when no Authorization header is present
+ * (which covers 99%+ of storefront traffic).
+ */
 async function requestIsAdmin(req: Request, secret: string): Promise<boolean> {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) return false;
@@ -25,16 +31,25 @@ async function requestIsAdmin(req: Request, secret: string): Promise<boolean> {
 export function createProductsRouter(secret: string) {
   const r = Router();
 
-  // GET / — List/search products
+  // GET / — List/search products (public, cacheable for non-admin)
   r.get("/", asyncHandler(async (req, res) => {
     const isAdmin = await requestIsAdmin(req, secret);
+    if (!isAdmin) {
+      // Public requests: allow CDN/browser to cache for 60s
+      res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=30");
+      res.removeHeader("Pragma");
+    }
     const result = await productService.listProducts(req.query as ProductListQuery, isAdmin);
     res.json(result);
   }));
 
-  // GET /slug/:slug — Single product by slug
+  // GET /slug/:slug — Single product by slug (public, cacheable for non-admin)
   r.get("/slug/:slug", asyncHandler(async (req, res) => {
     const isAdmin = await requestIsAdmin(req, secret);
+    if (!isAdmin) {
+      res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=30");
+      res.removeHeader("Pragma");
+    }
     const result = await productService.getProductBySlug(req.params.slug, isAdmin);
     res.json(result);
   }));

@@ -1,5 +1,30 @@
 import mongoose from "mongoose";
 
+/**
+ * SiteSettings stores the singleton configuration for the storefront.
+ *
+ * NOTE: `homepage` and `homepageDraft` use Mixed intentionally because the
+ * HomepageConfig shape is complex and managed entirely through typed merging
+ * functions (mergeHomepageConfig). Mongoose schema validation is not applied
+ * to these fields — validation happens at the application layer.
+ *
+ * `storefront` is similarly dynamic but simpler; it uses Mixed with a typed
+ * merge function (mergeStorefrontSettings) for safety.
+ *
+ * The `minimize: false` option prevents Mongoose from stripping empty objects
+ * (e.g. `{}` for a freshly-initialized homepage), which would break merging.
+ */
+
+const BannerSchema = new mongoose.Schema(
+  {
+    title: { type: String, default: "" },
+    image: { type: String, default: "" },
+    href: { type: String, default: "" },
+    placement: { type: String, default: "" },
+  },
+  { _id: false },
+);
+
 const SiteSettingsSchema = new mongoose.Schema(
   {
     /** Live storefront homepage (published). */
@@ -8,18 +33,14 @@ const SiteSettingsSchema = new mongoose.Schema(
     homepageDraft: { type: mongoose.Schema.Types.Mixed, default: null },
     homepagePublishedAt: { type: Date, default: null },
     homepageCmsVersion: { type: Number, default: 0 },
-    banners: [
-      {
-        title: String,
-        image: String,
-        href: String,
-        placement: String,
-      },
-    ],
-    /** PDP size chart, suggested-products mode, etc. */
+    banners: { type: [BannerSchema], default: () => [] },
+    /** PDP size chart, suggested-products mode, payment toggles, etc. */
     storefront: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    minimize: false, // Preserve empty objects for merge functions
+  },
 );
 
 export const SiteSettings =

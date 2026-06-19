@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CreditCard, IndianRupee, Truck } from "lucide-react";
+import { IndianRupee, Truck } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { AdminPageLayout } from "@/components/admin/ui/AdminPageLayout";
@@ -10,7 +10,6 @@ import { useToast } from "@/components/admin/ui/AdminToast";
 
 type PaymentMethodConfig = {
   codEnabled: boolean;
-  stripeEnabled: boolean;
   razorpayEnabled: boolean;
 };
 
@@ -19,7 +18,6 @@ export default function AdminPaymentsPage() {
   const toast = useToast();
   const [config, setConfig] = useState<PaymentMethodConfig>({
     codEnabled: false,
-    stripeEnabled: true,
     razorpayEnabled: true,
   });
   const [loading, setLoading] = useState(true);
@@ -36,7 +34,6 @@ export default function AdminPaymentsPage() {
       if (pm) {
         setConfig({
           codEnabled: pm.codEnabled ?? false,
-          stripeEnabled: pm.stripeEnabled ?? true,
           razorpayEnabled: pm.razorpayEnabled ?? true,
         });
       }
@@ -78,7 +75,6 @@ export default function AdminPaymentsPage() {
         <div className="animate-pulse space-y-4">
           <div className="h-20 rounded-xl bg-[var(--admin-surface-sunken)]" />
           <div className="h-20 rounded-xl bg-[var(--admin-surface-sunken)]" />
-          <div className="h-20 rounded-xl bg-[var(--admin-surface-sunken)]" />
         </div>
       </AdminPageLayout>
     );
@@ -91,18 +87,9 @@ export default function AdminPaymentsPage() {
     >
       <div className="space-y-4">
         <PaymentToggle
-          icon={<CreditCard className="h-5 w-5" />}
-          title="Stripe"
-          description="Credit/Debit cards, UPI, Google Pay, Apple Pay via Stripe"
-          enabled={config.stripeEnabled}
-          onToggle={() => toggle("stripeEnabled")}
-          saving={saving}
-        />
-
-        <PaymentToggle
           icon={<IndianRupee className="h-5 w-5" />}
           title="Razorpay"
-          description="UPI, Cards, Netbanking, Wallets via Razorpay"
+          description="UPI (GPay, PhonePe, Paytm), Cards (Visa, Mastercard, RuPay, Amex), Netbanking, Wallets, No-cost EMI"
           enabled={config.razorpayEnabled}
           onToggle={() => toggle("razorpayEnabled")}
           saving={saving}
@@ -122,9 +109,9 @@ export default function AdminPaymentsPage() {
         <p className="text-xs font-medium text-[var(--admin-ink)]">How it works</p>
         <ul className="mt-2 space-y-1 text-xs text-[var(--admin-muted)]">
           <li>• Enabled methods appear as options during checkout.</li>
-          <li>• Stripe and Razorpay require API keys configured in environment variables.</li>
-          <li>• COD orders are created with payment status "Pending" — mark as "Paid" after delivery confirmation.</li>
-          <li>• Disabling a method hides it from new checkouts but doesn't affect existing orders.</li>
+          <li>• Razorpay requires RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET configured in environment variables.</li>
+          <li>• COD orders are created with payment status &ldquo;Pending&rdquo; — mark as &ldquo;Paid&rdquo; after delivery confirmation.</li>
+          <li>• Disabling a method hides it from new checkouts but doesn&apos;t affect existing orders.</li>
         </ul>
       </div>
     </AdminPageLayout>

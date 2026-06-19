@@ -10,19 +10,20 @@ function isProduction(): boolean {
  * Call before `connectDb` / route registration.
  */
 export function assertSafeProductionConfig(): void {
-  if (!isProduction()) return;
-
+  // JWT_SECRET is ALWAYS required — never allow a fallback
   const jwt = process.env.JWT_SECRET?.trim();
   if (!jwt || jwt.length < 32) {
     console.error(
-      "[env] Production requires JWT_SECRET (min 32 characters). Generate with: openssl rand -base64 48",
+      "[env] JWT_SECRET is required (min 32 characters). Generate with: openssl rand -base64 48",
     );
     process.exit(1);
   }
-  if (jwt === DEV_JWT_PLACEHOLDER) {
-    console.error("[env] Production cannot use the default JWT_SECRET from .env.example.");
+  if (jwt === DEV_JWT_PLACEHOLDER || jwt === "replace-me-with-a-random-string-at-least-32-chars") {
+    console.error("[env] Cannot start with the default JWT_SECRET from .env.example. Set a unique value.");
     process.exit(1);
   }
+
+  if (!isProduction()) return;
 
   const mongo = process.env.MONGODB_URI?.trim();
   if (!mongo) {
@@ -43,11 +44,6 @@ export function assertSafeProductionConfig(): void {
   }
 
   // Warn (don't block) about missing webhook secrets in production
-  if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_WEBHOOK_SECRET) {
-    console.warn(
-      "[env] STRIPE_SECRET_KEY is set but STRIPE_WEBHOOK_SECRET is missing. Stripe webhooks cannot verify signatures.",
-    );
-  }
   if (process.env.RAZORPAY_KEY_ID && !process.env.RAZORPAY_WEBHOOK_SECRET) {
     console.warn(
       "[env] RAZORPAY_KEY_ID is set but RAZORPAY_WEBHOOK_SECRET is missing. Razorpay webhooks cannot verify signatures.",

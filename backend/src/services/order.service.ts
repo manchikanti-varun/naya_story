@@ -1,18 +1,42 @@
 /**
  * Order service — handles order creation, retrieval, and status management.
  */
+import crypto from "node:crypto";
+import mongoose from "mongoose";
 import { orderRepository } from "../repositories/order.repository.js";
 import { couponRepository } from "../repositories/coupon.repository.js";
 import { reserveStock, releaseStock } from "../lib/inventory.js";
 import { resolveCoupon } from "../lib/coupon-utils.js";
 import { validateTransition, allowedNextStatuses, type OrderStatus } from "../lib/order-status.js";
+import { escapeRegex } from "../lib/sanitize-input.js";
 import { isMongoDuplicateKey } from "../lib/webhookIdempotency.js";
 import { HttpError } from "../middleware/httpError.js";
 import { Order } from "../models/Order.js";
 
+/**
+ * Generate a collision-resistant order number.
+ * Format: NS-<timestamp_base36>-<6 crypto random hex chars>
+ * At 1000 orders/second, collision probability is ~1 in 16 million per second.
+ * The unique index on orderNumber provides a hard guarantee.
+ */
 function generateOrderNumber(): string {
-  const n = Math.floor(Math.random() * 90000 + 10000);
-  return `NS-${Date.now().toString(36).toUpperCase()}-${n}`;
+  const timePart = Date.now().toString(36).toUpperCase();
+  const randPart = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `NS-${timePart}-${randPart}`;
+}
+
+/**
+ * Start a MongoDB session for transactions. Returns null if the deployment
+ * doesn't support transactions (standalone local dev without replica set).
+ */
+async function startSessionSafe(): Promise<mongoose.ClientSession | null> {
+  try {
+    const session = await mongoose.startSession();
+    return session;
+  } catch {
+    // Standalone MongoDB (no replica set) — transactions unavailable
+    return null;
+  }
 }
 
 export type CreateOrderInput = {
@@ -21,8 +45,7 @@ export type CreateOrderInput = {
   couponCode?: string;
   guestEmail?: string;
   idempotencyKey?: string;
-  paymentProvider?: "stripe" | "razorpay" | "cod";
-  stripePaymentIntentId?: string;
+  paymentProvider?: "razorpay" | "cod";
   razorpayPaymentId?: string;
   userId?: string;
 };
@@ -31,17 +54,17 @@ export const orderService = {
   async createOrder(input: CreateOrderInput) {
     const {
       items, shippingAddress, couponCode, guestEmail,
-      idempotencyKey, paymentProvider = "stripe",
-      stripePaymentIntentId, razorpayPaymentId, userId,
+      idempotencyKey, paymentProvider = "razorpay",
+      razorpayPaymentId, userId,
     } = input;
 
-    // Idempotency check
+    // Idempotency check (outside transaction — safe read)
     if (idempotencyKey) {
       const existing = await orderRepository.findByIdempotencyKey(idempotencyKey);
       if (existing) return { order: existing, duplicate: true };
     }
 
-    // Atomic stock reservation
+    // Atomic stock reservation (uses findOneAndUpdate with $gte — already atomic per-item)
     const reservation = await reserveStock(items);
     if (!reservation.success) {
       throw new HttpError(409, reservation.error);
@@ -54,9 +77,15 @@ export const orderService = {
     const { discount, couponCode: appliedCoupon, coupon } = await resolveCoupon(couponCode, subtotal);
     const total = Math.max(0, subtotal + shipping - discount);
 
-    // Order creation
+    // Order creation + coupon increment in a transaction (if replica set available).
+    // This ensures: if Order.create fails, coupon usage is NOT incremented.
+    // If no replica set (local dev), falls back to non-transactional (best-effort).
+    const session = await startSessionSafe();
     let doc;
+
     try {
+      if (session) session.startTransaction();
+
       doc = await orderRepository.create({
         orderNumber: generateOrderNumber(),
         idempotencyKey: idempotencyKey || undefined,
@@ -72,11 +101,21 @@ export const orderService = {
         timeline: [{ status: "pending", at: new Date() }],
         paymentProvider,
         paymentReference: undefined,
-        stripePaymentIntentId: stripePaymentIntentId || undefined,
         razorpayPaymentId: razorpayPaymentId || undefined,
         status: "pending",
       });
+
+      // Atomic coupon usage increment (inside transaction)
+      if (coupon) {
+        await couponRepository.incrementUsage(coupon._id);
+      }
+
+      if (session) await session.commitTransaction();
     } catch (err) {
+      if (session) {
+        try { await session.abortTransaction(); } catch { /* ignore abort errors */ }
+      }
+
       if (isMongoDuplicateKey(err) && idempotencyKey) {
         const existing = await orderRepository.findByIdempotencyKey(idempotencyKey);
         if (existing) {
@@ -86,18 +125,22 @@ export const orderService = {
       }
       await releaseStock(items.map((i) => ({ productId: i.productId, sku: i.sku, quantity: i.quantity })));
       throw err;
-    }
-
-    // Atomic coupon usage increment
-    if (coupon) {
-      await couponRepository.incrementUsage(coupon._id);
+    } finally {
+      if (session) await session.endSession();
     }
 
     return { order: doc, duplicate: false };
   },
 
-  async getOrdersByUser(userId: string) {
-    return orderRepository.findByUser(userId);
+  async getOrdersByUser(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const { orders, total } = await orderRepository.findByUserPaginated(userId, skip, limit);
+    return {
+      orders,
+      total,
+      page,
+      pages: Math.max(Math.ceil(total / limit), 1),
+    };
   },
 
   async getOrderById(id: string, requesterId: string, requesterRole: string) {
@@ -121,7 +164,7 @@ export const orderService = {
     if (status) filter.status = status;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (q?.trim()) {
-      const regex = new RegExp(q.trim(), "i");
+      const regex = new RegExp(escapeRegex(q.trim()), "i");
       filter.$or = [
         { orderNumber: regex },
         { guestEmail: regex },

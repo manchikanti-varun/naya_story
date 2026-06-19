@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useCart } from "@/context/cart-context";
+import { useCartData } from "@/context/cart-context";
 import type { Product } from "@/types";
 import { cn } from "@/lib/cn";
 import { storefrontImageProps, storefrontImageShellClass } from "@/lib/media-protection";
@@ -19,7 +19,7 @@ type Props = {
 };
 
 export function QuickViewModal({ product, open, onClose }: Props) {
-  const { addLine } = useCart();
+  const { addLine } = useCartData();
   const [mounted, setMounted] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   const [size, setSize] = useState(product.variants[0]?.size ?? "");

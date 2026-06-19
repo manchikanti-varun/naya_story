@@ -4,6 +4,7 @@ import { claimWebhookEvent } from "../lib/webhookIdempotency.js";
 import { Order } from "../models/Order.js";
 import { validateTransition, type OrderStatus } from "../lib/order-status.js";
 import { releaseStock } from "../lib/inventory.js";
+import { logger } from "../lib/logger.js";
 
 type RazorpayWebhookBody = {
   event?: string;
@@ -41,15 +42,27 @@ function razorpayExternalId(body: unknown, raw: Buffer): string {
 }
 
 /**
- * Find order by Razorpay Payment ID (stored at checkout) or from payment notes.
+ * Find order by Razorpay Payment ID, Razorpay Order ID, or from payment notes.
  */
 async function findOrderByRazorpayPayment(
   paymentId: string,
   notes?: Record<string, string>,
+  orderId?: string,
 ): Promise<InstanceType<typeof Order> | null> {
-  // First try the indexed razorpayPaymentId field
+  // First try the indexed razorpayPaymentId field (stores order_id during creation, payment_id after verify)
   let order = await Order.findOne({ razorpayPaymentId: paymentId });
   if (order) return order;
+
+  // Try by Razorpay order_id (during creation we store the order ID in razorpayPaymentId)
+  if (orderId) {
+    order = await Order.findOne({ razorpayPaymentId: orderId });
+    if (order) {
+      // Link the payment ID for future lookups
+      order.razorpayPaymentId = paymentId;
+      await order.save();
+      return order;
+    }
+  }
 
   // Try looking up by orderId in notes (if client passed our order _id in notes)
   const orderIdFromNotes = notes?.orderId ?? notes?.order_id;
@@ -73,16 +86,12 @@ async function handlePaymentCaptured(body: RazorpayWebhookBody, requestId?: stri
   const payment = body.payload?.payment?.entity;
   if (!payment?.id) return;
 
-  const order = await findOrderByRazorpayPayment(payment.id, payment.notes);
+  const order = await findOrderByRazorpayPayment(payment.id, payment.notes, payment.order_id);
   if (!order) {
-    console.warn(
-      JSON.stringify({
-        level: "warn",
-        msg: "razorpay_webhook_order_not_found",
-        paymentId: payment.id,
-        requestId,
-      }),
-    );
+    logger.warn("razorpay_webhook_order_not_found", {
+      paymentId: payment.id,
+      requestId,
+    });
     return;
   }
 
@@ -90,15 +99,11 @@ async function handlePaymentCaptured(body: RazorpayWebhookBody, requestId?: stri
 
   // If already confirmed or beyond, skip
   if (current !== "pending") {
-    console.log(
-      JSON.stringify({
-        level: "info",
-        msg: "razorpay_payment_captured_already_progressed",
-        orderId: String(order._id),
-        currentStatus: current,
-        requestId,
-      }),
-    );
+    logger.info("razorpay_payment_captured_already_progressed", {
+      orderId: String(order._id),
+      currentStatus: current,
+      requestId,
+    });
     return;
   }
 
@@ -111,17 +116,13 @@ async function handlePaymentCaptured(body: RazorpayWebhookBody, requestId?: stri
   order.timeline!.push({ status: "confirmed", at: new Date() });
   await order.save();
 
-  console.log(
-    JSON.stringify({
-      level: "info",
-      msg: "razorpay_payment_captured",
-      orderId: String(order._id),
-      orderNumber: order.orderNumber,
-      paymentId: payment.id,
-      amount: payment.amount,
-      requestId,
-    }),
-  );
+  logger.info("razorpay_payment_captured", {
+    orderId: String(order._id),
+    orderNumber: order.orderNumber,
+    paymentId: payment.id,
+    amount: payment.amount,
+    requestId,
+  });
 }
 
 /**
@@ -131,16 +132,12 @@ async function handlePaymentFailed(body: RazorpayWebhookBody, requestId?: string
   const payment = body.payload?.payment?.entity;
   if (!payment?.id) return;
 
-  const order = await findOrderByRazorpayPayment(payment.id, payment.notes);
+  const order = await findOrderByRazorpayPayment(payment.id, payment.notes, payment.order_id);
   if (!order) {
-    console.warn(
-      JSON.stringify({
-        level: "warn",
-        msg: "razorpay_webhook_order_not_found",
-        paymentId: payment.id,
-        requestId,
-      }),
-    );
+    logger.warn("razorpay_webhook_order_not_found", {
+      paymentId: payment.id,
+      requestId,
+    });
     return;
   }
 
@@ -148,15 +145,11 @@ async function handlePaymentFailed(body: RazorpayWebhookBody, requestId?: string
 
   // Only cancel if still in a cancellable state
   if (current !== "pending" && current !== "confirmed") {
-    console.warn(
-      JSON.stringify({
-        level: "warn",
-        msg: "razorpay_payment_failed_order_not_cancellable",
-        orderId: String(order._id),
-        currentStatus: current,
-        requestId,
-      }),
-    );
+    logger.warn("razorpay_payment_failed_order_not_cancellable", {
+      orderId: String(order._id),
+      currentStatus: current,
+      requestId,
+    });
     return;
   }
 
@@ -173,16 +166,12 @@ async function handlePaymentFailed(body: RazorpayWebhookBody, requestId?: string
   order.timeline!.push({ status: "cancelled", at: new Date() });
   await order.save();
 
-  console.log(
-    JSON.stringify({
-      level: "info",
-      msg: "razorpay_payment_failed_order_cancelled",
-      orderId: String(order._id),
-      orderNumber: order.orderNumber,
-      paymentId: payment.id,
-      requestId,
-    }),
-  );
+  logger.info("razorpay_payment_failed_order_cancelled", {
+    orderId: String(order._id),
+    orderNumber: order.orderNumber,
+    paymentId: payment.id,
+    requestId,
+  });
 }
 
 /**
@@ -194,15 +183,11 @@ async function handleRefundProcessed(body: RazorpayWebhookBody, requestId?: stri
 
   const order = await findOrderByRazorpayPayment(refund.payment_id, refund.notes);
   if (!order) {
-    console.warn(
-      JSON.stringify({
-        level: "warn",
-        msg: "razorpay_webhook_order_not_found",
-        paymentId: refund.payment_id,
-        refundId: refund.id,
-        requestId,
-      }),
-    );
+    logger.warn("razorpay_webhook_order_not_found", {
+      paymentId: refund.payment_id,
+      refundId: refund.id,
+      requestId,
+    });
     return;
   }
 
@@ -212,17 +197,13 @@ async function handleRefundProcessed(body: RazorpayWebhookBody, requestId?: stri
   });
   await order.save();
 
-  console.log(
-    JSON.stringify({
-      level: "info",
-      msg: "razorpay_refund_processed",
-      orderId: String(order._id),
-      orderNumber: order.orderNumber,
-      refundId: refund.id,
-      amount: refund.amount,
-      requestId,
-    }),
-  );
+  logger.info("razorpay_refund_processed", {
+    orderId: String(order._id),
+    orderNumber: order.orderNumber,
+    refundId: refund.id,
+    amount: refund.amount,
+    requestId,
+  });
 }
 
 /**
@@ -272,14 +253,10 @@ export async function razorpayWebhookHandler(req: Request, res: Response): Promi
       return;
     }
   } catch (err) {
-    console.error(
-      JSON.stringify({
-        level: "error",
-        msg: "razorpay_webhook_idempotency",
-        requestId: req.requestId,
-        error: String(err),
-      }),
-    );
+    logger.error("razorpay_webhook_idempotency", {
+      requestId: req.requestId,
+      error: String(err),
+    });
     res.status(500).json({ message: "Webhook persistence failed" });
     return;
   }
@@ -297,28 +274,20 @@ export async function razorpayWebhookHandler(req: Request, res: Response): Promi
         await handleRefundProcessed(body, req.requestId);
         break;
       default:
-        console.log(
-          JSON.stringify({
-            level: "info",
-            msg: "razorpay_webhook_unhandled_type",
-            event: eventType,
-            id: externalId,
-            requestId: req.requestId,
-          }),
-        );
+        logger.info("razorpay_webhook_unhandled_type", {
+          event: eventType,
+          id: externalId,
+          requestId: req.requestId,
+        });
         break;
     }
   } catch (err) {
-    console.error(
-      JSON.stringify({
-        level: "error",
-        msg: "razorpay_webhook_processing_error",
-        event: eventType,
-        id: externalId,
-        requestId: req.requestId,
-        error: String(err),
-      }),
-    );
+    logger.error("razorpay_webhook_processing_error", {
+      event: eventType,
+      id: externalId,
+      requestId: req.requestId,
+      error: String(err),
+    });
     // Still return 200 — already claimed. Failures are logged for manual reconciliation.
   }
 
