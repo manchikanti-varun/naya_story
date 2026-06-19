@@ -60,10 +60,10 @@ export function HomeProductRail({
       className={cn(
         compactTop
           ? compactBottom
-            ? "pt-10 pb-10 md:pt-14 md:pb-14"
-            : "pb-section pt-10 md:pt-14"
+            ? "pt-6 pb-6 md:pt-8 md:pb-8"
+            : "pb-section pt-6 md:pt-8"
           : compactBottom
-            ? "pt-section pb-10 md:pb-14"
+            ? "pt-section pb-6 md:pb-8"
             : "py-section",
         !design?.backgroundColor && (tone === "mist" ? "bg-ivory-muted/80" : "bg-ivory"),
       )}

@@ -103,7 +103,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
       ? "text-center items-center"
       : slideDesign?.align === "right"
         ? "text-right items-end"
-        : "text-left";
+        : "text-center items-center sm:text-left sm:items-start";
 
   return (
     <section
@@ -249,7 +249,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
 
       {count > 1 ? (
         <>
-          <div className="pointer-events-none absolute inset-x-0 bottom-[max(5.5rem,env(safe-area-inset-bottom))] z-20 flex justify-between px-4 sm:bottom-10 sm:justify-start sm:px-6 md:bottom-14 md:px-12 lg:px-16">
+          <div className="pointer-events-none absolute inset-x-0 bottom-[max(5.5rem,env(safe-area-inset-bottom))] z-20 flex justify-center px-4 sm:bottom-10 sm:justify-start sm:px-6 md:bottom-14 md:px-12 lg:px-16">
             <div className="flex gap-2" style={{ pointerEvents: "auto" }}>
               {active.map((s, i) => (
                 <button
