@@ -87,20 +87,19 @@ export function ShopByCategorySection({
               viewport={{ once: true, margin: "-20px" }}
               variants={cardVariants}
               className="shrink-0 snap-center first:ml-1 last:mr-1"
-              style={{ width: "70vw", maxWidth: "260px" }}
+              style={{ width: "44vw", maxWidth: "180px" }}
             >
               <CategoryCardItem cat={cat} />
             </motion.div>
           ))}
         </div>
 
-        {/* Tablet+: grid layout */}
+        {/* Tablet+: centered grid with constrained card sizes */}
         <div
-          className="hidden sm:grid gap-4 md:gap-5"
+          className="hidden sm:grid gap-4 md:gap-5 mx-auto"
           style={{
-            gridTemplateColumns: visible.length <= 3
-              ? `repeat(${visible.length}, 1fr)`
-              : "repeat(auto-fill, minmax(200px, 1fr))",
+            gridTemplateColumns: `repeat(${Math.min(visible.length, 4)}, minmax(0, 180px))`,
+            justifyContent: "center",
           }}
           role="list"
           aria-label="Shop by category"

@@ -41,8 +41,8 @@ export default {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       spacing: {
-        section: "clamp(2.75rem, 6vw, 5.5rem)",
-        "section-sm": "clamp(2rem, 4vw, 3.5rem)",
+        section: "clamp(1.75rem, 4vw, 3.5rem)",
+        "section-sm": "clamp(1.25rem, 3vw, 2.5rem)",
       },
       borderRadius: {
         lux: "var(--radius-lux)",
