@@ -14,12 +14,13 @@ const MAX_AGE_SEC = 30 * 24 * 60 * 60;
  * Format: <timestamp_hex>.<hmac_hex_16>
  */
 function getGateSecret(): string {
-  // Client-side: use the dedicated env var or fallback
-  if (typeof window !== "undefined") {
-    return process.env.NEXT_PUBLIC_ADMIN_GATE_SECRET || `${window.location.origin}:naya-admin-gate-v2`;
-  }
-  // Server-side (Edge middleware / SSR): use server-only secret
-  return process.env.ADMIN_GATE_SECRET || process.env.NEXT_PUBLIC_ADMIN_GATE_SECRET || "naya-admin-gate-v2-change-me";
+  // Use dedicated env var if available, otherwise use a shared fallback.
+  // Both client (cookie signing) and server (Edge middleware verification) 
+  // must resolve to the same value.
+  const envSecret = process.env.NEXT_PUBLIC_ADMIN_GATE_SECRET || process.env.ADMIN_GATE_SECRET;
+  if (envSecret) return envSecret;
+  // Fallback: deterministic value both sides agree on
+  return "naya-admin-gate-v2-default";
 }
 
 async function hmacSign(secret: string, message: string): Promise<string> {

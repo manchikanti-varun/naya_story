@@ -12,7 +12,7 @@ async function verifyGateInEdge(value: string | undefined): Promise<boolean> {
   const [ts, sig] = value.split(".");
   if (!ts || !sig) return false;
 
-  const secret = process.env.ADMIN_GATE_SECRET || process.env.NEXT_PUBLIC_ADMIN_GATE_SECRET || "naya-admin-gate-v2-change-me";
+  const secret = process.env.ADMIN_GATE_SECRET || process.env.NEXT_PUBLIC_ADMIN_GATE_SECRET || "naya-admin-gate-v2-default";
 
   // Use Web Crypto API (Edge-compatible)
   const encoder = new TextEncoder();
