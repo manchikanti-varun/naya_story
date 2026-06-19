@@ -91,13 +91,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /**
    * Persist user profile (NOT the token) and set in-memory token.
    */
-  const persist = useCallback((t: string, u: User) => {
+  const persist = useCallback(async (t: string, u: User) => {
     localStorage.setItem(USER_KEY, JSON.stringify(u));
     // Notify other tabs of login
     localStorage.setItem(SYNC_EVENT_KEY, `login:${Date.now()}`);
     setToken(t);
     setUser(u);
-    if (u.role === "admin") setAdminGateCookie();
+    if (u.role === "admin") await setAdminGateCookie();
     else clearAdminGateCookie();
   }, []);
 

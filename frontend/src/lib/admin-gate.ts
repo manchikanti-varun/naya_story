@@ -58,12 +58,11 @@ export function verifyGateValue(value: string | undefined): boolean {
   return true;
 }
 
-export function setAdminGateCookie(): void {
+export async function setAdminGateCookie(): Promise<void> {
   if (typeof document === "undefined") return;
-  void signGateValue().then((value) => {
-    const secure = window.location.protocol === "https:" ? "; Secure" : "";
-    document.cookie = `${ADMIN_GATE_COOKIE}=${value}; path=/; max-age=${MAX_AGE_SEC}; SameSite=Lax${secure}`;
-  });
+  const value = await signGateValue();
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${ADMIN_GATE_COOKIE}=${value}; path=/; max-age=${MAX_AGE_SEC}; SameSite=Lax${secure}`;
 }
 
 export function clearAdminGateCookie(): void {
