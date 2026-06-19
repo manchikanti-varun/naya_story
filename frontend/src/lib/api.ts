@@ -35,6 +35,7 @@ export async function apiFetch<T>(
   const { token, headers, ...rest } = options;
   const res = await fetch(`${API_BASE}${path}`, {
     ...rest,
+    credentials: "include",
     headers: {
       ...authHeaders(token),
       ...(headers as Record<string, string>),
