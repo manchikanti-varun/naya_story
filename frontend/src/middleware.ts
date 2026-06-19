@@ -4,41 +4,28 @@ import type { NextRequest } from "next/server";
 const ADMIN_GATE_COOKIE = "naya_admin_gate";
 
 /**
- * Verify admin gate cookie HMAC in Edge middleware using Web Crypto API.
- * This is a navigation guard — real auth is enforced by the API via JWT.
+ * Admin navigation guard — prevents casual access to /admin pages.
+ * Real authorization is enforced by the API via JWT on every request.
+ *
+ * The cookie is a simple signed value set client-side after successful admin login.
+ * We verify format only (not HMAC) in middleware to avoid secret sync issues
+ * across Edge/client environments. The HMAC verification was causing deployment
+ * issues with env var availability in Edge runtime.
  */
-async function verifyGateInEdge(value: string | undefined): Promise<boolean> {
+function hasValidGateCookie(value: string | undefined): boolean {
   if (!value || !value.includes(".")) return false;
   const [ts, sig] = value.split(".");
   if (!ts || !sig) return false;
-
-  const secret = process.env.ADMIN_GATE_SECRET || process.env.NEXT_PUBLIC_ADMIN_GATE_SECRET || "naya-admin-gate-v2-default";
-
-  // Use Web Crypto API (Edge-compatible)
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(ts));
-  const expected = Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-    .slice(0, 16);
-
-  // Constant-time comparison (both are 16 hex chars)
-  if (expected.length !== sig.length) return false;
-  let diff = 0;
-  for (let i = 0; i < expected.length; i++) {
-    diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
-  }
-  return diff === 0;
+  // Verify format: timestamp is hex, signature is 16 hex chars
+  if (!/^[0-9a-f]+$/i.test(ts) || sig.length !== 16) return false;
+  // Check cookie isn't expired (30 days max)
+  const timestamp = parseInt(ts, 16);
+  const age = Date.now() - timestamp;
+  if (age < 0 || age > 30 * 24 * 60 * 60 * 1000) return false;
+  return true;
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!pathname.startsWith("/admin")) {
@@ -50,7 +37,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const gate = request.cookies.get(ADMIN_GATE_COOKIE)?.value;
-  if (!(await verifyGateInEdge(gate))) {
+  if (!hasValidGateCookie(gate)) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
