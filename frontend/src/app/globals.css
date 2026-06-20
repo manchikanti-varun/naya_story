@@ -100,7 +100,7 @@ body {
   }
 
   .lux-hero-nav {
-    @apply touch-target rounded-full border border-[rgb(245_241_236/0.25)] bg-[rgb(44_40_37/0.2)] text-[rgb(245_241_236/0.95)] backdrop-blur-sm transition-all duration-700 active:scale-95;
+    @apply hidden sm:flex touch-target rounded-full border border-[rgb(245_241_236/0.25)] bg-[rgb(44_40_37/0.2)] text-[rgb(245_241_236/0.95)] backdrop-blur-sm transition-all duration-700 active:scale-95;
   }
 
   .lux-hero-dot {
