@@ -9,7 +9,7 @@
   --surface-soft: #f1ebe3;
   --border-soft: rgba(44, 40, 37, 0.08);
   --store-nav-pad: 5rem;
-  --store-hero-min-h: min(50svh, 420px);
+  --store-hero-min-h: min(42svh, 360px);
   --store-promo-bar-h: 0px;
   --store-mobile-cta-h: 5.25rem;
   --store-sticky-cart-h: 4.75rem;
