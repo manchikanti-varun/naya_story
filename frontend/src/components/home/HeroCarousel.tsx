@@ -203,21 +203,21 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
               </p>
             ) : null}
             <h1
-              className="lux-hero-title mt-3 sm:mt-4 [text-shadow:0_2px_40px_rgba(0,0,0,0.35)]"
+              className="lux-hero-title mt-1.5 sm:mt-4 [text-shadow:0_2px_40px_rgba(0,0,0,0.35)]"
               style={heroHeadingStyle(slideDesign, st.heading)}
             >
               {slide.heading}
             </h1>
             {slide.subheading ? (
               <p
-                className="lux-hero-sub mt-5 max-w-xl [text-shadow:0_1px_20px_rgba(0,0,0,0.3)]"
+                className="lux-hero-sub mt-2 max-w-xl sm:mt-5 [text-shadow:0_1px_20px_rgba(0,0,0,0.3)]"
                 style={heroSubheadingStyle(slideDesign, st.subheading)}
               >
                 {slide.subheading}
               </p>
             ) : null}
             {slide.ctaLabel ? (
-              <div className="mt-8 flex flex-wrap gap-3 sm:mt-11 sm:gap-4">
+              <div className="mt-4 flex flex-wrap gap-3 sm:mt-11 sm:gap-4">
                 <Link
                   href={slide.ctaHref || "/collections"}
                   className="lux-hero-cta"
