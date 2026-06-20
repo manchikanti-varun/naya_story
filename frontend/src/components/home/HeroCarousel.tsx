@@ -103,7 +103,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
       ? "text-center items-center"
       : slideDesign?.align === "right"
         ? "text-right items-end"
-        : "text-center items-center sm:text-left sm:items-start";
+        : "text-left items-start";
 
   return (
     <section
@@ -154,7 +154,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
       </AnimatePresence>
 
       <motion.div
-        className="pointer-events-none absolute bottom-24 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-2 md:bottom-14 md:gap-3"
+        className="pointer-events-none absolute bottom-24 left-1/2 z-20 hidden -translate-x-1/2 flex-col items-center gap-2 sm:flex md:bottom-14 md:gap-3"
         aria-hidden
       >
         <span className="font-sans text-[9px] uppercase tracking-[0.32em] text-ivory/55 sm:tracking-[0.4em]">
@@ -165,7 +165,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
 
       <div
         className={cn(
-          "relative z-10 lux-shell flex min-h-[var(--store-hero-min-h)] flex-col justify-end pb-[max(5.5rem,env(safe-area-inset-bottom))] pt-20 sm:pb-24 sm:pt-24 md:grid md:grid-cols-12 md:items-end md:pb-28 md:pt-28",
+          "relative z-10 lux-shell flex min-h-[var(--store-hero-min-h)] flex-col justify-end pb-16 pt-14 sm:pb-24 sm:pt-24 md:grid md:grid-cols-12 md:items-end md:pb-28 md:pt-28",
           alignClass,
         )}
         onTouchStart={(e) => {
@@ -249,7 +249,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
 
       {count > 1 ? (
         <>
-          <div className="pointer-events-none absolute inset-x-0 bottom-[max(5.5rem,env(safe-area-inset-bottom))] z-20 flex justify-center px-4 sm:bottom-10 sm:justify-start sm:px-6 md:bottom-14 md:px-12 lg:px-16">
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4 sm:bottom-10 sm:justify-start sm:px-6 md:bottom-14 md:px-12 lg:px-16">
             <div className="flex gap-2" style={{ pointerEvents: "auto" }}>
               {active.map((s, i) => (
                 <button
@@ -273,7 +273,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
           <button
             type="button"
             aria-label="Previous slide"
-            className="lux-hero-nav absolute left-2 top-1/2 z-20 -translate-y-1/2 sm:left-3 md:left-6"
+            className="lux-hero-nav absolute left-2 top-1/2 z-20 -translate-y-1/2 scale-75 sm:scale-100 sm:left-3 md:left-6"
             onClick={() => go(-1)}
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.05} />
@@ -281,7 +281,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
           <button
             type="button"
             aria-label="Next slide"
-            className="lux-hero-nav absolute right-2 top-1/2 z-20 -translate-y-1/2 sm:right-3 md:right-6"
+            className="lux-hero-nav absolute right-2 top-1/2 z-20 -translate-y-1/2 scale-75 sm:scale-100 sm:right-3 md:right-6"
             onClick={() => go(1)}
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.05} />

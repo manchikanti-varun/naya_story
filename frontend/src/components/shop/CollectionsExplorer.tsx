@@ -683,7 +683,7 @@ export function CollectionsExplorer() {
       />
 
       {/* Category tabs */}
-      <div className="mt-6">
+      <div className="mt-3 sm:mt-6">
         <div className="lux-collection-categories">
           <div className="lux-scroll-x gap-2 pb-1">
             {categories.map((cat) => (
@@ -703,23 +703,38 @@ export function CollectionsExplorer() {
         </div>
       </div>
 
-      {/* Mobile filter button */}
+      {/* Mobile filter button — compact icon style */}
       {hasDesktopFilters ? (
-        <button
-          type="button"
-          className="mt-4 lux-btn-outline inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 lg:hidden"
-          onClick={() => setShowMobileFilters(true)}
-        >
-          <SlidersHorizontal className="h-4 w-4" strokeWidth={1.5} />
-          {messages.mobileFiltersLabel}
-          {hasActiveRefinements ? (
-            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] text-gold">Active</span>
+        <div className="mt-3 flex items-center justify-between sm:mt-4 lg:hidden">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-full border border-ivory-deep/70 bg-white/50 px-3 py-1.5 font-sans text-[10px] uppercase tracking-[0.16em] text-ink/70 transition hover:border-ink/30 hover:text-ink"
+            onClick={() => setShowMobileFilters(true)}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />
+            Filter
+            {hasActiveRefinements ? (
+              <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-gold" />
+            ) : null}
+          </button>
+          {filters.showSort && enabledSortOptions.length > 0 ? (
+            <select
+              value={params.get("sort") ?? defaultSort}
+              onChange={(e) => patchParams({ sort: e.target.value })}
+              className="rounded-full border border-ivory-deep/70 bg-white/50 px-3 py-1.5 font-sans text-[10px] uppercase tracking-[0.12em] text-ink/70 outline-none"
+            >
+              {enabledSortOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           ) : null}
-        </button>
+        </div>
       ) : null}
 
       {/* Main content: products left + filter sidebar right */}
-      <div className="mt-6 flex gap-8">
+      <div className="mt-4 flex gap-8 sm:mt-6">
         {/* Products area */}
         <div className="min-w-0 flex-1">
           {loading ? (
