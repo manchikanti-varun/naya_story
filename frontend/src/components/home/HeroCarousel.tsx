@@ -273,7 +273,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
           <button
             type="button"
             aria-label="Previous slide"
-            className="lux-hero-nav absolute left-2 top-1/2 z-20 -translate-y-1/2 scale-75 sm:scale-100 sm:left-3 md:left-6"
+            className="lux-hero-nav absolute left-2 top-1/2 z-20 -translate-y-1/2 hidden sm:flex sm:left-3 md:left-6"
             onClick={() => go(-1)}
           >
             <ChevronLeft className="h-5 w-5" strokeWidth={1.05} />
@@ -281,7 +281,7 @@ export function HeroCarousel({ slides, autoplayMs, carouselStyles, sectionText }
           <button
             type="button"
             aria-label="Next slide"
-            className="lux-hero-nav absolute right-2 top-1/2 z-20 -translate-y-1/2 scale-75 sm:scale-100 sm:right-3 md:right-6"
+            className="lux-hero-nav absolute right-2 top-1/2 z-20 -translate-y-1/2 hidden sm:flex sm:right-3 md:right-6"
             onClick={() => go(1)}
           >
             <ChevronRight className="h-5 w-5" strokeWidth={1.05} />
