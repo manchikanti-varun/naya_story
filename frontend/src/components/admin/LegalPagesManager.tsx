@@ -35,6 +35,20 @@ function slugPreview(title: string, slug: string) {
   return s || "page";
 }
 
+/** Convert plain text (with double-newline paragraphs) to HTML if not already HTML */
+function ensureHtml(body: string): string {
+  if (!body || !body.trim()) return "";
+  // If it already contains HTML tags, return as-is
+  if (/<[a-z][\s\S]*>/i.test(body)) return body;
+  // Convert plain text paragraphs to HTML
+  return body
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
 export function LegalPagesManager() {
   const { token } = useAuth();
   const [pages, setPages] = useState<LegalPage[]>([]);
@@ -78,7 +92,7 @@ export function LegalPagesManager() {
     setDraft({
       title: page.title,
       slug: page.slug,
-      body: page.body,
+      body: ensureHtml(page.body),
       order: page.order,
       published: page.published,
     });
@@ -185,7 +199,7 @@ export function LegalPagesManager() {
           <AdminField label="Page content">
             <RichTextEditor
               initialContent={draft.body}
-              onChange={(html) => setDraft({ ...draft, body: html })}
+              onChange={(html) => setDraft((prev) => ({ ...prev, body: html }))}
               contentKey={editingId ?? "new"}
               placeholder="Write your policy content here…"
             />

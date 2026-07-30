@@ -10,7 +10,6 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Color from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Highlight from "@tiptap/extension-highlight";
-import FontFamily from "@tiptap/extension-font-family";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import { Table } from "@tiptap/extension-table";
@@ -18,18 +17,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import CharacterCount from "@tiptap/extension-character-count";
-import { useCallback, useState } from "react";
-import {
-  Bold, Italic, Underline as UnderlineIcon, Strikethrough,
-  Heading1, Heading2, Heading3, Heading4,
-  List, ListOrdered, Quote,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Link as LinkIcon, Unlink, ImageIcon,
-  Undo, Redo, Minus,
-  Palette, Highlighter,
-  Table as TableIcon, Subscript as SubIcon, Superscript as SupIcon,
-  Code, RemoveFormatting, Type,
-} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type Props = {
   initialContent: string;
@@ -39,272 +27,266 @@ type Props = {
   className?: string;
 };
 
-/* ─── Color Palettes ─── */
 const TEXT_COLORS = [
-  { label: "Default", value: "" },
-  { label: "Black", value: "#000000" },
-  { label: "Dark Gray", value: "#374151" },
-  { label: "Gray", value: "#6b7280" },
-  { label: "Red", value: "#dc2626" },
-  { label: "Orange", value: "#ea580c" },
-  { label: "Amber", value: "#d97706" },
-  { label: "Gold", value: "#c9a15b" },
-  { label: "Green", value: "#16a34a" },
-  { label: "Teal", value: "#0d9488" },
-  { label: "Blue", value: "#2563eb" },
-  { label: "Indigo", value: "#4f46e5" },
-  { label: "Purple", value: "#9333ea" },
-  { label: "Pink", value: "#db2777" },
-  { label: "Rose", value: "#e11d48" },
+  "#000000", "#374151", "#6b7280", "#dc2626", "#ea580c",
+  "#d97706", "#c9a15b", "#16a34a", "#0d9488", "#2563eb",
+  "#4f46e5", "#9333ea", "#db2777", "#e11d48", "#ffffff",
 ];
 
 const HIGHLIGHT_COLORS = [
-  { label: "None", value: "" },
-  { label: "Yellow", value: "#fef08a" },
-  { label: "Lime", value: "#d9f99d" },
-  { label: "Green", value: "#bbf7d0" },
-  { label: "Cyan", value: "#a5f3fc" },
-  { label: "Blue", value: "#bfdbfe" },
-  { label: "Purple", value: "#e9d5ff" },
-  { label: "Pink", value: "#fbcfe8" },
-  { label: "Rose", value: "#fecdd3" },
-  { label: "Orange", value: "#fed7aa" },
+  "#fef08a", "#d9f99d", "#bbf7d0", "#a5f3fc", "#bfdbfe",
+  "#e9d5ff", "#fbcfe8", "#fecdd3", "#fed7aa", "",
 ];
 
-const FONT_FAMILIES = [
-  { label: "Sans Serif", value: "" },
-  { label: "Serif", value: "Georgia, serif" },
-  { label: "Mono", value: "monospace" },
-  { label: "Inter", value: "Inter, sans-serif" },
-  { label: "Georgia", value: "Georgia, serif" },
-  { label: "Playfair", value: "'Playfair Display', serif" },
-];
-
-const FONT_SIZES = [
-  { label: "Small", value: "0.875em" },
-  { label: "Normal", value: "" },
-  { label: "Large", value: "1.25em" },
-  { label: "XL", value: "1.5em" },
-  { label: "2XL", value: "2em" },
-];
-
-/* ─── Toolbar Button ─── */
-function TBtn({
-  onMouseDown, active, disabled, title, children,
-}: {
-  onMouseDown: (e: React.MouseEvent) => void;
-  active?: boolean; disabled?: boolean; title: string;
-  children: React.ReactNode;
+/* ─── Toolbar Icon Button ─── */
+function Btn({ onMouseDown, active, disabled, title, children }: {
+  onMouseDown: () => void; active?: boolean; disabled?: boolean; title: string; children: React.ReactNode;
 }) {
   return (
-    <button type="button" onMouseDown={onMouseDown} disabled={disabled} title={title}
-      className={`rounded p-1.5 transition-colors select-none ${
-        active ? "bg-[var(--admin-accent,#6366f1)] text-white" : "text-[var(--admin-muted,#6b7280)] hover:bg-gray-100 hover:text-gray-900"
-      } disabled:opacity-30 disabled:cursor-not-allowed`}>
+    <button
+      type="button"
+      title={title}
+      disabled={disabled}
+      onMouseDown={(e) => { e.preventDefault(); onMouseDown(); }}
+      className={`inline-flex items-center justify-center h-8 w-8 rounded text-sm transition-colors select-none
+        ${active ? "bg-indigo-600 text-white shadow-sm" : "text-gray-600 hover:bg-gray-200/80 hover:text-gray-900"}
+        disabled:opacity-25 disabled:pointer-events-none`}
+    >
       {children}
     </button>
   );
 }
 
-function Divider() { return <div className="mx-0.5 h-6 w-px bg-gray-200" />; }
+function Sep() { return <div className="mx-1 h-5 w-px bg-gray-300/60" />; }
 
-/* ─── Dropdown Selector ─── */
-function ToolbarSelect({ value, options, onChange, title, width = "w-24" }: {
-  value: string; options: { label: string; value: string }[];
-  onChange: (v: string) => void; title: string; width?: string;
-}) {
-  return (
-    <select title={title} value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onMouseDown={(e) => e.stopPropagation()}
-      className={`${width} rounded border border-gray-200 bg-white px-1.5 py-1 text-xs text-gray-700 focus:border-indigo-400 focus:outline-none`}>
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
-  );
-}
-
-/* ─── Color Picker Popover ─── */
-function ColorPicker({ editor, colors, type, icon, title }: {
-  editor: Editor; colors: { label: string; value: string }[];
-  type: "text" | "highlight"; icon: React.ReactNode; title: string;
+/* ─── Color Dropdown ─── */
+function ColorDrop({ editor, colors, type, label }: {
+  editor: Editor; colors: string[]; type: "text" | "highlight"; label: string;
 }) {
   const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  const applyColor = (c: string) => {
+    if (type === "text") {
+      if (!c) editor.chain().focus().unsetColor().run();
+      else editor.chain().focus().setColor(c).run();
+    } else {
+      if (!c) editor.chain().focus().unsetHighlight().run();
+      else editor.chain().focus().setHighlight({ color: c }).run();
+    }
+  };
+
   return (
-    <div className="relative">
-      <button type="button" onMouseDown={(e) => { e.preventDefault(); setOpen(!open); }} title={title}
-        className="rounded p-1.5 text-[var(--admin-muted,#6b7280)] hover:bg-gray-100 hover:text-gray-900">
-        {icon}
+    <div ref={wrapRef} className="relative inline-flex">
+      <button type="button" title={label}
+        onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}
+        className="inline-flex items-center justify-center h-8 w-8 rounded text-gray-600 hover:bg-gray-200/80 hover:text-gray-900 select-none"
+      >
+        {type === "text" ? (
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 20h16M6 4l6 12M18 4l-6 12" /></svg>
+        ) : (
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9M3 20h3m1-4l4-12h2l4 12" /><rect x="1" y="17" width="22" height="4" rx="1" fill="#fef08a" stroke="none" opacity="0.6" /></svg>
+        )}
       </button>
       {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 z-50 mt-1 rounded-lg border border-gray-200 bg-white p-2 shadow-xl">
-            <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-gray-400">{title}</p>
-            <div className="grid grid-cols-5 gap-1.5">
-              {colors.map((c) => (
-                <button key={c.value || "none"} type="button" title={c.label}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    if (type === "text") {
-                      if (!c.value) editor.chain().focus().unsetColor().run();
-                      else editor.chain().focus().setColor(c.value).run();
-                    } else {
-                      if (!c.value) editor.chain().focus().unsetHighlight().run();
-                      else editor.chain().focus().setHighlight({ color: c.value }).run();
-                    }
-                    setOpen(false);
-                  }}
-                  className="h-6 w-6 rounded-sm border border-gray-200 transition hover:scale-125 hover:shadow"
-                  style={{ backgroundColor: c.value || "#ffffff" }}
-                />
-              ))}
-            </div>
+        <div className="absolute top-full left-0 z-[200] mt-1 p-2.5 rounded-lg border bg-white shadow-xl min-w-[160px]"
+          onMouseDown={(e) => e.preventDefault()}>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</p>
+          <div className="grid grid-cols-5 gap-1.5">
+            {colors.map((c, i) => (
+              <button key={c || `none-${i}`} type="button"
+                onMouseDown={(e) => { e.preventDefault(); applyColor(c); setOpen(false); }}
+                className={`h-6 w-6 rounded border transition hover:scale-125 hover:shadow ${!c ? "bg-white border-dashed border-gray-300 relative after:content-['✕'] after:text-[8px] after:text-gray-400 after:absolute after:inset-0 after:flex after:items-center after:justify-center" : "border-gray-200"}`}
+                style={c ? { backgroundColor: c } : undefined}
+                title={c || "Remove color"}
+              />
+            ))}
           </div>
-        </>
+          {/* Custom color picker */}
+          <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center gap-2">
+            <input
+              ref={pickerRef}
+              type="color"
+              defaultValue={type === "text" ? "#000000" : "#fef08a"}
+              className="h-7 w-7 rounded border border-gray-200 cursor-pointer p-0"
+              onMouseDown={(e) => e.stopPropagation()}
+              onChange={(e) => { applyColor(e.target.value); }}
+            />
+            <span className="text-[10px] text-gray-500">Custom color</span>
+            <button type="button"
+              onMouseDown={(e) => { e.preventDefault(); if (pickerRef.current) { applyColor(pickerRef.current.value); setOpen(false); } }}
+              className="ml-auto text-[10px] font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-/* ─── Main Toolbar ─── */
+/* ─── Toolbar ─── */
 function Toolbar({ editor }: { editor: Editor }) {
-  const cmd = (fn: () => void) => (e: React.MouseEvent) => { e.preventDefault(); fn(); };
-
-  const addLink = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  const link = useCallback(() => {
     if (editor.isActive("link")) { editor.chain().focus().unsetLink().run(); return; }
-    const url = window.prompt("Enter URL:");
+    const url = window.prompt("URL:");
     if (url) editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }, [editor]);
 
-  const addImage = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  const image = useCallback(() => {
     const url = window.prompt("Image URL:");
     if (url) editor.chain().focus().setImage({ src: url }).run();
   }, [editor]);
 
-  const insertTable = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  const table = useCallback(() => {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }, [editor]);
 
-  const currentFont = editor.getAttributes("textStyle").fontFamily || "";
-  const currentSize = editor.getAttributes("textStyle").fontSize || "";
-
   return (
-    <div className="border-b border-gray-200 bg-gray-50/80 px-2 py-1.5 rounded-t-lg">
-      {/* Row 1: Font, Size, Colors, Inline formatting */}
-      <div className="flex flex-wrap items-center gap-1">
-        <ToolbarSelect title="Font Family" value={currentFont} width="w-28"
-          options={FONT_FAMILIES}
-          onChange={(v) => { if (!v) editor.chain().focus().unsetFontFamily().run(); else editor.chain().focus().setFontFamily(v).run(); }}
-        />
-        <ToolbarSelect title="Font Size" value={currentSize} width="w-20"
-          options={FONT_SIZES}
-          onChange={(v) => { if (!v) editor.chain().focus().unsetMark("textStyle").run(); else editor.chain().focus().setMark("textStyle", { fontSize: v }).run(); }}
-        />
+    <div className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur-sm px-3 py-2 space-y-1 rounded-t-lg">
+      {/* Row 1 */}
+      <div className="flex flex-wrap items-center gap-0.5">
+        <Btn onMouseDown={() => editor.chain().focus().setParagraph().run()} active={editor.isActive("paragraph")} title="Normal Text"><span className="text-[10px] font-medium">P</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title="Heading 1"><span className="font-bold text-xs">H1</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive("heading", { level: 2 })} title="Heading 2"><span className="font-bold text-xs">H2</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive("heading", { level: 3 })} title="Heading 3"><span className="font-bold text-xs">H3</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleHeading({ level: 4 }).run()} active={editor.isActive("heading", { level: 4 })} title="Heading 4"><span className="font-bold text-[10px]">H4</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleHeading({ level: 5 }).run()} active={editor.isActive("heading", { level: 5 })} title="Heading 5"><span className="font-bold text-[10px]">H5</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleHeading({ level: 6 }).run()} active={editor.isActive("heading", { level: 6 })} title="Heading 6"><span className="font-bold text-[10px]">H6</span></Btn>
 
-        <Divider />
+        <Sep />
 
-        <ColorPicker editor={editor} colors={TEXT_COLORS} type="text" icon={<Palette className="h-4 w-4" />} title="Text Color" />
-        <ColorPicker editor={editor} colors={HIGHLIGHT_COLORS} type="highlight" icon={<Highlighter className="h-4 w-4" />} title="Highlight" />
+        <Btn onMouseDown={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="Bold (Ctrl+B)"><span className="font-bold">B</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive("italic")} title="Italic (Ctrl+I)"><span className="italic">I</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive("underline")} title="Underline (Ctrl+U)"><span className="underline">U</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive("strike")} title="Strikethrough"><span className="line-through">S</span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleSubscript().run()} active={editor.isActive("subscript")} title="Subscript"><span className="text-[10px]">X<sub>2</sub></span></Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleSuperscript().run()} active={editor.isActive("superscript")} title="Superscript"><span className="text-[10px]">X<sup>2</sup></span></Btn>
 
-        <Divider />
+        <Sep />
 
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleBold().run())} active={editor.isActive("bold")} title="Bold (Ctrl+B)"><Bold className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleItalic().run())} active={editor.isActive("italic")} title="Italic (Ctrl+I)"><Italic className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleUnderline().run())} active={editor.isActive("underline")} title="Underline (Ctrl+U)"><UnderlineIcon className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleStrike().run())} active={editor.isActive("strike")} title="Strikethrough"><Strikethrough className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleSubscript().run())} active={editor.isActive("subscript")} title="Subscript"><SubIcon className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleSuperscript().run())} active={editor.isActive("superscript")} title="Superscript"><SupIcon className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleCode().run())} active={editor.isActive("code")} title="Inline Code"><Code className="h-4 w-4" /></TBtn>
+        <ColorDrop editor={editor} colors={TEXT_COLORS} type="text" label="Text Color" />
+        <ColorDrop editor={editor} colors={HIGHLIGHT_COLORS} type="highlight" label="Highlight" />
 
-        <Divider />
+        <Sep />
 
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().clearNodes().unsetAllMarks().run())} title="Clear Formatting"><RemoveFormatting className="h-4 w-4" /></TBtn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive("bulletList")} title="Bullet List">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
+        </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Numbered List">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 6h11M10 12h11M10 18h11M3 5v2M3 17v2M3 11v2M5 5H3M5 17H3M5 11H3" /></svg>
+        </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Blockquote">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3M15 17h3l2-4V7h-6v6h3" /></svg>
+        </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive("codeBlock")} title="Code Block"><span className="font-mono text-[10px]">&lt;/&gt;</span></Btn>
       </div>
 
-      {/* Row 2: Headings, Lists, Alignment, Blocks, Insert */}
-      <div className="mt-1 flex flex-wrap items-center gap-1">
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().setParagraph().run())} active={editor.isActive("paragraph")} title="Paragraph"><Type className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleHeading({ level: 1 }).run())} active={editor.isActive("heading", { level: 1 })} title="Heading 1"><Heading1 className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleHeading({ level: 2 }).run())} active={editor.isActive("heading", { level: 2 })} title="Heading 2"><Heading2 className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleHeading({ level: 3 }).run())} active={editor.isActive("heading", { level: 3 })} title="Heading 3"><Heading3 className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleHeading({ level: 4 }).run())} active={editor.isActive("heading", { level: 4 })} title="Heading 4"><Heading4 className="h-4 w-4" /></TBtn>
+      {/* Row 2 */}
+      <div className="flex flex-wrap items-center gap-0.5">
+        <Btn onMouseDown={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} title="Align Left">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M3 12h12M3 18h18" /></svg>
+        </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().setTextAlign("center").run()} active={editor.isActive({ textAlign: "center" })} title="Align Center">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M3 18h18" /></svg>
+        </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().setTextAlign("right").run()} active={editor.isActive({ textAlign: "right" })} title="Align Right">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M9 12h12M3 18h18" /></svg>
+        </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().setTextAlign("justify").run()} active={editor.isActive({ textAlign: "justify" })} title="Justify">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+        </Btn>
 
-        <Divider />
+        <Sep />
 
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleBulletList().run())} active={editor.isActive("bulletList")} title="Bullet List"><List className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleOrderedList().run())} active={editor.isActive("orderedList")} title="Numbered List"><ListOrdered className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleBlockquote().run())} active={editor.isActive("blockquote")} title="Blockquote"><Quote className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().toggleCodeBlock().run())} active={editor.isActive("codeBlock")} title="Code Block"><Code className="h-4 w-4" /></TBtn>
+        <Btn onMouseDown={link} active={editor.isActive("link")} title={editor.isActive("link") ? "Remove Link" : "Add Link"}>
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" /></svg>
+        </Btn>
+        <Btn onMouseDown={image} title="Insert Image">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+        </Btn>
+        <Btn onMouseDown={table} title="Insert Table">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M3 15h18M9 3v18M15 3v18" /></svg>
+        </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Line">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12h18" /></svg>
+        </Btn>
 
-        <Divider />
+        <Sep />
 
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().setTextAlign("left").run())} active={editor.isActive({ textAlign: "left" })} title="Align Left"><AlignLeft className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().setTextAlign("center").run())} active={editor.isActive({ textAlign: "center" })} title="Align Center"><AlignCenter className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().setTextAlign("right").run())} active={editor.isActive({ textAlign: "right" })} title="Align Right"><AlignRight className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().setTextAlign("justify").run())} active={editor.isActive({ textAlign: "justify" })} title="Justify"><AlignJustify className="h-4 w-4" /></TBtn>
+        <Btn onMouseDown={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Undo (Ctrl+Z)">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 10h13a4 4 0 010 8H9M3 10l4-4M3 10l4 4" /></svg>
+        </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} title="Redo (Ctrl+Y)">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10H8a4 4 0 000 8h6M21 10l-4-4M21 10l-4 4" /></svg>
+        </Btn>
 
-        <Divider />
+        <Sep />
 
-        <TBtn onMouseDown={addLink} active={editor.isActive("link")} title={editor.isActive("link") ? "Remove Link" : "Add Link"}>
-          {editor.isActive("link") ? <Unlink className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
-        </TBtn>
-        <TBtn onMouseDown={addImage} title="Insert Image"><ImageIcon className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={insertTable} title="Insert Table"><TableIcon className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().setHorizontalRule().run())} title="Horizontal Line"><Minus className="h-4 w-4" /></TBtn>
-
-        <Divider />
-
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().undo().run())} disabled={!editor.can().undo()} title="Undo (Ctrl+Z)"><Undo className="h-4 w-4" /></TBtn>
-        <TBtn onMouseDown={cmd(() => editor.chain().focus().redo().run())} disabled={!editor.can().redo()} title="Redo (Ctrl+Y)"><Redo className="h-4 w-4" /></TBtn>
+        <Btn onMouseDown={() => editor.chain().focus().clearNodes().unsetAllMarks().run()} title="Clear Formatting">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16" /><path d="M3 21l18-18" strokeWidth="1.5" stroke="#dc2626" /></svg>
+        </Btn>
       </div>
     </div>
   );
 }
 
-/* ─── Editor Component ─── */
+/* ─── Main Editor ─── */
 export function RichTextEditor({ initialContent, onChange, contentKey, placeholder, className }: Props) {
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: { levels: [1, 2, 3, 4] } }),
+      StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
       Underline,
       TextStyle,
       Color,
-      FontFamily,
       Highlight.configure({ multicolor: true }),
       Subscript,
       Superscript,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer nofollow", target: "_blank" } }),
       Image.configure({ inline: false, allowBase64: false }),
-      Table.configure({ resizable: true }),
+      Table.configure({ resizable: false }),
       TableRow,
       TableCell,
       TableHeader,
       CharacterCount,
-      Placeholder.configure({ placeholder: placeholder ?? "Start writing…" }),
+      Placeholder.configure({ placeholder: placeholder ?? "Start writing your content…" }),
     ],
     content: initialContent,
-    onUpdate: ({ editor: e }) => { onChange(e.getHTML()); },
+    onUpdate: ({ editor: e }) => {
+      onChangeRef.current(e.getHTML());
+    },
     editorProps: {
-      attributes: { class: "tiptap min-h-[300px] px-5 py-4 focus:outline-none" },
+      attributes: { class: "tiptap min-h-[300px] max-h-[600px] overflow-y-auto px-5 py-4 focus:outline-none cursor-text" },
     },
     immediatelyRender: false,
   }, [contentKey]);
 
   if (!editor) return null;
 
-  const chars = editor.storage.characterCount.characters();
   const words = editor.storage.characterCount.words();
+  const chars = editor.storage.characterCount.characters();
   const readTime = Math.max(1, Math.ceil(words / 200));
 
   return (
-    <div className={`overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm ${className ?? ""}`}>
+    <div className={`rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ${className ?? ""}`}>
       <Toolbar editor={editor} />
       <EditorContent editor={editor} />
-      <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-4 py-1.5 text-[11px] text-gray-400">
+      <div className="border-t border-gray-100 px-4 py-1.5 flex justify-end gap-4 text-[11px] text-gray-400 select-none">
         <span>{words} words</span>
         <span>{chars} chars</span>
         <span>~{readTime} min read</span>
