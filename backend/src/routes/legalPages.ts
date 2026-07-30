@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import { Router } from "express";
 import { body, param } from "express-validator";
 import { slugify } from "../lib/slugify.js";
+import { sanitizeRichContent } from "../lib/sanitize-html-content.js";
 import { isAdminRequest, requireAdmin } from "../middleware/auth.js";
 import { asyncHandler, HttpError } from "../middleware/httpError.js";
 import { settingsRepository } from "../repositories/settings.repository.js";
@@ -78,7 +79,7 @@ export function createLegalPagesRouter(secret: string) {
       const doc = await settingsRepository.createLegalPage({
         title: title.trim(),
         slug: nextSlug,
-        body: pageBody?.trim() ?? "",
+        body: sanitizeRichContent(pageBody?.trim() ?? ""),
         published: published ?? true,
         order: order ?? maxOrder + 1,
       });
@@ -102,7 +103,7 @@ export function createLegalPagesRouter(secret: string) {
       const { title, body: pageBody, slug, published, order } = req.body;
       const patch: Record<string, unknown> = {};
       if (title !== undefined) patch.title = title.trim();
-      if (pageBody !== undefined) patch.body = pageBody;
+      if (pageBody !== undefined) patch.body = sanitizeRichContent(pageBody);
       if (published !== undefined) patch.published = published;
       if (order !== undefined) patch.order = Number(order);
       if (slug !== undefined) patch.slug = await uniqueSlug(slug.trim() || title || "page", req.params.id);

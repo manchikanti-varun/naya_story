@@ -9,8 +9,9 @@ import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
 import { AdminCard } from "@/components/admin/ui/AdminCard";
 import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
-import { AdminField, AdminInput, AdminTextarea } from "@/components/admin/ui/AdminField";
+import { AdminField, AdminInput } from "@/components/admin/ui/AdminField";
 import { AdminTable } from "@/components/admin/ui/AdminTable";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 import { legalPageHref, type LegalPage } from "@/types/legal-page";
 
 type Draft = {
@@ -181,12 +182,11 @@ export function LegalPagesManager() {
             </Link>
           </p>
 
-          <AdminField label="Page content" hint="Separate paragraphs with a blank line.">
-            <AdminTextarea
-              rows={10}
-              value={draft.body}
-              onChange={(e) => setDraft({ ...draft, body: e.target.value })}
-              placeholder="Write your policy text here…"
+          <AdminField label="Page content">
+            <RichTextEditor
+              content={draft.body}
+              onChange={(html) => setDraft({ ...draft, body: html })}
+              placeholder="Write your policy content here…"
             />
           </AdminField>
 
