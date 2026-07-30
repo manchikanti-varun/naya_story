@@ -45,9 +45,18 @@ async function main() {
   }, STALE_ORDER_INTERVAL_MS);
   staleOrderTimer.unref();
 
+  console.log("[DEBUG] Creating Express app...");
   const app = createApp(config);
+  console.log("[DEBUG] Express app created, attempting to listen on port", config.app.port);
+
   const server: Server = app.listen(config.app.port, () => {
     logger.info("server_started", { port: config.app.port, env: config.app.nodeEnv });
+  });
+
+  server.on("error", (err) => {
+    console.error("[SERVER ERROR]", err);
+    logger.error("server_listen_error", { error: String(err), port: config.app.port });
+    process.exit(1);
   });
 
   // --- Graceful shutdown ---
@@ -101,6 +110,7 @@ function setupGracefulShutdown(server: Server) {
 }
 
 main().catch((err) => {
-  logger.error("startup_failed", { error: String(err) });
+  logger.error("startup_failed", { error: String(err), stack: err?.stack });
+  console.error("[STARTUP FATAL]", err);
   process.exit(1);
 });
