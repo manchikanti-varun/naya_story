@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Mail, Search, ShoppingBag } from "lucide-react";
+import { Mail, Search, ShoppingBag, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/context/auth-context";
 import { AdminAvatar } from "@/components/admin/ui/AdminAvatar";
@@ -102,15 +102,32 @@ export default function AdminCustomersPage() {
 
       {/* Customer Drawer */}
       <AdminDrawer open={!!selected} onClose={() => setSelected(null)} title={selected?.name ?? ""} description={selected?.email}>
-        {selected && <CustomerProfile customer={selected} />}
+        {selected && <CustomerProfile customer={selected} onDeleted={() => { setSelected(null); void refresh(); }} />}
       </AdminDrawer>
     </AdminPageLayout>
   );
 }
 
-function CustomerProfile({ customer }: { customer: CustomerRow }) {
+function CustomerProfile({ customer, onDeleted }: { customer: CustomerRow; onDeleted: () => void }) {
   const aov = customer.orderCount > 0 ? Math.round(customer.totalSpent / customer.orderCount) : 0;
   const toast = useToast();
+  const { token } = useAuth();
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!token) return;
+    if (!window.confirm(`Are you sure you want to delete "${customer.name}" (${customer.email})? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await apiFetch(`/admin/customers/${customer._id}`, { method: "DELETE", token });
+      toast.success("Customer deleted");
+      onDeleted();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete customer");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -151,6 +168,15 @@ function CustomerProfile({ customer }: { customer: CustomerRow }) {
       <Link href="/admin/orders" className="admin-btn admin-btn--secondary admin-btn--sm w-full justify-center">
         <ShoppingBag className="h-3.5 w-3.5" strokeWidth={1.5} /> View orders
       </Link>
+
+      <button
+        type="button"
+        onClick={handleDelete}
+        disabled={deleting}
+        className="w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+      >
+        {deleting ? "Deleting…" : "Delete customer"}
+      </button>
     </div>
   );
 }

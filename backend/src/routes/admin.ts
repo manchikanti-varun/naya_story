@@ -1,8 +1,11 @@
 import type { RequestHandler } from "express";
 import { Router } from "express";
+import { param } from "express-validator";
 import { requireAdmin } from "../middleware/auth.js";
-import { asyncHandler } from "../middleware/httpError.js";
+import { asyncHandler, HttpError } from "../middleware/httpError.js";
 import { analyticsService } from "../services/analytics.service.js";
+import { userRepository } from "../repositories/user.repository.js";
+import { handleValidationErrors } from "../validators/index.js";
 
 export function createAdminRouter(secret: string) {
   const r = Router();
@@ -27,6 +30,20 @@ export function createAdminRouter(secret: string) {
     if (!data) return res.status(404).json({ message: "Not found" });
     res.json(data);
   }));
+
+  // DELETE /customers/:id — Delete a customer account
+  r.delete(
+    "/customers/:id",
+    param("id").notEmpty(),
+    handleValidationErrors,
+    asyncHandler(async (req, res) => {
+      const user = await userRepository.findById(req.params.id);
+      if (!user) throw new HttpError(404, "Customer not found");
+      if (user.role === "admin") throw new HttpError(403, "Cannot delete admin accounts from here");
+      await userRepository.deleteById(req.params.id);
+      res.json({ ok: true, message: `Customer ${user.email} deleted.` });
+    }),
+  );
 
   return r;
 }

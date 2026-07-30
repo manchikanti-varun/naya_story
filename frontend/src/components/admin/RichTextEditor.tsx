@@ -7,7 +7,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   Bold,
   Italic,
@@ -169,6 +169,10 @@ function Toolbar({ editor }: { editor: Editor }) {
 }
 
 export function RichTextEditor({ content, onChange, placeholder, className }: Props) {
+  // Track whether content update is from the editor itself (avoid resetting on own changes)
+  const isInternalUpdate = useRef(false);
+  const lastExternalContent = useRef(content);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -192,6 +196,7 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Pr
     ],
     content,
     onUpdate: ({ editor: e }) => {
+      isInternalUpdate.current = true;
       onChange(e.getHTML());
     },
     editorProps: {
@@ -201,13 +206,22 @@ export function RichTextEditor({ content, onChange, placeholder, className }: Pr
     },
   });
 
-  // Sync external content changes (e.g., when switching between pages)
+  // Only sync when content changes from OUTSIDE (e.g., switching pages in the editor)
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (!editor) return;
+
+    // If the change came from the editor's own onUpdate, skip
+    if (isInternalUpdate.current) {
+      isInternalUpdate.current = false;
+      return;
+    }
+
+    // Only reset if the external content actually changed (different page selected)
+    if (content !== lastExternalContent.current) {
+      lastExternalContent.current = content;
       editor.commands.setContent(content);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content]);
+  }, [content, editor]);
 
   if (!editor) return null;
 

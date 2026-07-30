@@ -98,4 +98,13 @@ export const userRepository = {
   async deleteRefreshTokensByHash(tokenHash: string) {
     return RefreshToken.deleteMany({ tokenHash });
   },
+
+  async deleteById(id: string) {
+    // Remove all refresh tokens for this user, then delete the user
+    const user = await User.findById(id);
+    if (user) {
+      await RefreshToken.deleteMany({ userId: user._id });
+    }
+    return User.findByIdAndDelete(id);
+  },
 };
