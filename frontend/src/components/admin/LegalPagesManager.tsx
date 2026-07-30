@@ -57,6 +57,7 @@ export function LegalPagesManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
   const [error, setError] = useState<string | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -84,6 +85,7 @@ export function LegalPagesManager() {
   function startCreate() {
     setEditingId(null);
     setDraft({ ...emptyDraft(), order: pages.length });
+    setEditorKey((k) => k + 1);
     setError(null);
   }
 
@@ -96,6 +98,7 @@ export function LegalPagesManager() {
       order: page.order,
       published: page.published,
     });
+    setEditorKey((k) => k + 1);
     setError(null);
   }
 
@@ -127,6 +130,7 @@ export function LegalPagesManager() {
       }
       await refresh();
       if (!editingId) startCreate();
+      else setEditorKey((k) => k + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save page.");
     } finally {
@@ -200,7 +204,7 @@ export function LegalPagesManager() {
             <RichTextEditor
               initialContent={draft.body}
               onChange={(html) => setDraft((prev) => ({ ...prev, body: html }))}
-              contentKey={editingId ?? "new"}
+              contentKey={`${editingId ?? "new"}-${editorKey}`}
               placeholder="Write your policy content here…"
             />
           </AdminField>

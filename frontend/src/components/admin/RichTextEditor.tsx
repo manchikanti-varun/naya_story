@@ -271,7 +271,7 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
       onChangeRef.current(e.getHTML());
     },
     editorProps: {
-      attributes: { class: "tiptap min-h-[300px] max-h-[600px] overflow-y-auto px-5 py-4 focus:outline-none cursor-text" },
+      attributes: { class: "tiptap px-5 py-4 focus:outline-none" },
     },
     immediatelyRender: false,
   }, [contentKey]);
@@ -285,7 +285,9 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
   return (
     <div className={`rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ${className ?? ""}`}>
       <Toolbar editor={editor} />
-      <EditorContent editor={editor} />
+      <div className="min-h-[300px] cursor-text" onClick={() => { if (!editor.isFocused) editor.commands.focus("end"); }}>
+        <EditorContent editor={editor} />
+      </div>
       <div className="border-t border-gray-100 px-4 py-1.5 flex justify-end gap-4 text-[11px] text-gray-400 select-none">
         <span>{words} words</span>
         <span>{chars} chars</span>
