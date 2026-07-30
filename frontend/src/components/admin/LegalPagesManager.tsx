@@ -184,8 +184,9 @@ export function LegalPagesManager() {
 
           <AdminField label="Page content">
             <RichTextEditor
-              content={draft.body}
+              initialContent={draft.body}
               onChange={(html) => setDraft({ ...draft, body: html })}
+              contentKey={editingId ?? "new"}
               placeholder="Write your policy content here…"
             />
           </AdminField>

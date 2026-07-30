@@ -386,30 +386,50 @@ body {
 /* TipTap Rich Text Editor */
 .tiptap {
   outline: none;
-  min-height: 200px;
+  min-height: 300px;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: #1f2937;
 }
 
 .tiptap p.is-editor-empty:first-child::before {
-  color: #adb5bd;
+  color: #9ca3af;
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
 }
 
-.tiptap h1 { font-size: 1.75rem; font-weight: 700; margin: 1rem 0 0.5rem; }
-.tiptap h2 { font-size: 1.4rem; font-weight: 600; margin: 0.75rem 0 0.5rem; }
-.tiptap h3 { font-size: 1.15rem; font-weight: 600; margin: 0.75rem 0 0.25rem; }
-.tiptap h4 { font-size: 1rem; font-weight: 600; margin: 0.5rem 0 0.25rem; }
+.tiptap h1 { font-size: 2rem; font-weight: 700; margin: 1.5rem 0 0.75rem; line-height: 1.3; }
+.tiptap h2 { font-size: 1.5rem; font-weight: 600; margin: 1.25rem 0 0.5rem; line-height: 1.35; }
+.tiptap h3 { font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.4rem; line-height: 1.4; }
+.tiptap h4 { font-size: 1.1rem; font-weight: 600; margin: 0.75rem 0 0.25rem; line-height: 1.4; }
 .tiptap p { margin: 0.5rem 0; }
-.tiptap ul, .tiptap ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+.tiptap ul, .tiptap ol { padding-left: 1.5rem; margin: 0.75rem 0; }
 .tiptap ul { list-style-type: disc; }
 .tiptap ol { list-style-type: decimal; }
-.tiptap li { margin: 0.25rem 0; }
-.tiptap blockquote { border-left: 3px solid #c9a15b; padding-left: 1rem; margin: 0.75rem 0; color: #6b6560; font-style: italic; }
-.tiptap a { color: #c9a15b; text-decoration: underline; text-underline-offset: 3px; }
-.tiptap hr { border: none; border-top: 1px solid #e8e0d6; margin: 1.5rem 0; }
-.tiptap img { max-width: 100%; height: auto; border-radius: 4px; margin: 1rem 0; }
-.tiptap code { background: #f5f1ec; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85em; }
-.tiptap pre { background: #2c2825; color: #f5f1ec; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 0.75rem 0; }
-.tiptap pre code { background: none; padding: 0; color: inherit; }
+.tiptap li { margin: 0.3rem 0; }
+.tiptap li p { margin: 0.1rem 0; }
+.tiptap blockquote { border-left: 3px solid #c9a15b; padding-left: 1rem; margin: 1rem 0; color: #6b6560; font-style: italic; }
+.tiptap a { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.tiptap a:hover { color: #1d4ed8; }
+.tiptap hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.5rem 0; }
+.tiptap img { max-width: 100%; height: auto; border-radius: 6px; margin: 1rem 0; }
+.tiptap code { background: #f3f4f6; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85em; font-family: monospace; color: #e11d48; }
+.tiptap pre { background: #1f2937; color: #f9fafb; padding: 1rem 1.25rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; font-size: 0.85em; line-height: 1.6; }
+.tiptap pre code { background: none; padding: 0; color: inherit; border-radius: 0; }
+.tiptap mark { border-radius: 2px; padding: 0.1em 0.2em; }
+.tiptap sub { font-size: 0.75em; }
+.tiptap sup { font-size: 0.75em; }
+
+/* Tables */
+.tiptap table { border-collapse: collapse; width: 100%; margin: 1rem 0; border-radius: 6px; overflow: hidden; }
+.tiptap th, .tiptap td { border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; text-align: left; vertical-align: top; min-width: 80px; }
+.tiptap th { background: #f9fafb; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.02em; color: #374151; }
+.tiptap td { font-size: 0.9em; }
+.tiptap tr:hover td { background: #f9fafb; }
+
+/* Table resize handles */
+.tiptap .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: #6366f1; cursor: col-resize; pointer-events: auto; }
+.tiptap .tableWrapper { overflow-x: auto; margin: 1rem 0; }
+.tiptap table .selectedCell { background: #ede9fe; }

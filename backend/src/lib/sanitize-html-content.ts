@@ -7,19 +7,21 @@ import sanitizeHtml from "sanitize-html";
 const ALLOWED_TAGS = [
   "h1", "h2", "h3", "h4", "h5", "h6",
   "p", "br", "hr",
-  "strong", "em", "u", "s", "del",
+  "strong", "em", "u", "s", "del", "sub", "sup",
   "ul", "ol", "li",
   "blockquote",
   "a",
   "img",
   "table", "thead", "tbody", "tr", "th", "td",
-  "span", "div",
+  "span", "div", "mark",
   "code", "pre",
 ];
 
 const ALLOWED_ATTRIBUTES: Record<string, string[]> = {
   a: ["href", "target", "rel"],
   img: ["src", "alt", "width", "height", "style"],
+  span: ["style", "data-color"],
+  mark: ["style", "data-color"],
   "*": ["style", "class"],
   td: ["colspan", "rowspan"],
   th: ["colspan", "rowspan"],
@@ -29,6 +31,10 @@ const ALLOWED_STYLES = {
   "*": {
     "text-align": [/^(left|center|right|justify)$/],
     "max-width": [/^\d+(px|%|em|rem)$/],
+    "color": [/^#[0-9a-fA-F]{3,6}$/, /^rgb/],
+    "background-color": [/^#[0-9a-fA-F]{3,6}$/, /^rgb/],
+    "font-family": [/.+/],
+    "font-size": [/^\d+(\.\d+)?(px|em|rem|%)$/],
   },
 };
 
