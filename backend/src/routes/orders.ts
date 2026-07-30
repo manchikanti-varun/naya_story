@@ -41,8 +41,9 @@ export function createOrdersRouter(secret: string) {
           return `user:${payload.sub}`;
         } catch { /* fall through to IP */ }
       }
-      return `ip:${req.ip ?? "unknown"}`;
+      return req.ip ?? "unknown";
     },
+    validate: { xForwardedForHeader: false, default: true },
   });
 
   // POST / — Create order
