@@ -45,9 +45,7 @@ async function main() {
   }, STALE_ORDER_INTERVAL_MS);
   staleOrderTimer.unref();
 
-  console.log("[DEBUG] Creating Express app...");
   const app = createApp(config);
-  console.log("[DEBUG] Express app created, attempting to listen on port", config.app.port);
 
   const server: Server = app.listen(config.app.port, () => {
     logger.info("server_started", { port: config.app.port, env: config.app.nodeEnv });

@@ -40,6 +40,12 @@ export function createApp(config: Config): express.Express {
   app.disable("x-powered-by");
   app.use(requestIdMiddleware);
   app.use(requestLoggerMiddleware);
+  // Split CLIENT_ORIGIN (may be comma-separated) into individual origins for CSP
+  const clientOrigins = config.auth.clientOrigin
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -50,7 +56,7 @@ export function createApp(config: Config): express.Express {
               scriptSrc: ["'self'", "https://checkout.razorpay.com"],
               styleSrc: ["'self'", "'unsafe-inline'"],
               imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://*.razorpay.com"],
-              connectSrc: ["'self'", "https://api.razorpay.com", "https://lumberjack.razorpay.com", config.auth.clientOrigin],
+              connectSrc: ["'self'", "https://api.razorpay.com", "https://lumberjack.razorpay.com", ...clientOrigins],
               frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
               fontSrc: ["'self'", "https://fonts.gstatic.com"],
               objectSrc: ["'none'"],
