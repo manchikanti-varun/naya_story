@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLegalPageBySlug, getLegalPageSlugs } from "@/lib/server-legal-pages";
+import { rewriteEmbeddedMediaInHtml } from "@/lib/rich-text-utils";
 
 export const revalidate = 300;
 
@@ -39,7 +40,7 @@ export default async function LegalPolicyPage({ params }: Props) {
       {isHtml ? (
         <div
           className="mt-10 prose prose-sm max-w-none text-ink-muted prose-headings:text-ink prose-headings:font-display prose-a:text-gold prose-a:underline-offset-4 hover:prose-a:text-ink prose-strong:text-ink prose-blockquote:border-gold/40 prose-blockquote:text-ink-muted/80"
-          dangerouslySetInnerHTML={{ __html: page.body }}
+          dangerouslySetInnerHTML={{ __html: rewriteEmbeddedMediaInHtml(page.body) }}
         />
       ) : (
         <div className="mt-10 space-y-6 font-sans text-sm leading-relaxed text-ink-muted">

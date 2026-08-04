@@ -11,17 +11,26 @@ const ALLOWED_TAGS = [
   "ul", "ol", "li",
   "blockquote",
   "a",
-  "img",
+  "img", "video", "source", "iframe",
   "table", "thead", "tbody", "tr", "th", "td",
   "span", "div", "mark",
   "code", "pre",
+  "input", "label", // task list checkboxes
+  "figure", "figcaption",
 ];
 
 const ALLOWED_ATTRIBUTES: Record<string, string[]> = {
   a: ["href", "target", "rel"],
   img: ["src", "alt", "width", "height", "style"],
+  video: ["src", "controls", "width", "height", "style", "data-storage-url"],
+  source: ["src", "type"],
+  iframe: ["src", "frameborder", "allowfullscreen", "allow", "loading", "style", "width", "height"],
+  input: ["type", "checked", "disabled"],
   span: ["style", "data-color"],
   mark: ["style", "data-color"],
+  div: ["class", "style", "data-type"],
+  ul: ["data-type"],
+  li: ["data-type", "data-checked"],
   "*": ["style", "class"],
   td: ["colspan", "rowspan"],
   th: ["colspan", "rowspan"],
@@ -62,10 +71,20 @@ export function sanitizeRichContent(html: string): string {
       }),
     },
     // Don't allow data: or javascript: URLs
-    allowedSchemes: ["http", "https"],
+    allowedSchemes: ["http", "https", "data", "blob"],
     allowedSchemesByTag: {
-      img: ["http", "https"],
+      img: ["http", "https", "data"],
       a: ["http", "https", "mailto"],
+      video: ["http", "https", "blob"],
+      source: ["http", "https", "blob"],
+      iframe: ["http", "https"],
     },
+    allowedIframeHostnames: [
+      "www.youtube.com",
+      "youtube.com",
+      "player.vimeo.com",
+      "vimeo.com",
+      "drive.google.com",
+    ],
   });
 }

@@ -4,6 +4,7 @@ import {
   parseProductDescription,
 } from "@/lib/parse-product-description";
 import { cn } from "@/lib/cn";
+import { rewriteEmbeddedMediaInHtml, isHtmlContent } from "@/lib/rich-text-utils";
 
 const DEFAULT_PRINT_DISCLAIMER =
   "Print and placement may differ, making every piece uniquely yours.";
@@ -14,6 +15,31 @@ type Props = {
 };
 
 export function ProductDetailDescription({ product, className }: Props) {
+  // Rich HTML description (from the RichTextEditor)
+  if (product.description && isHtmlContent(product.description)) {
+    const fabricRaw = product.fabricDetails?.trim() || product.material?.trim() || null;
+    const fabricLabel = fabricRaw
+      ? /^fabric used:/i.test(fabricRaw) ? fabricRaw : `Fabric used: ${fabricRaw}`
+      : null;
+    const printDisclaimer = product.pdpPrintDisclaimer?.trim() || DEFAULT_PRINT_DISCLAIMER;
+
+    return (
+      <div className={cn("space-y-3 border-b border-ivory-deep/70 pb-4", className)}>
+        <div
+          className="prose prose-sm max-w-none text-ink-muted prose-headings:text-ink prose-headings:font-display prose-a:text-gold prose-a:underline-offset-4 hover:prose-a:text-ink prose-strong:text-ink prose-blockquote:border-gold/40"
+          dangerouslySetInnerHTML={{ __html: rewriteEmbeddedMediaInHtml(product.description) }}
+        />
+        {fabricLabel ? (
+          <p className="font-sans text-sm font-light text-ink-muted">{fabricLabel}</p>
+        ) : null}
+        <p className="font-sans text-[11px] font-light leading-relaxed text-ink-soft">
+          {printDisclaimer}
+        </p>
+      </div>
+    );
+  }
+
+  // Legacy plain-text description (bullet points parsed from text)
   const parsed = parseProductDescription(product.description);
   const legacyBullets = bulletsFromStylingNotes(product.stylingSuggestions);
   const bullets = parsed.bullets.length > 0 ? parsed.bullets : legacyBullets;

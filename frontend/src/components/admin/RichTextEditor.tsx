@@ -12,11 +12,14 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Highlight from "@tiptap/extension-highlight";
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
+import FontFamily from "@tiptap/extension-font-family";
 import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import CharacterCount from "@tiptap/extension-character-count";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Props = {
@@ -25,6 +28,8 @@ type Props = {
   contentKey?: string;
   placeholder?: string;
   className?: string;
+  uploadImage?: (file: File) => Promise<{ url: string; alt?: string }>;
+  uploadVideo?: (file: File, onProgress: (pct: number) => void) => Promise<{ url: string; storageUrl?: string }>;
 };
 
 const TEXT_COLORS = [
@@ -36,6 +41,24 @@ const TEXT_COLORS = [
 const HIGHLIGHT_COLORS = [
   "#fef08a", "#d9f99d", "#bbf7d0", "#a5f3fc", "#bfdbfe",
   "#e9d5ff", "#fbcfe8", "#fecdd3", "#fed7aa", "",
+];
+
+const FONT_FAMILIES = [
+  "Default", "Arial", "Courier New", "Georgia", "Helvetica", "Inter",
+  "Lato", "Merriweather", "Montserrat", "Open Sans", "Poppins",
+  "Roboto", "Times New Roman", "Verdana",
+];
+
+const FONT_SIZES = [
+  "8px", "10px", "12px", "14px", "16px", "18px", "20px", "24px", "30px", "36px", "48px", "72px",
+];
+
+const LINE_SPACINGS = [
+  { label: "Single", value: "1" },
+  { label: "1.15", value: "1.15" },
+  { label: "1.5", value: "1.5" },
+  { label: "Double", value: "2" },
+  { label: "2.5", value: "2.5" },
 ];
 
 /* ─── Toolbar Icon Button ─── */
@@ -58,6 +81,48 @@ function Btn({ onMouseDown, active, disabled, title, children }: {
 }
 
 function Sep() { return <div className="mx-1 h-5 w-px bg-gray-300/60" />; }
+
+/* ─── Dropdown ─── */
+function DropMenu({ label, items, onSelect, fontPreview }: {
+  label: string; items: string[]; onSelect: (val: string) => void; fontPreview?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative inline-flex">
+      <button type="button" title={label}
+        onMouseDown={(e) => { e.preventDefault(); setOpen((v) => !v); }}
+        className="inline-flex items-center h-8 px-2 rounded border border-gray-200 text-[11px] text-gray-600 hover:bg-gray-100 select-none whitespace-nowrap"
+      >
+        {label}
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 z-[200] mt-1 min-w-[130px] max-h-[240px] overflow-y-auto rounded-lg border bg-white shadow-xl p-1"
+          onMouseDown={(e) => e.preventDefault()}>
+          {items.map((item) => (
+            <button key={item} type="button"
+              onMouseDown={(e) => { e.preventDefault(); onSelect(item); setOpen(false); }}
+              className="block w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100 rounded"
+              style={fontPreview && item !== "Default" ? { fontFamily: item } : undefined}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ─── Color Dropdown ─── */
 function ColorDrop({ editor, colors, type, label }: {
@@ -112,11 +177,8 @@ function ColorDrop({ editor, colors, type, label }: {
               />
             ))}
           </div>
-          {/* Custom color picker */}
           <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center gap-2">
-            <input
-              ref={pickerRef}
-              type="color"
+            <input ref={pickerRef} type="color"
               defaultValue={type === "text" ? "#000000" : "#fef08a"}
               className="h-7 w-7 rounded border border-gray-200 cursor-pointer p-0"
               onMouseDown={(e) => e.stopPropagation()}
@@ -126,9 +188,7 @@ function ColorDrop({ editor, colors, type, label }: {
             <button type="button"
               onMouseDown={(e) => { e.preventDefault(); if (pickerRef.current) { applyColor(pickerRef.current.value); setOpen(false); } }}
               className="ml-auto text-[10px] font-medium text-indigo-600 hover:text-indigo-800"
-            >
-              Apply
-            </button>
+            >Apply</button>
           </div>
         </div>
       )}
@@ -153,9 +213,33 @@ function Toolbar({ editor }: { editor: Editor }) {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }, [editor]);
 
+  const insertVideo = useCallback(() => {
+    const url = window.prompt("Video URL (YouTube, Vimeo, or direct MP4):");
+    if (!url) return;
+    // Auto-embed: convert to iframe if supported
+    const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) {
+      editor.chain().focus().insertContent(`<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;max-width:100%;border-radius:8px;"></iframe>`).run();
+      return;
+    }
+    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) {
+      editor.chain().focus().insertContent(`<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;max-width:100%;border-radius:8px;"></iframe>`).run();
+      return;
+    }
+    // Direct video
+    editor.chain().focus().insertContent(`<video src="${url}" controls style="width:100%;max-width:100%;border-radius:8px;"></video>`).run();
+  }, [editor]);
+
+  const insertDate = useCallback(() => {
+    const now = new Date();
+    const formatted = now.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) + " " + now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    editor.chain().focus().insertContent(formatted).run();
+  }, [editor]);
+
   return (
     <div className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur-sm px-3 py-2 space-y-1 rounded-t-lg">
-      {/* Row 1 */}
+      {/* Row 1: Headings + Text Formatting + Colors + Lists */}
       <div className="flex flex-wrap items-center gap-0.5">
         <Btn onMouseDown={() => editor.chain().focus().setParagraph().run()} active={editor.isActive("paragraph")} title="Normal Text"><span className="text-[10px] font-medium">P</span></Btn>
         <Btn onMouseDown={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive("heading", { level: 1 })} title="Heading 1"><span className="font-bold text-xs">H1</span></Btn>
@@ -187,13 +271,16 @@ function Toolbar({ editor }: { editor: Editor }) {
         <Btn onMouseDown={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive("orderedList")} title="Numbered List">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 6h11M10 12h11M10 18h11M3 5v2M3 17v2M3 11v2M5 5H3M5 17H3M5 11H3" /></svg>
         </Btn>
+        <Btn onMouseDown={() => editor.chain().focus().toggleTaskList().run()} active={editor.isActive("taskList")} title="Task List">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="M5 8l1 1 2-2"/><line x1="13" y1="8" x2="21" y2="8"/><rect x="3" y="14" width="6" height="6" rx="1"/><line x1="13" y1="17" x2="21" y2="17"/></svg>
+        </Btn>
         <Btn onMouseDown={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive("blockquote")} title="Blockquote">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3M15 17h3l2-4V7h-6v6h3" /></svg>
         </Btn>
         <Btn onMouseDown={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive("codeBlock")} title="Code Block"><span className="font-mono text-[10px]">&lt;/&gt;</span></Btn>
       </div>
 
-      {/* Row 2 */}
+      {/* Row 2: Alignment + Indent + Typography + Links + Media + Tools */}
       <div className="flex flex-wrap items-center gap-0.5">
         <Btn onMouseDown={() => editor.chain().focus().setTextAlign("left").run()} active={editor.isActive({ textAlign: "left" })} title="Align Left">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M3 12h12M3 18h18" /></svg>
@@ -210,17 +297,43 @@ function Toolbar({ editor }: { editor: Editor }) {
 
         <Sep />
 
+        <DropMenu label="Font" items={FONT_FAMILIES} fontPreview onSelect={(val) => {
+          if (val === "Default") editor.chain().focus().unsetFontFamily().run();
+          else editor.chain().focus().setFontFamily(val).run();
+        }} />
+        <DropMenu label="Size" items={FONT_SIZES} onSelect={(val) => {
+          editor.chain().focus().setMark("textStyle", { fontSize: val }).run();
+        }} />
+        <DropMenu label="Spacing" items={LINE_SPACINGS.map(s => s.label)} onSelect={(val) => {
+          const spacing = LINE_SPACINGS.find(s => s.label === val);
+          if (spacing) {
+            // Apply line-height via node style
+            editor.chain().focus().updateAttributes("paragraph", { style: `line-height: ${spacing.value}` } as any).run();
+          }
+        }} />
+
+        <Sep />
+
         <Btn onMouseDown={link} active={editor.isActive("link")} title={editor.isActive("link") ? "Remove Link" : "Add Link"}>
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" /></svg>
         </Btn>
         <Btn onMouseDown={image} title="Insert Image">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
         </Btn>
+        <Btn onMouseDown={insertVideo} title="Insert Video">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M10 9l5 3-5 3V9z" /></svg>
+        </Btn>
         <Btn onMouseDown={table} title="Insert Table">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M3 15h18M9 3v18M15 3v18" /></svg>
         </Btn>
         <Btn onMouseDown={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Line">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12h18" /></svg>
+        </Btn>
+
+        <Sep />
+
+        <Btn onMouseDown={insertDate} title="Insert Date/Time">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
         </Btn>
 
         <Sep />
@@ -243,7 +356,7 @@ function Toolbar({ editor }: { editor: Editor }) {
 }
 
 /* ─── Main Editor ─── */
-export function RichTextEditor({ initialContent, onChange, contentKey, placeholder, className }: Props) {
+export function RichTextEditor({ initialContent, onChange, contentKey, placeholder, className, uploadImage, uploadVideo }: Props) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -253,16 +366,19 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
       Underline,
       TextStyle,
       Color,
+      FontFamily,
       Highlight.configure({ multicolor: true }),
       Subscript,
       Superscript,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer nofollow", target: "_blank" } }),
-      Image.configure({ inline: false, allowBase64: false }),
+      Image.configure({ inline: false, allowBase64: true }),
       Table.configure({ resizable: false }),
       TableRow,
       TableCell,
       TableHeader,
+      TaskList,
+      TaskItem.configure({ nested: true }),
       CharacterCount,
       Placeholder.configure({ placeholder: placeholder ?? "Start writing your content…" }),
     ],
@@ -272,6 +388,41 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
     },
     editorProps: {
       attributes: { class: "tiptap px-5 py-4 focus:outline-none" },
+      handlePaste: (_view, event) => {
+        // Auto-embed video URLs on paste
+        const text = event.clipboardData?.getData("text/plain");
+        if (text) {
+          const ytMatch = text.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+          if (ytMatch) {
+            event.preventDefault();
+            editor?.chain().focus().insertContent(`<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:8px;"></iframe>`).run();
+            return true;
+          }
+          const vimeoMatch = text.match(/vimeo\.com\/(\d+)/);
+          if (vimeoMatch) {
+            event.preventDefault();
+            editor?.chain().focus().insertContent(`<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:8px;"></iframe>`).run();
+            return true;
+          }
+        }
+        // Handle image paste
+        const items = event.clipboardData?.items;
+        if (items && uploadImage) {
+          for (const item of Array.from(items)) {
+            if (item.type.startsWith("image/")) {
+              event.preventDefault();
+              const file = item.getAsFile();
+              if (file) {
+                void uploadImage(file).then(({ url, alt }) => {
+                  editor?.chain().focus().setImage({ src: url, alt: alt || "" }).run();
+                });
+              }
+              return true;
+            }
+          }
+        }
+        return false;
+      },
     },
     immediatelyRender: false,
   }, [contentKey]);
@@ -285,7 +436,7 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
   return (
     <div className={`rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ${className ?? ""}`}>
       <Toolbar editor={editor} />
-      <div className="min-h-[300px] cursor-text" onClick={() => { if (!editor.isFocused) editor.commands.focus("end"); }}>
+      <div className="min-h-[300px] max-h-[720px] overflow-y-auto cursor-text" onClick={() => { if (!editor.isFocused) editor.commands.focus("end"); }}>
         <EditorContent editor={editor} />
       </div>
       <div className="border-t border-gray-100 px-4 py-1.5 flex justify-end gap-4 text-[11px] text-gray-400 select-none">

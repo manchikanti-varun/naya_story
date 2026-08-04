@@ -15,6 +15,7 @@ import { AdminCombobox } from "@/components/admin/ui/AdminCombobox";
 import { cn } from "@/lib/cn";
 import { consolidateProductDescription } from "@/lib/product-description";
 import { publishStorefrontSettingsChanged } from "@/lib/storefront-live-sync";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 type TabId = "general" | "commerce" | "photos" | "shop";
 
@@ -339,11 +340,11 @@ export function ProductEditor({
               </span>
             </Field>
             <Field label="Description" className="md:col-span-2">
-              <textarea
-                className={cn(inputClass, "min-h-[160px]")}
-                placeholder="Story and details for the product page. Use lines starting with > for bullet points."
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              <RichTextEditor
+                initialContent={form.description}
+                onChange={(html) => setForm((f) => ({ ...f, description: html }))}
+                contentKey={form.slug || "new"}
+                placeholder="Story and details for the product page…"
               />
             </Field>
             <p className="md:col-span-2 text-xs text-[var(--admin-muted)]">
