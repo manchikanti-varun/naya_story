@@ -388,44 +388,53 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
     },
     editorProps: {
       attributes: { class: "tiptap px-5 py-4 focus:outline-none" },
-      handlePaste: (_view, event) => {
-        // Auto-embed video URLs on paste
-        const text = event.clipboardData?.getData("text/plain");
-        if (text) {
-          const ytMatch = text.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-          if (ytMatch) {
-            event.preventDefault();
-            editor?.chain().focus().insertContent(`<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:8px;"></iframe>`).run();
-            return true;
-          }
-          const vimeoMatch = text.match(/vimeo\.com\/(\d+)/);
-          if (vimeoMatch) {
-            event.preventDefault();
-            editor?.chain().focus().insertContent(`<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:8px;"></iframe>`).run();
-            return true;
-          }
-        }
-        // Handle image paste
-        const items = event.clipboardData?.items;
-        if (items && uploadImage) {
-          for (const item of Array.from(items)) {
-            if (item.type.startsWith("image/")) {
-              event.preventDefault();
-              const file = item.getAsFile();
-              if (file) {
-                void uploadImage(file).then(({ url, alt }) => {
-                  editor?.chain().focus().setImage({ src: url, alt: alt || "" }).run();
-                });
-              }
-              return true;
-            }
-          }
-        }
-        return false;
-      },
     },
     immediatelyRender: false,
   }, [contentKey]);
+
+  // Handle paste separately via effect to avoid stale closure
+  useEffect(() => {
+    if (!editor) return;
+    const handlePaste = (_view: any, event: ClipboardEvent) => {
+      // Auto-embed video URLs on paste
+      const text = event.clipboardData?.getData("text/plain");
+      if (text) {
+        const ytMatch = text.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+        if (ytMatch) {
+          event.preventDefault();
+          editor.chain().focus().insertContent(`<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:8px;"></iframe>`).run();
+          return true;
+        }
+        const vimeoMatch = text.match(/vimeo\.com\/(\d+)/);
+        if (vimeoMatch) {
+          event.preventDefault();
+          editor.chain().focus().insertContent(`<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:8px;"></iframe>`).run();
+          return true;
+        }
+      }
+      // Handle image paste
+      const items = event.clipboardData?.items;
+      if (items && uploadImage) {
+        for (const item of Array.from(items)) {
+          if (item.type.startsWith("image/")) {
+            event.preventDefault();
+            const file = item.getAsFile();
+            if (file) {
+              void uploadImage(file).then(({ url, alt }) => {
+                editor.chain().focus().setImage({ src: url, alt: alt || "" }).run();
+              });
+            }
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    editor.view.setProps({
+      handlePaste,
+    });
+  }, [editor, uploadImage]);
 
   if (!editor) return null;
 

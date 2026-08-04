@@ -386,7 +386,7 @@ body {
 /* TipTap Rich Text Editor */
 .tiptap {
   outline: none;
-  min-height: 250px;
+  min-height: 100%;
   font-size: 0.9375rem;
   line-height: 1.7;
   color: #1f2937;
