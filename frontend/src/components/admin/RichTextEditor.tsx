@@ -238,7 +238,7 @@ function Toolbar({ editor }: { editor: Editor }) {
   }, [editor]);
 
   return (
-    <div className="sticky top-0 z-10 border-b bg-white/95 backdrop-blur-sm px-3 py-2 space-y-1 rounded-t-lg">
+    <div className="z-10 border-b bg-white/95 backdrop-blur-sm px-3 py-2 space-y-1 rounded-t-lg">
       {/* Row 1: Headings + Text Formatting + Colors + Lists */}
       <div className="flex flex-wrap items-center gap-0.5">
         <Btn onMouseDown={() => editor.chain().focus().setParagraph().run()} active={editor.isActive("paragraph")} title="Normal Text"><span className="text-[10px] font-medium">P</span></Btn>
@@ -436,7 +436,14 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
   return (
     <div className={`rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ${className ?? ""}`}>
       <Toolbar editor={editor} />
-      <div className="min-h-[300px] max-h-[720px] overflow-y-auto cursor-text" onClick={() => { if (!editor.isFocused) editor.commands.focus("end"); }}>
+      <div className="min-h-[300px] max-h-[720px] overflow-y-auto cursor-text"
+        onClick={(e) => {
+          // Only focus if clicking the empty area outside the editor content itself
+          if (e.target === e.currentTarget && !editor.isFocused) {
+            editor.commands.focus("end");
+          }
+        }}
+      >
         <EditorContent editor={editor} />
       </div>
       <div className="border-t border-gray-100 px-4 py-1.5 flex justify-end gap-4 text-[11px] text-gray-400 select-none">
