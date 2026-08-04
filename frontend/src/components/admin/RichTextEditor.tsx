@@ -1,5 +1,6 @@
 "use client";
 
+import { Extension } from "@tiptap/core";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -21,6 +22,26 @@ import CharacterCount from "@tiptap/extension-character-count";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+/* ─── Font Size Extension ─── */
+const FontSize = Extension.create({
+  name: "fontSize",
+  addGlobalAttributes() {
+    return [{
+      types: ["textStyle"],
+      attributes: {
+        fontSize: {
+          default: null,
+          parseHTML: (element) => element.style.fontSize || null,
+          renderHTML: (attributes) => {
+            if (!attributes.fontSize) return {};
+            return { style: `font-size: ${attributes.fontSize}` };
+          },
+        },
+      },
+    }];
+  },
+});
 
 type Props = {
   initialContent: string;
@@ -51,14 +72,6 @@ const FONT_FAMILIES = [
 
 const FONT_SIZES = [
   "8px", "10px", "12px", "14px", "16px", "18px", "20px", "24px", "30px", "36px", "48px", "72px",
-];
-
-const LINE_SPACINGS = [
-  { label: "Single", value: "1" },
-  { label: "1.15", value: "1.15" },
-  { label: "1.5", value: "1.5" },
-  { label: "Double", value: "2" },
-  { label: "2.5", value: "2.5" },
 ];
 
 /* ─── Toolbar Icon Button ─── */
@@ -302,14 +315,8 @@ function Toolbar({ editor }: { editor: Editor }) {
           else editor.chain().focus().setFontFamily(val).run();
         }} />
         <DropMenu label="Size" items={FONT_SIZES} onSelect={(val) => {
-          editor.chain().focus().setMark("textStyle", { fontSize: val }).run();
-        }} />
-        <DropMenu label="Spacing" items={LINE_SPACINGS.map(s => s.label)} onSelect={(val) => {
-          const spacing = LINE_SPACINGS.find(s => s.label === val);
-          if (spacing) {
-            // Apply line-height via node style
-            editor.chain().focus().updateAttributes("paragraph", { style: `line-height: ${spacing.value}` } as any).run();
-          }
+          // Apply font size using a span with inline style
+          editor.chain().focus().setMark("textStyle", { fontSize: val } as any).run();
         }} />
 
         <Sep />
@@ -359,6 +366,12 @@ function Toolbar({ editor }: { editor: Editor }) {
 export function RichTextEditor({ initialContent, onChange, contentKey, placeholder, className, uploadImage, uploadVideo }: Props) {
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const uploadImageRef = useRef(uploadImage);
+  uploadImageRef.current = uploadImage;
+  const [mounted, setMounted] = useState(false);
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const editor = useEditor({
     extensions: [
@@ -367,6 +380,7 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
       TextStyle,
       Color,
       FontFamily,
+      FontSize,
       Highlight.configure({ multicolor: true }),
       Subscript,
       Superscript,
@@ -383,60 +397,22 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
       Placeholder.configure({ placeholder: placeholder ?? "Start writing your content…" }),
     ],
     content: initialContent,
+    editable: true,
     onUpdate: ({ editor: e }) => {
       onChangeRef.current(e.getHTML());
+      forceUpdate((n) => n + 1);
+    },
+    onSelectionUpdate: () => {
+      forceUpdate((n) => n + 1);
     },
     editorProps: {
       attributes: { class: "tiptap px-5 py-4 focus:outline-none" },
     },
     immediatelyRender: false,
+    shouldRerenderOnTransaction: false,
   }, [contentKey]);
 
-  // Handle paste separately via effect to avoid stale closure
-  useEffect(() => {
-    if (!editor) return;
-    const handlePaste = (_view: any, event: ClipboardEvent) => {
-      // Auto-embed video URLs on paste
-      const text = event.clipboardData?.getData("text/plain");
-      if (text) {
-        const ytMatch = text.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-        if (ytMatch) {
-          event.preventDefault();
-          editor.chain().focus().insertContent(`<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:8px;"></iframe>`).run();
-          return true;
-        }
-        const vimeoMatch = text.match(/vimeo\.com\/(\d+)/);
-        if (vimeoMatch) {
-          event.preventDefault();
-          editor.chain().focus().insertContent(`<iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;border-radius:8px;"></iframe>`).run();
-          return true;
-        }
-      }
-      // Handle image paste
-      const items = event.clipboardData?.items;
-      if (items && uploadImage) {
-        for (const item of Array.from(items)) {
-          if (item.type.startsWith("image/")) {
-            event.preventDefault();
-            const file = item.getAsFile();
-            if (file) {
-              void uploadImage(file).then(({ url, alt }) => {
-                editor.chain().focus().setImage({ src: url, alt: alt || "" }).run();
-              });
-            }
-            return true;
-          }
-        }
-      }
-      return false;
-    };
-
-    editor.view.setProps({
-      handlePaste,
-    });
-  }, [editor, uploadImage]);
-
-  if (!editor) return null;
+  if (!mounted || !editor) return null;
 
   const words = editor.storage.characterCount.words();
   const chars = editor.storage.characterCount.characters();
@@ -448,12 +424,12 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
       <div className="min-h-[300px] max-h-[720px] overflow-y-auto cursor-text"
         onClick={(e) => {
           // Only focus if clicking the empty area outside the editor content itself
-          if (e.target === e.currentTarget && !editor.isFocused) {
+          if (e.target === e.currentTarget) {
             editor.commands.focus("end");
           }
         }}
       >
-        <EditorContent editor={editor} />
+        <EditorContent editor={editor} className="h-full" />
       </div>
       <div className="border-t border-gray-100 px-4 py-1.5 flex justify-end gap-4 text-[11px] text-gray-400 select-none">
         <span>{words} words</span>
