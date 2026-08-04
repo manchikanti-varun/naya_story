@@ -24,7 +24,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /* ═══════════════════════════════════════════════════════════════════
- * CUSTOM EXTENSIONSfix them
+ * CUSTOM EXTENSIONS
  * ═══════════════════════════════════════════════════════════════════ */
 
 /**
@@ -284,8 +284,7 @@ function ColorDrop({ editor, colors, type, label }: {
           <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center gap-2">
             <input ref={pickerRef} type="color" defaultValue={type === "text" ? "#000000" : "#fef08a"}
               className="h-7 w-7 rounded border border-gray-200 cursor-pointer p-0"
-              onMouseDown={(e) => e.stopPropagation()}
-              onChange={(e) => applyColor(e.target.value)} />
+              onMouseDown={(e) => e.stopPropagation()} />
             <span className="text-[10px] text-gray-500">Custom</span>
             <button type="button"
               onMouseDown={(e) => { e.preventDefault(); if (pickerRef.current) { applyColor(pickerRef.current.value); setOpen(false); } }}
@@ -302,31 +301,37 @@ function ColorDrop({ editor, colors, type, label }: {
  * TOOLBAR
  * ═══════════════════════════════════════════════════════════════════ */
 
-function Toolbar({ editor, onPickImage, onPickVideo }: {
+function Toolbar({ editor, onPickImage, onPickVideo, hasImageUpload, hasVideoUpload }: {
   editor: Editor;
   onPickImage: () => void;
   onPickVideo: () => void;
+  hasImageUpload: boolean;
+  hasVideoUpload: boolean;
 }) {
   const link = useCallback(() => {
     if (editor.isActive("link")) { editor.chain().focus().unsetLink().run(); return; }
-    const url = window.prompt("URL:");
+    // UX: If selection is collapsed, user needs to select text first for the link to be visible
+    const { empty } = editor.state.selection;
+    const url = window.prompt(
+      empty ? "URL (tip: select text first to make the link visible):" : "URL:"
+    );
     if (url) editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   }, [editor]);
 
   const image = useCallback(() => {
-    const url = window.prompt("Image URL (or cancel to upload a file):");
-    // FIX 4: Distinguish null (user cancelled) from "" (user pressed OK with empty input)
+    const msg = hasImageUpload
+      ? "Image URL — or press Cancel to upload from your device:"
+      : "Image URL:";
+    const url = window.prompt(msg);
     if (url === null) {
-      // User pressed Cancel — open file picker for upload
-      onPickImage();
+      // User pressed Cancel
+      if (hasImageUpload) onPickImage();
       return;
     }
     if (url.trim()) {
-      // User entered a URL — insert it
       editor.chain().focus().setImage({ src: url.trim() }).run();
     }
-    // else: user pressed OK with empty input — do nothing (re-focus editor)
-  }, [editor, onPickImage]);
+  }, [editor, onPickImage, hasImageUpload]);
 
   const table = useCallback(() => {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
@@ -334,10 +339,15 @@ function Toolbar({ editor, onPickImage, onPickVideo }: {
 
   // ISSUE 2 FIX: Use schema-aware insertContent with the registered node type
   const insertVideo = useCallback(() => {
-    const url = window.prompt("Video URL (YouTube, Vimeo, MP4) — or cancel to upload:");
-    // FIX 4: null = cancel (open file picker), "" = empty OK (do nothing)
-    if (url === null) { onPickVideo(); return; }
-    if (!url.trim()) return; // empty input — do nothing
+    const msg = hasVideoUpload
+      ? "Video URL (YouTube, Vimeo, MP4) — or press Cancel to upload:"
+      : "Video URL (YouTube, Vimeo, or direct MP4 link):";
+    const url = window.prompt(msg);
+    if (url === null) {
+      if (hasVideoUpload) onPickVideo();
+      return;
+    }
+    if (!url.trim()) return;
     const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
     if (ytMatch) {
       editor.chain().focus().insertContent({
@@ -359,7 +369,7 @@ function Toolbar({ editor, onPickImage, onPickVideo }: {
       type: "video",
       attrs: { src: url },
     }).run();
-  }, [editor, onPickVideo]);
+  }, [editor, onPickVideo, hasVideoUpload]);
 
   const insertDate = useCallback(() => {
     const now = new Date();
@@ -636,7 +646,8 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
 
   return (
     <div className={`rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden ${className ?? ""}`}>
-      <Toolbar editor={editor} onPickImage={onPickImage} onPickVideo={onPickVideo} />
+      <Toolbar editor={editor} onPickImage={onPickImage} onPickVideo={onPickVideo}
+        hasImageUpload={!!uploadImage} hasVideoUpload={!!uploadVideo} />
 
       {/* ISSUE 3 FIX: Video upload progress bar */}
       {videoProgress !== null && (
@@ -650,7 +661,14 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
         </div>
       )}
 
-      <div className="min-h-[300px] max-h-[720px] overflow-y-auto">
+      <div className="min-h-[300px] max-h-[720px] overflow-y-auto cursor-text"
+        onClick={(e) => {
+          // UX: clicking empty area below content focuses editor at end
+          if (e.target === e.currentTarget) {
+            editor.commands.focus("end");
+          }
+        }}
+      >
         <EditorContent editor={editor} />
       </div>
 

@@ -15,6 +15,7 @@ import {
 } from "../lib/global-categories.js";
 import { HttpError } from "../middleware/httpError.js";
 import { eventBus } from "../lib/event-bus.js";
+import { sanitizeRichContent } from "../lib/sanitize-html-content.js";
 import type { HomepageConfig } from "../types/homepage.js";
 
 // Product field whitelist for admin updates
@@ -32,6 +33,13 @@ function sanitizeProductBody(raw: Record<string, unknown>): Record<string, unkno
   const sanitized: Record<string, unknown> = {};
   for (const key of ALLOWED_PRODUCT_FIELDS) {
     if (key in raw) sanitized[key] = raw[key];
+  }
+  // Sanitize rich HTML fields to prevent XSS
+  if (typeof sanitized.description === "string") {
+    sanitized.description = sanitizeRichContent(sanitized.description);
+  }
+  if (typeof sanitized.shortDescription === "string") {
+    sanitized.shortDescription = sanitizeRichContent(sanitized.shortDescription);
   }
   return sanitizeProductMedia(sanitized);
 }
@@ -186,7 +194,7 @@ export const productService = {
   },
 
   async createProduct(body: Record<string, unknown>) {
-    const sanitized = sanitizeProductMedia(body);
+    const sanitized = sanitizeProductBody(body);
     const doc = await productRepository.create(sanitized);
     const productId = String(doc._id);
 
