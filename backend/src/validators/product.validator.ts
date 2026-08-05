@@ -1,13 +1,16 @@
 import { body } from "express-validator";
 
 export const createProductRules = [
-  body("name").notEmpty(),
-  body("slug").notEmpty(),
-  body("description").notEmpty(),
+  body("name").notEmpty().isLength({ max: 200 }),
+  body("slug").notEmpty().isLength({ max: 200 })
+    .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .withMessage("Slug must be lowercase alphanumeric with hyphens"),
+  body("description").notEmpty().isLength({ max: 50000 })
+    .withMessage("Description must not exceed 50,000 characters"),
   body("price").isNumeric(),
-  body("category").notEmpty(),
-  body("images").isArray({ min: 1 }),
-  body("variants").isArray({ min: 1 }),
+  body("category").notEmpty().isLength({ max: 100 }),
+  body("images").isArray({ min: 1, max: 20 }),
+  body("variants").isArray({ min: 1, max: 100 }),
 ];
 
 /**
@@ -19,7 +22,7 @@ export const updateProductRules = [
   body("slug").optional().trim().notEmpty().isLength({ max: 200 })
     .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     .withMessage("Slug must be lowercase alphanumeric with hyphens"),
-  body("description").optional().trim().notEmpty().isLength({ max: 10000 }),
+  body("description").optional().trim().notEmpty().isLength({ max: 50000 }),
   body("shortDescription").optional().trim().isLength({ max: 500 }),
   body("price").optional().isFloat({ min: 0, max: 10000000 })
     .withMessage("Price must be between 0 and 10,000,000"),

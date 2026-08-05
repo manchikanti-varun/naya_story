@@ -662,14 +662,17 @@ export function RichTextEditor({ initialContent, onChange, contentKey, placehold
       )}
 
       <div className="min-h-[300px] max-h-[720px] overflow-y-auto cursor-text"
-        onClick={(e) => {
-          // UX: clicking empty area below content focuses editor at end
-          if (e.target === e.currentTarget) {
-            editor.commands.focus("end");
+        onMouseDown={() => {
+          // UX: Any click in the editor area ensures it gets focus
+          if (!editor.isFocused) {
+            // Small delay to let native click handling try first
+            requestAnimationFrame(() => {
+              if (!editor.isFocused) editor.commands.focus("end");
+            });
           }
         }}
       >
-        <EditorContent editor={editor} />
+        <EditorContent editor={editor} className="min-h-[inherit]" />
       </div>
 
       <div className="border-t border-gray-100 px-4 py-1.5 flex justify-end gap-4 text-[11px] text-gray-400 select-none">

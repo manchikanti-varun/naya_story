@@ -386,10 +386,11 @@ body {
 /* TipTap Rich Text Editor */
 .tiptap {
   outline: none;
-  min-height: 100%;
+  min-height: 280px;
   font-size: 0.9375rem;
   line-height: 1.7;
   color: #1f2937;
+  cursor: text;
 }
 
 .tiptap p.is-editor-empty:first-child::before {
